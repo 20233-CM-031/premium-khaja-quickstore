@@ -373,7 +373,7 @@ export const CustomerAuthModal = () => {
                     <input 
                       type="text" 
                       required
-                      placeholder="e.g. ayesha@example.com or 9820144521"
+                      placeholder="e.g. ayesha@example.com or 9393056641"
                       value={loginEmailOrPhone}
                       onChange={(e) => setLoginEmailOrPhone(e.target.value)}
                       className="form-input"

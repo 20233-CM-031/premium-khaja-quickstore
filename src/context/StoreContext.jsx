@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ALL_PRODUCTS, BANGLES_PRODUCTS, STORE_CATEGORIES, CELEBRITY_SHOWCASE_DATA } from '../data/products';
 import { INITIAL_CUSTOMERS, INITIAL_LEADS, INITIAL_CAMPAIGNS } from '../data/crmData';
 
+// Official Store Owner Contact & UPI Configuration
+export const STORE_OWNER_PHONE = "9393056641";
+export const STORE_OWNER_WHATSAPP = "https://wa.me/919393056641";
+export const STORE_UPI_ID = "9393056641@upi";
+
 const StoreContext = createContext();
 
 export const StoreProvider = ({ children }) => {
@@ -115,7 +120,7 @@ export const StoreProvider = ({ children }) => {
     {
       orderId: "PK-ORD-9041",
       customerName: "Ayesha Sheikh",
-      customerPhone: "+91 98201 44521",
+      customerPhone: "+91 93930 56641",
       items: [
         { name: "Rajwada Bridal Chura Master Set", quantity: 1, price: 3499, image: "/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png" }
       ],
@@ -127,6 +132,25 @@ export const StoreProvider = ({ children }) => {
       channel: "Miss World 2025 India Feature"
     }
   ]);
+
+  // Store Payment QR Code State (Owner Uploadable or Default UPI)
+  const [storePaymentQr, setStorePaymentQr] = useState(() => {
+    return localStorage.getItem('pk_payment_qr') || null;
+  });
+
+  const uploadStorePaymentQr = (qrDataUrl) => {
+    setStorePaymentQr(qrDataUrl);
+    try {
+      localStorage.setItem('pk_payment_qr', qrDataUrl);
+    } catch (e) {
+      console.error("Storage error for payment QR", e);
+    }
+  };
+
+  const resetStorePaymentQr = () => {
+    setStorePaymentQr(null);
+    localStorage.removeItem('pk_payment_qr');
+  };
 
   // Miss World & Celebrity Showcase Items State (Dynamic & Updatable)
   const [celebrityShowcase, setCelebrityShowcase] = useState(() => {
@@ -324,7 +348,7 @@ export const StoreProvider = ({ children }) => {
       id: existing ? existing.id : `CUST-${Date.now().toString().slice(-4)}`,
       name: existing ? existing.name : identifier.split('@')[0],
       email: cleanId.includes('@') ? cleanId : (existing?.email || `${identifier}@example.com`),
-      phone: !cleanId.includes('@') ? cleanId : (existing?.phone || '+91 98201 44521'),
+      phone: !cleanId.includes('@') ? cleanId : (existing?.phone || '+91 93930 56641'),
       isLoggedIn: true,
       isMember: true,
       tier: existing?.tier || 'GOLD',
@@ -360,7 +384,7 @@ export const StoreProvider = ({ children }) => {
       id: `CUST-G-${Date.now().toString().slice(-4)}`,
       name: cleanName,
       email: cleanEmail,
-      phone: target.phone || '+91 98201 44521',
+      phone: target.phone || '+91 93930 56641',
       isLoggedIn: true,
       isMember: true,
       tier: 'GOLD',
@@ -706,10 +730,12 @@ export const StoreProvider = ({ children }) => {
         image: i.product.image
       })),
       totalAmount: orderPayload.total,
-      status: 'CONFIRMED',
-      paymentMethod: orderPayload.paymentMethod,
+      status: 'PAID - VERIFY & DISPATCH',
+      paymentMethod: orderPayload.paymentMethod || 'UPI QR Code',
+      utrNumber: orderPayload.utrNumber || '',
       orderDate: new Date().toLocaleString(),
-      shippingAddress: `${orderPayload.shipping.address}, ${orderPayload.shipping.city}, ${orderPayload.shipping.pincode}`,
+      shippingAddress: `${orderPayload.shipping.address}, ${orderPayload.shipping.city} - ${orderPayload.shipping.pincode}`,
+      shippingDetails: orderPayload.shipping,
       channel: attribution.lastTouch.source
     };
 
@@ -732,6 +758,20 @@ export const StoreProvider = ({ children }) => {
 
     setOrderSuccessData(newOrder);
     setCheckoutOpen(false);
+
+    // Compose formatted WhatsApp alert for Store Owner (9393056641)
+    const itemsText = newOrder.items
+      .map(i => `• ${i.name} (Qty: ${i.quantity}, Size: ${i.size}) - ₹${i.price * i.quantity}`)
+      .join('\n');
+
+    const ownerMsg = `🛍️ *NEW ORDER & PAYMENT RECEIVED - PREMIUM KHAJA* 🛍️\n----------------------------------------\n💰 *TOTAL PAYMENT MADE:* ₹${newOrder.totalAmount.toLocaleString()}\n💳 *Payment Method:* ${newOrder.paymentMethod}${newOrder.utrNumber ? ` (UTR/Ref: ${newOrder.utrNumber})` : ''}\n📦 *Order ID:* ${newOrder.orderId}\n\n👤 *CUSTOMER DETAILS:*\n• *Name:* ${newOrder.customerName}\n• *Phone:* ${newOrder.customerPhone}\n• *Delivery Address:* ${newOrder.shippingAddress}\n\n🛒 *ITEMS ORDERED:*\n${itemsText}\n\n📍 *DELIVERY DISPATCH ACTION:*\nCustomer has made payment via QR code. Please confirm receipt in your UPI App and message the customer to request their exact location / pin to book online delivery via Dunzo / Porter / Delhivery / Speed Post!\n----------------------------------------`;
+
+    try {
+      const waUrl = `https://wa.me/919393056641?text=${encodeURIComponent(ownerMsg)}`;
+      window.open(waUrl, '_blank');
+    } catch (e) {
+      console.warn("Could not automatically open WhatsApp popup", e);
+    }
   };
 
   // Category and Subcategory Switcher
@@ -865,7 +905,14 @@ export const StoreProvider = ({ children }) => {
         addNewProduct,
         deleteProduct,
         ALL_PRODUCTS,
-        BANGLES_PRODUCTS
+        BANGLES_PRODUCTS,
+        // Store Owner WhatsApp & UPI Configuration
+        storeOwnerPhone: STORE_OWNER_PHONE,
+        storeOwnerWhatsApp: STORE_OWNER_WHATSAPP,
+        storeUpiId: STORE_UPI_ID,
+        storePaymentQr,
+        uploadStorePaymentQr,
+        resetStorePaymentQr
       }}
     >
       {children}

@@ -23,13 +23,15 @@ export const OrderSuccessModal = () => {
 
   if (!orderSuccessData) return null;
 
-  // WhatsApp formatted order slip text
+  // WhatsApp formatted order slip text for Owner (9393056641)
   const generateWhatsAppMessage = () => {
     const itemsList = orderSuccessData.items
       .map(i => `• ${i.name} (Qty: ${i.quantity}, Size: ${i.size}) - ₹${i.price * i.quantity}`)
-      .join('%0A');
+      .join('\n');
 
-    return `https://wa.me/919820144521?text=Hello%20Premium%20Khaja!%20I%20just%20placed%20an%20order:%0A%0A*Order%20ID:*%20${orderSuccessData.orderId}%0A*Name:*%20${orderSuccessData.customerName}%0A*Address:*%20${orderSuccessData.shippingAddress}%0A%0A*Items:*%0A${itemsList}%0A%0A*Total%20Paid:*%20₹${orderSuccessData.totalAmount}%0A*Payment%20Mode:*%20${orderSuccessData.paymentMethod}%0A%0APlease%20confirm%20dispatch%20timeline!`;
+    const msg = `🛍️ *NEW ORDER & PAYMENT RECEIVED - PREMIUM KHAJA* 🛍️\n----------------------------------------\n💰 *TOTAL PAYMENT MADE:* ₹${orderSuccessData.totalAmount.toLocaleString()}\n💳 *Payment Mode:* ${orderSuccessData.paymentMethod}${orderSuccessData.utrNumber ? ` (UTR/Ref: ${orderSuccessData.utrNumber})` : ''}\n📦 *Order ID:* ${orderSuccessData.orderId}\n\n👤 *CUSTOMER DETAILS:*\n• *Name:* ${orderSuccessData.customerName}\n• *Phone:* ${orderSuccessData.customerPhone || 'Provided'}\n• *Delivery Address:* ${orderSuccessData.shippingAddress}\n\n🛒 *ITEMS ORDERED:*\n${itemsList}\n\n📍 *DELIVERY DISPATCH ACTION:*\nCustomer has completed payment via UPI QR code. Please confirm payment in your UPI app and reply to customer to request their exact location / pin to book online delivery via Dunzo / Porter / Delhivery / Speed Post!\n----------------------------------------`;
+
+    return `https://wa.me/919393056641?text=${encodeURIComponent(msg)}`;
   };
 
   return (
@@ -110,8 +112,11 @@ export const OrderSuccessModal = () => {
             }}
           >
             <MessageCircle size={18} />
-            <span>Send Order Confirmation Slip to WhatsApp</span>
+            <span>Send Payment Slip to Owner (9393056641)</span>
           </a>
+          <div style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)' }}>
+            WhatsApp will open to owner <strong>+91 93930 56641</strong> to confirm your payment and book online courier delivery to your address.
+          </div>
 
           <button 
             onClick={() => setOrderSuccessData(null)}

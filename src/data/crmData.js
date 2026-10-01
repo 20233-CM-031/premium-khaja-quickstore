@@ -58,7 +58,7 @@ export const INITIAL_CUSTOMERS = [
   {
     id: "CUST-9021",
     name: "Ayesha Sheikh",
-    phone: "+91 98201 44521",
+    phone: "+91 93930 56641",
     email: "ayesha.s@example.com",
     tier: "VIP",
     isMember: true,

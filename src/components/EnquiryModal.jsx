@@ -29,7 +29,7 @@ export const EnquiryModal = () => {
 
     // Open WhatsApp directly
     const encoded = encodeURIComponent(`Hi Premium Khaja! I have a question about ${enquiryProduct.name} (SKU: ${enquiryProduct.sku}):\n\n${message || 'Please share available sizes and delivery timelines.'}\n\nMy Name: ${name}`);
-    window.open(`https://wa.me/919820144521?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/919393056641?text=${encoded}`, '_blank');
 
     setSubmitted(true);
     setTimeout(() => {

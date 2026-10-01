@@ -59,11 +59,14 @@ export const Footer = () => {
             <h4 style={{ fontSize: '0.85rem', color: '#E4C88A', letterSpacing: '0.08em', textTransform: 'uppercase', fontWeight: 700, marginBottom: '1rem' }}>
               WhatsApp Concierge
             </h4>
-            <p style={{ fontSize: '0.82rem', color: '#A89E92', marginBottom: '1rem', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '0.82rem', color: '#A89E92', marginBottom: '0.6rem', lineHeight: 1.5 }}>
               Have questions regarding custom bangle sizing (2.4, 2.6, 2.8) or wedding trousseau matching?
             </p>
+            <div style={{ fontSize: '0.78rem', color: '#E4C88A', fontWeight: 600, marginBottom: '0.75rem' }}>
+              Direct Line / WhatsApp: +91 93930 56641
+            </div>
             <a 
-              href="https://wa.me/919820144521?text=Hello%20Premium%20Khaja!%20I%20need%20assistance%20with%20jewellery%20styling."
+              href="https://wa.me/919393056641?text=Hello%20Premium%20Khaja!%20I%20need%20assistance%20with%20jewellery%20styling%20and%20orders."
               target="_blank"
               rel="noopener noreferrer"
               style={{

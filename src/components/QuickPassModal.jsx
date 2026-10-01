@@ -113,7 +113,7 @@ export const QuickPassModal = () => {
             </label>
             <input 
               type="tel" 
-              placeholder="e.g. 9820144521"
+              placeholder="e.g. 9393056641"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
               style={{
