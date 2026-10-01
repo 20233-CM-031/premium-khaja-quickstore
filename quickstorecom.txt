@@ -1,0 +1,3303 @@
+# SOUQONE QUICKSTORE
+
+## ARTIFICIAL JEWELLERY EDITION — MASTER BUILD PROMPT
+
+You are building a production-grade **SouqOne QuickStore** for an Artificial Jewellery / Fashion Jewellery brand.
+
+This is NOT a conventional website.
+
+This is NOT a Shopify clone.
+
+This is NOT merely an online product catalogue.
+
+Build it as a new type of digital commerce system called a:
+
+# QUICKSTORE
+
+A QuickStore is:
+
+**Storefront + Customer Intelligence + Marketing Engine + Commerce + Membership + Retention**
+
+The customer-facing store is only one layer.
+
+The system underneath must help the jewellery business:
+
+* attract customers
+* identify customers
+* understand customer behaviour
+* showcase products
+* create desire
+* increase basket size
+* convert visitors
+* capture customer information
+* build membership
+* generate repeat purchases
+* encourage referrals
+* track marketing
+* understand product performance
+* automate customer engagement
+
+The final experience should make the user think:
+
+> "This is the brand's digital store."
+
+not:
+
+> "This is a website."
+
+---
+
+# 1. BRAND / PRODUCT CONTEXT
+
+Business type:
+
+**Artificial Jewellery / Fashion Jewellery**
+
+Typical products may include:
+
+* Earrings
+* Rings
+* Necklaces
+* Chains
+* Bracelets
+* Bangles
+* Anklets
+* Pendants
+* Jewellery Sets
+* Bridal Fashion Jewellery
+* Party Jewellery
+* Everyday Jewellery
+* Trend / Instagram Jewellery
+* Gift Sets
+* Custom combinations
+
+The products are fashion-oriented and generally lower-ticket than precious jewellery.
+
+Therefore optimize for:
+
+* visual discovery
+* trend discovery
+* fast browsing
+* impulse buying
+* bundles
+* recommendations
+* social sharing
+* repeat purchases
+* gifting
+* seasonal collections
+
+---
+
+# 2. PRODUCT PHILOSOPHY
+
+The central principle is:
+
+> Artificial Jewellery is often purchased because the customer sees a look they want to wear.
+
+Therefore the product experience must answer:
+
+* What does it look like?
+* How would I style it?
+* What occasion is it suitable for?
+* What can I wear with it?
+* What else matches it?
+* Is it currently available?
+* What is the price?
+* Is there an offer?
+* Is it worth adding another item?
+
+Do not make the store feel like an inventory database.
+
+Make it feel like a:
+
+# DIGITAL JEWELLERY SHOWROOM
+
+---
+
+# 3. VISUAL DIRECTION
+
+Create a premium fashion-commerce aesthetic.
+
+The visual design should be:
+
+* elegant
+* editorial
+* modern
+* feminine/brand-appropriate
+* luxurious without pretending to be fine jewellery
+* image-led
+* clean
+* fast
+* mobile-first
+* highly polished
+
+Avoid:
+
+* generic Shopify layouts
+* excessive gradients
+* excessive glassmorphism
+* generic SaaS cards
+* childish design
+* excessive popups
+* clutter
+* emoji-heavy UI
+* cheap-looking discount banners
+* excessive animation
+
+The UI should feel like a premium fashion brand.
+
+---
+
+# 4. QUICKSTORE PRINCIPLE
+
+Normal website:
+
+```text
+HOME
+ABOUT
+PRODUCTS
+CONTACT
+```
+
+Normal ecommerce:
+
+```text
+PRODUCT
+→ CART
+→ CHECKOUT
+```
+
+QuickStore:
+
+```text
+DISCOVER
+→ IDENTIFY CUSTOMER
+→ UNDERSTAND INTEREST
+→ SHOW RELEVANT PRODUCTS
+→ RECOMMEND
+→ CONVERT
+→ MEMBERSHIP
+→ RETAIN
+→ REACTIVATE
+→ REFER
+```
+
+Everything must contribute to this loop.
+
+---
+
+# 5. CUSTOMER ENTRY — QUICKPASS
+
+Implement a lightweight customer identity layer called:
+
+# QUICKPASS
+
+Do not force a giant registration form before customers can browse.
+
+Use progressive customer capture.
+
+Initial entry can request:
+
+```text
+Name
+Mobile / WhatsApp
+```
+
+and appropriate communication preferences.
+
+Example:
+
+```text
+Welcome to [BRAND]
+
+Get access to:
+• member offers
+• new arrivals
+• exclusive collections
+• personalized recommendations
+
+Name
+Mobile Number
+
+[Continue]
+```
+
+Do not force promotional consent into general account creation.
+
+Provide clear communication preferences.
+
+Store consent metadata.
+
+---
+
+# 6. CUSTOMER PROFILE
+
+Every identified customer receives:
+
+```text
+Customer ID
+Name
+Mobile
+Email
+WhatsApp preference
+Location
+Optional birthday
+Optional preferences
+Membership
+First visit
+First purchase
+Last purchase
+Order count
+Lifetime spend
+Average order value
+Favorite category
+Favorite products
+Acquisition source
+Campaign source
+Referral history
+```
+
+Do not collect unnecessary personal information.
+
+---
+
+# 7. MARKETING ATTRIBUTION
+
+This is a core QuickStore feature.
+
+Track where each customer came from.
+
+### SOURCE
+
+```text
+INSTAGRAM
+WHATSAPP
+GOOGLE
+DIRECT
+QR
+REFERRAL
+INFLUENCER
+OFFLINE
+FACEBOOK
+OTHER
+```
+
+### METHOD
+
+```text
+INSTAGRAM_REEL
+INSTAGRAM_STORY
+WHATSAPP_MESSAGE
+WHATSAPP_STATUS
+GOOGLE_SEARCH
+STORE_QR
+CUSTOMER_REFERRAL
+INFLUENCER_POST
+INFLUENCER_STORY
+PACKAGING_QR
+BUSINESS_CARD
+```
+
+### CAMPAIGN
+
+Examples:
+
+```text
+NEW_COLLECTION
+DIWALI
+EID
+WEDDING
+BRIDAL
+FLASH_SALE
+MEMBER_DAY
+SUMMER_LOOK
+```
+
+### CREATIVE
+
+Examples:
+
+```text
+REEL_01
+EARRING_VIDEO_03
+BRIDAL_POST_02
+```
+
+Store:
+
+```text
+first_touch_source
+first_touch_method
+first_touch_campaign
+
+last_touch_source
+last_touch_method
+last_touch_campaign
+```
+
+Never overwrite first-touch information.
+
+---
+
+# 8. CUSTOMER EVENT ENGINE
+
+Implement a centralized event system.
+
+Events include:
+
+```text
+STORE_VISIT
+QUICKPASS_STARTED
+QUICKPASS_COMPLETED
+SEARCH
+CATEGORY_VIEW
+COLLECTION_VIEW
+PRODUCT_VIEW
+PRODUCT_IMAGE_VIEW
+PRODUCT_VIDEO_VIEW
+WISHLIST_ADD
+WISHLIST_REMOVE
+SHARE_PRODUCT
+ADD_TO_CART
+REMOVE_FROM_CART
+CART_VIEW
+CHECKOUT_STARTED
+RECOMMENDATION_VIEW
+RECOMMENDATION_CLICK
+OFFER_VIEW
+OFFER_CLICK
+MEMBERSHIP_VIEW
+MEMBERSHIP_JOINED
+PAYMENT_STARTED
+PAYMENT_SUBMITTED
+PAYMENT_SUCCESS
+PAYMENT_FAILED
+ORDER_CREATED
+ORDER_CONFIRMED
+ORDER_CANCELLED
+ORDER_DELIVERED
+REVIEW_SUBMITTED
+REFERRAL_CREATED
+REFERRAL_CONVERTED
+CAMPAIGN_VIEW
+CAMPAIGN_CLICK
+CAMPAIGN_CONVERSION
+```
+
+Build a centralized event service.
+
+Do not scatter analytics logic throughout the application.
+
+---
+
+# 9. PRODUCT MODEL
+
+Create a fashion-jewellery-specific product model.
+
+Core:
+
+```text
+Product ID
+SKU
+Name
+Brand
+Description
+Category
+Subcategory
+Collection
+Images
+Videos
+Status
+Visibility
+```
+
+Product properties:
+
+```text
+Colour
+Finish
+Style
+Material
+Stone Type
+Occasion
+Pattern
+Size
+Weight
+Adjustability
+Care Instructions
+```
+
+Optional:
+
+```text
+Hypoallergenic
+Water Resistant
+Nickel Free
+Skin Friendly
+```
+
+BUT:
+
+Only display these claims when the merchant has explicitly verified and supplied them.
+
+Never invent product properties.
+
+---
+
+# 10. PRODUCT TAGS
+
+Use tags such as:
+
+```text
+Trending
+New
+Best Seller
+Limited
+Bridal
+Party
+Everyday
+Office
+Minimal
+Statement
+Traditional
+Western
+Gift
+Under ₹499
+Under ₹999
+```
+
+Tags can drive discovery and marketing.
+
+---
+
+# 11. PRODUCT VARIANTS
+
+Support:
+
+```text
+Colour
+Size
+Pack Size
+Set Configuration
+```
+
+For example:
+
+```text
+Gold Finish
+Silver Finish
+Rose Gold Finish
+```
+
+Each variant should support:
+
+```text
+SKU
+Price
+Inventory
+Images
+Availability
+```
+
+---
+
+# 12. PRODUCT BUNDLES
+
+Artificial jewellery has strong bundle potential.
+
+Implement:
+
+```text
+Necklace + Earrings
+Earrings + Bracelet
+Bracelet + Ring
+Complete Set
+Bridal Set
+Gift Box
+```
+
+Bundle model:
+
+```text
+Individual total
+Bundle price
+Savings
+```
+
+But never display fake savings.
+
+---
+
+# 13. STYLE / OCCASION DISCOVERY
+
+This is a major differentiator.
+
+Do not only organize products by category.
+
+Allow customers to browse by:
+
+### Occasion
+
+```text
+Wedding
+Party
+Office
+Casual
+Festive
+Date Night
+Gift
+```
+
+### Style
+
+```text
+Minimal
+Traditional
+Elegant
+Statement
+Trendy
+Vintage
+Modern
+```
+
+### Look
+
+```text
+Bridal Look
+Minimal Look
+Party Look
+Daily Look
+Festive Look
+```
+
+This makes the store much more like a fashion platform.
+
+---
+
+# 14. DIGITAL LOOKBOOK
+
+Build a Lookbook system.
+
+Example:
+
+```text
+THE WEDDING LOOK
+```
+
+Show:
+
+* model/lifestyle image
+* earrings
+* necklace
+* bracelet
+* rings
+
+Every visible product should be clickable.
+
+Example:
+
+```text
+Model Image
+   ↓
+Necklace
+   ↓
+Earrings
+   ↓
+Bracelet
+```
+
+This can dramatically improve discovery compared with isolated product cards.
+
+---
+
+# 15. SHOP THE LOOK
+
+This should be a first-class feature.
+
+Example:
+
+```text
+SHOP THE LOOK
+
+Elegant Gold Look
+
+Necklace ₹899
+Earrings ₹499
+Bracelet ₹599
+
+Complete Look:
+₹1,997
+
+Bundle:
+₹1,699
+```
+
+The customer can:
+
+```text
+Add all to Bag
+```
+
+or individually select products.
+
+---
+
+# 16. PRODUCT PAGE
+
+Product page must include:
+
+```text
+Large visual
+Product name
+Price
+Offer price
+Availability
+Member price
+```
+
+Then:
+
+```text
+Description
+Specifications
+Material
+Colour
+Size
+Care
+Shipping
+Returns
+```
+
+Then:
+
+```text
+Complete the Look
+You May Also Like
+Trending With This
+```
+
+Use:
+
+* image zoom
+* image gallery
+* video
+* swipe
+* fullscreen media
+
+---
+
+# 17. PRODUCT VISUAL EXPERIENCE
+
+Artificial jewellery is highly visual.
+
+Prioritize:
+
+* product photography
+* model photography
+* close-up shots
+* lifestyle photos
+* short product videos
+* try-on/lifestyle imagery when available
+
+Support:
+
+```text
+Product
++
+Model
++
+Video
+```
+
+Do not create fake AI model imagery and present it as an actual product photograph.
+
+---
+
+# 18. SEARCH
+
+Search should understand natural product terms.
+
+Examples:
+
+```text
+gold earrings
+bridal set
+black stone necklace
+simple daily earrings
+party wear necklace
+earrings under 500
+pink bridal jewellery
+```
+
+Support:
+
+* typo tolerance
+* synonyms
+* category matching
+* tags
+* collections
+
+---
+
+# 19. SMART FILTERS
+
+Filters:
+
+```text
+Category
+Price
+Colour
+Style
+Occasion
+Collection
+Availability
+Material
+Rating
+Discount
+New
+Trending
+```
+
+Keep filters adaptive to the catalogue.
+
+---
+
+# 20. WISHLIST
+
+Customers can save products.
+
+Track:
+
+```text
+wishlist_added
+wishlist_removed
+wishlist_purchased
+```
+
+Merchant analytics:
+
+```text
+Most Wishlisted
+Wishlist → Purchase conversion
+```
+
+This is valuable for fashion products.
+
+---
+
+# 21. CART
+
+Cart must provide:
+
+```text
+Product
+Variant
+Quantity
+Price
+Discount
+Subtotal
+```
+
+Then:
+
+### Complete the Look
+
+Show complementary products.
+
+Do not show random items.
+
+---
+
+# 22. CHECKOUT RECOMMENDATION ENGINE
+
+This is your first major marketing mechanism.
+
+When the customer reaches checkout:
+
+```text
+YOUR BAG
+```
+
+Then:
+
+# COMPLETE YOUR LOOK
+
+Show only 1–3 relevant products.
+
+Examples:
+
+```text
+Earrings
+₹499
+
+[Add]
+```
+
+or:
+
+```text
+Matching Bracelet
+₹599
+
+[Add]
+```
+
+Recommendation methods:
+
+```text
+FREQUENTLY_BOUGHT_TOGETHER
+COMPLEMENTARY
+SAME_COLLECTION
+SAME_STYLE
+MERCHANT_CURATED
+PERSONALIZED
+TRENDING
+```
+
+Do NOT say:
+
+> "Other people bought this"
+
+unless actual purchasing data supports the claim.
+
+---
+
+# 23. SMART UPSELL
+
+If cart value is:
+
+```text
+₹1,450
+```
+
+system can show:
+
+```text
+Complete your look at ₹1,999
+```
+
+when a relevant bundle exists.
+
+Use:
+
+```text
+threshold offers
+bundle offers
+member offers
+campaign offers
+```
+
+Do not push irrelevant expensive products.
+
+---
+
+# 24. OFFER ENGINE
+
+Support:
+
+```text
+Percentage Discount
+Flat Discount
+Bundle
+Buy X Get Y
+Category Offer
+Product Offer
+Member Offer
+First Purchase Offer
+Referral Offer
+Campaign Offer
+Free Gift
+Free Shipping
+```
+
+Every offer must support:
+
+```text
+start
+end
+eligibility
+minimum order
+maximum usage
+customer segment
+product/category
+membership
+```
+
+Prevent coupon abuse.
+
+---
+
+# 25. MEMBERSHIP
+
+Create:
+
+# [BRAND] CLUB
+
+Members can receive:
+
+```text
+Flat Discount
+Exclusive Offers
+Early Access
+New Collection Preview
+Birthday Benefit
+Member-Only Collection
+Special Events
+Referral Benefits
+```
+
+Everything should be merchant-configurable.
+
+---
+
+# 26. MEMBERSHIP CONVERSION MOMENT
+
+After customer interacts with a relevant offer:
+
+```text
+JOIN [BRAND] CLUB
+
+Get:
+5% member benefit
+exclusive offers
+early access
+special collections
+
+[Join Membership]
+[Continue Without Membership]
+```
+
+Don't aggressively interrupt checkout.
+
+---
+
+# 27. DIGITAL MEMBERSHIP CARD
+
+Create a beautiful digital card:
+
+```text
+[BRAND]
+
+MEMBER
+
+Name
+Member ID
+
+Benefits
+```
+
+Potential future tiers:
+
+```text
+SILVER
+GOLD
+PLATINUM
+VIP
+```
+
+Start with one simple membership tier if appropriate.
+
+---
+
+# 28. SOCIAL SHOUTOUT
+
+Optional feature:
+
+```text
+Become a Featured Customer
+```
+
+Customer explicitly agrees.
+
+Merchant can publish:
+
+```text
+Customer name
+Photo
+Testimonial
+Product
+```
+
+only with appropriate consent.
+
+Never automatically publish customer purchases.
+
+---
+
+# 29. REFERRAL ENGINE
+
+Every customer can receive:
+
+```text
+Personal referral link
+Referral code
+```
+
+Example:
+
+```text
+Share & Earn
+```
+
+Possible model:
+
+```text
+Friend:
+₹100 off
+
+You:
+₹100 store credit
+```
+
+Merchant controls the values.
+
+Track:
+
+```text
+share
+click
+visit
+signup
+purchase
+reward
+```
+
+Implement abuse prevention.
+
+---
+
+# 30. ABANDONED CART
+
+Track:
+
+```text
+items added
+checkout started
+payment not completed
+```
+
+After an appropriate delay:
+
+```text
+Your selected pieces are still waiting.
+```
+
+Follow-up sequence should be configurable.
+
+Do not automatically offer discounts every time.
+
+---
+
+# 31. POST-PURCHASE ENGINE
+
+After purchase:
+
+```text
+Order confirmed
+↓
+Order updates
+↓
+Delivery
+↓
+Review
+↓
+Membership
+↓
+Referral
+↓
+Related collection
+```
+
+After appropriate time:
+
+```text
+New Collection
+```
+
+or:
+
+```text
+You may like these new arrivals
+```
+
+---
+
+# 32. REPEAT PURCHASE ENGINE
+
+Customer lifecycle:
+
+```text
+NEW
+↓
+FIRST_TIME_BUYER
+↓
+RETURNING
+↓
+LOYAL
+↓
+VIP
+↓
+DORMANT
+↓
+REACTIVATION
+```
+
+Build dynamic customer segments.
+
+---
+
+# 33. CUSTOMER SEGMENTS
+
+Automatically support:
+
+```text
+New Customers
+First-Time Buyers
+Returning Customers
+High-Value Customers
+Frequent Buyers
+Wishlist Users
+Cart Abandoners
+Members
+Non-Members
+Referral Customers
+Instagram Customers
+WhatsApp Customers
+Dormant Customers
+```
+
+Segments should be data-driven.
+
+---
+
+# 34. MARKETING CAMPAIGN ENGINE
+
+Merchant can create:
+
+```text
+Campaign Name
+Audience
+Products
+Offer
+Channel
+Start
+End
+```
+
+Audience options:
+
+```text
+All Customers
+Members
+New Customers
+Returning Customers
+Wishlist Customers
+High Value
+Dormant
+Specific Product Buyers
+```
+
+---
+
+# 35. CAMPAIGN CHANNELS
+
+Architecture must support:
+
+```text
+Store Banner
+Email
+WhatsApp
+SMS
+Push
+Social Links
+QR
+```
+
+Do not tightly couple the system to one provider.
+
+---
+
+# 36. CAMPAIGN ANALYTICS
+
+Measure:
+
+```text
+Sent
+Viewed
+Clicked
+Visited
+Product Viewed
+Cart
+Checkout
+Orders
+Revenue
+New Customers
+Returning Customers
+```
+
+Merchant should know:
+
+> Which campaign generated sales?
+
+---
+
+# 37. MARKETING ATTRIBUTION DASHBOARD
+
+Show:
+
+```text
+Instagram
+₹XX revenue
+
+WhatsApp
+₹XX
+
+Google
+₹XX
+
+Referral
+₹XX
+
+QR
+₹XX
+```
+
+Also:
+
+```text
+Customers
+Orders
+Conversion
+Revenue
+Average Order Value
+```
+
+Use real tracked data only.
+
+---
+
+# 38. CUSTOMER LIFETIME VALUE
+
+Calculate:
+
+```text
+Orders
+Total Spend
+Average Order Value
+Purchase Frequency
+```
+
+Build a foundation for:
+
+```text
+Customer Lifetime Value
+```
+
+---
+
+# 39. RFM
+
+Implement:
+
+```text
+RECENCY
+FREQUENCY
+MONETARY
+```
+
+Use this to identify:
+
+```text
+VIP
+Loyal
+At Risk
+Dormant
+Potential
+```
+
+---
+
+# 40. MERCHANT COMMAND CENTER
+
+Do NOT create a boring generic admin dashboard.
+
+Call the main area:
+
+# BUSINESS COMMAND CENTER
+
+Top:
+
+```text
+Today's Revenue
+Orders
+New Customers
+Returning Customers
+Average Order Value
+```
+
+Then:
+
+```text
+CUSTOMER ACTIVITY
+MARKETING
+PRODUCT PERFORMANCE
+MEMBERSHIP
+ORDERS
+```
+
+Then:
+
+```text
+QUICK INSIGHTS
+```
+
+Examples:
+
+```text
+Instagram brought 18 new customers this week.
+
+Your bridal collection has the highest conversion rate.
+
+Members generated 34% of this month's revenue.
+
+Bracelet products are frequently added after necklace purchases.
+```
+
+Only show insights supported by actual data.
+
+---
+
+# 41. PRODUCT INTELLIGENCE
+
+For every product:
+
+```text
+Views
+Wishlist
+Cart Adds
+Orders
+Revenue
+Conversion Rate
+Recommendation Impressions
+Recommendation Clicks
+Recommendation Purchases
+```
+
+Classify:
+
+```text
+BEST SELLER
+MOST VIEWED
+MOST WISHLISTED
+HIGH CONVERSION
+LOW CONVERSION
+TRENDING
+UNDERPERFORMING
+```
+
+---
+
+# 42. INVENTORY
+
+Statuses:
+
+```text
+IN STOCK
+LOW STOCK
+OUT OF STOCK
+PREORDER
+COMING SOON
+```
+
+Do not create fake scarcity.
+
+Only show low-stock messaging from real inventory.
+
+---
+
+# 43. TREND ENGINE
+
+Artificial jewellery changes with fashion.
+
+Create support for:
+
+```text
+Trending
+Recently Popular
+New
+Editor's Pick
+Seasonal
+```
+
+The merchant can manually curate.
+
+Later, analytics can identify trends.
+
+Do not claim something is trending unless supported by actual store data.
+
+---
+
+# 44. GIFTING EXPERIENCE
+
+Create:
+
+```text
+Gift Collection
+Birthday Gifts
+Anniversary
+Wedding Gifts
+Festive Gifts
+Under ₹500
+Under ₹1000
+```
+
+Support optional:
+
+```text
+Gift Message
+Gift Packaging
+Recipient Name
+```
+
+---
+
+# 45. GIFT BOX / BUNDLE ENGINE
+
+Merchant can create:
+
+```text
+Gift Box
+Complete Set
+Occasion Bundle
+```
+
+Example:
+
+```text
+Earrings
++
+Bracelet
++
+Gift Box
+
+₹1,499
+```
+
+---
+
+# 46. LEAD / ENQUIRY SYSTEM
+
+For customers not ready to buy:
+
+```text
+Ask About This
+```
+
+Capture:
+
+```text
+Name
+Phone
+Product
+Question
+```
+
+Merchant sees:
+
+```text
+NEW LEAD
+↓
+CONTACTED
+↓
+FOLLOW UP
+↓
+CONVERTED
+```
+
+---
+
+# 47. WHATSAPP BRIDGE
+
+Because these businesses frequently live on WhatsApp:
+
+Add:
+
+```text
+Ask on WhatsApp
+Share on WhatsApp
+Order support on WhatsApp
+```
+
+But the QuickStore should prevent the merchant from being completely dependent on WhatsApp.
+
+The goal is:
+
+> WhatsApp becomes an acquisition/support channel.
+
+QuickStore becomes:
+
+> the system of record.
+
+---
+
+# 48. QR COMMERCE
+
+Generate unique QR destinations for:
+
+```text
+Store Counter
+Packaging
+Business Card
+Instagram
+WhatsApp
+Event
+Exhibition
+Influencer
+Flyer
+Poster
+```
+
+Each QR has attribution.
+
+Example:
+
+```text
+QR_PACKAGING
+QR_INSTAGRAM
+QR_EVENT_DIWALI
+QR_COUNTER
+```
+
+This gives the merchant measurable offline marketing.
+
+---
+
+# 49. SOCIAL SHARING
+
+Every product:
+
+```text
+Share
+WhatsApp
+Copy Link
+```
+
+Generate proper social metadata.
+
+Shared product should show:
+
+```text
+Image
+Product
+Price
+Brand
+```
+
+---
+
+# 50. HOMEPAGE — DO NOT MAKE IT STATIC
+
+Homepage should be dynamic.
+
+Possible structure:
+
+```text
+Brand
+Search
+
+New Arrivals
+↓
+
+Shop by Style
+↓
+
+Shop by Occasion
+↓
+
+Trending Now
+↓
+
+Shop the Look
+↓
+
+Best Sellers
+↓
+
+Membership
+↓
+
+Customer Stories
+```
+
+But render sections dynamically based on available content.
+
+Do not fill every space just because the template has it.
+
+---
+
+# 51. PERSONALIZED HOMEPAGE
+
+For returning customers:
+
+```text
+Welcome back.
+
+Because you liked...
+New arrivals in...
+Your saved pieces
+Member offers
+```
+
+For new visitors:
+
+```text
+Explore the collection.
+```
+
+Personalization must reflect real behaviour.
+
+---
+
+# 52. AI PRODUCT ASSISTANT
+
+Merchant can upload:
+
+```text
+Image
+Product information
+Price
+```
+
+AI can suggest:
+
+```text
+Name
+Description
+Tags
+Category
+SEO Title
+SEO Description
+```
+
+Merchant MUST approve.
+
+AI must never invent:
+
+```text
+material
+hypoallergenic
+water-resistant
+certification
+product size
+price
+stock
+```
+
+---
+
+# 53. CUSTOMER AI SHOPPING ASSISTANT
+
+Future feature:
+
+Customer:
+
+> Show me elegant earrings under ₹700.
+
+System searches actual catalogue and returns:
+
+```text
+Product
+Image
+Price
+Colour
+Availability
+```
+
+Customer:
+
+> Show me something matching this necklace.
+
+System should use actual product relationships or image/search intelligence if implemented.
+
+Never invent products.
+
+---
+
+# 54. AI MARKETING ASSISTANT
+
+Merchant asks:
+
+> What should I promote this weekend?
+
+System analyses:
+
+```text
+product performance
+inventory
+customer segments
+campaign history
+```
+
+Then suggests evidence-backed actions.
+
+Example:
+
+```text
+Promote Bridal Earrings to Instagram visitors.
+
+Reason:
+High product views
+Strong conversion
+Healthy inventory
+```
+
+---
+
+# 55. AI CUSTOMER INSIGHT
+
+Merchant asks:
+
+> Who should I target for this new collection?
+
+System can answer based on actual segmentation:
+
+```text
+Customers who purchased bridal products
+Customers who viewed similar styles
+Members
+Customers active in the last 90 days
+```
+
+---
+
+# 56. RECOMMENDATION ENGINE
+
+V1:
+
+```text
+Merchant curated
+Complementary product
+Same collection
+Same style
+Frequently bought together
+```
+
+V2:
+
+```text
+Behavioural recommendations
+Customer affinity
+Product affinity
+```
+
+V3:
+
+```text
+Hybrid recommendation system
+```
+
+Do NOT begin with unnecessarily complex ML.
+
+---
+
+# 57. CHECKOUT MEMBERSHIP OFFER
+
+At checkout:
+
+```text
+JOIN [BRAND] CLUB
+
+Today's benefit:
+5% member discount
+
+Future benefits:
+Exclusive offers
+Early access
+Special drops
+
+[JOIN]
+```
+
+Show the exact economic impact before confirmation.
+
+Example:
+
+```text
+Regular:
+₹1,999
+
+Member:
+₹1,899
+
+You save:
+₹100
+```
+
+---
+
+# 58. PRICE TRANSPARENCY
+
+Always show:
+
+```text
+Original price
+Offer price
+Savings
+Final price
+```
+
+Do not fabricate "MRP" or savings.
+
+---
+
+# 59. PAYMENT
+
+Support initially:
+
+```text
+Merchant QR / UPI
+```
+
+Flow:
+
+```text
+Checkout
+↓
+Show merchant payment QR
+↓
+Customer pays
+↓
+Customer submits payment reference/proof
+↓
+Payment Verification Required
+↓
+Merchant verifies
+↓
+Order confirmed
+```
+
+Do not mark payment as successful merely because a customer uploads a screenshot.
+
+Create an abstraction so gateway providers can be added later.
+
+---
+
+# 60. ORDER SYSTEM
+
+Order states:
+
+```text
+CREATED
+PAYMENT_PENDING
+PAYMENT_VERIFICATION_REQUIRED
+PAYMENT_VERIFIED
+CONFIRMED
+PROCESSING
+DISPATCHED
+DELIVERED
+CANCELLED
+REFUND_REQUESTED
+REFUNDED
+```
+
+Every important state transition must be logged.
+
+---
+
+# 61. ORDER SNAPSHOT
+
+Once order is confirmed, preserve:
+
+```text
+Product Name
+SKU
+Variant
+Price
+Discount
+Tax where applicable
+Quantity
+Final Amount
+Customer details required for fulfillment
+```
+
+Changing the product later must not alter historical orders.
+
+---
+
+# 62. CUSTOMER ORDER HISTORY
+
+Customer sees:
+
+```text
+Order
+Products
+Status
+Amount
+Date
+```
+
+Also:
+
+```text
+Buy Again
+Review
+Share
+```
+
+---
+
+# 63. REVIEW SYSTEM
+
+Customer can review:
+
+```text
+Rating
+Text
+Image
+```
+
+Only allow verified-purchase review status when supported by actual purchase records.
+
+Merchant can moderate according to a transparent policy.
+
+Never create fake reviews.
+
+---
+
+# 64. AFTER-SALES
+
+Support:
+
+```text
+Return
+Exchange
+Refund
+Order Issue
+Product Issue
+Support Request
+```
+
+Policies must be merchant-configurable.
+
+---
+
+# 65. CUSTOMER SUPPORT
+
+Support:
+
+```text
+WhatsApp
+Call
+Message
+FAQ
+Order support
+```
+
+High-value customer queries can create a lead/support case.
+
+---
+
+# 66. MULTI-TENANCY
+
+Architecture must already support many QuickStores.
+
+Entities should be scoped appropriately with:
+
+```text
+merchant_id
+store_id
+```
+
+Merchant A must never access Merchant B's:
+
+* customers
+* orders
+* products
+* campaigns
+* analytics
+
+---
+
+# 67. MERCHANT ROLES
+
+Support:
+
+```text
+OWNER
+ADMIN
+SALES
+MARKETING
+OPERATIONS
+VIEW_ONLY
+```
+
+Use RBAC.
+
+---
+
+# 68. PRODUCT IMPORT
+
+Support:
+
+```text
+CSV
+Bulk Upload
+Image Upload
+Bulk Pricing
+Bulk Categories
+Bulk Collections
+Bulk Publish
+```
+
+Validate before committing.
+
+---
+
+# 69. MERCHANT ONBOARDING
+
+Wizard:
+
+```text
+Business
+↓
+Brand
+↓
+Catalogue
+↓
+Payments
+↓
+Delivery
+↓
+Offers
+↓
+Membership
+↓
+Marketing
+↓
+Launch
+```
+
+Show:
+
+```text
+Store Readiness
+```
+
+Allow save and continue later.
+
+---
+
+# 70. BUSINESS COMMAND CENTER — KEY METRICS
+
+Dashboard:
+
+```text
+Revenue
+Orders
+New Customers
+Returning Customers
+Average Order Value
+Members
+Repeat Rate
+```
+
+Marketing:
+
+```text
+Instagram
+WhatsApp
+Google
+Referral
+QR
+```
+
+Product:
+
+```text
+Best Sellers
+Trending
+Most Viewed
+Most Wishlisted
+```
+
+Customer:
+
+```text
+New
+Returning
+VIP
+Dormant
+Members
+```
+
+---
+
+# 71. FUNNEL
+
+Track:
+
+```text
+Visitors
+↓
+Identified Customers
+↓
+Product Views
+↓
+Add to Cart
+↓
+Checkout
+↓
+Payment
+↓
+Purchase
+↓
+Membership
+↓
+Repeat Purchase
+```
+
+Show conversion rates.
+
+---
+
+# 72. CUSTOMER LIFECYCLE
+
+Implement:
+
+```text
+VISITOR
+↓
+IDENTIFIED
+↓
+INTERESTED
+↓
+CART
+↓
+CUSTOMER
+↓
+MEMBER
+↓
+REPEAT CUSTOMER
+↓
+LOYAL
+↓
+VIP
+```
+
+Also:
+
+```text
+DORMANT
+↓
+REACTIVATION
+```
+
+---
+
+# 73. DATA MODEL
+
+Core entities:
+
+```text
+Merchant
+Store
+Staff
+Role
+Customer
+Consent
+CustomerTag
+CustomerEvent
+Session
+Product
+ProductVariant
+Category
+Collection
+Lookbook
+LookbookProduct
+Bundle
+Inventory
+Offer
+Campaign
+CampaignEvent
+Cart
+CartItem
+Checkout
+Payment
+PaymentAttempt
+Order
+OrderItem
+Membership
+MembershipTier
+Referral
+ReferralEvent
+Recommendation
+RecommendationEvent
+Review
+Lead
+Communication
+CommunicationPreference
+AuditLog
+```
+
+---
+
+# 74. SECURITY
+
+Implement:
+
+```text
+Authentication
+Authorization
+RBAC
+Tenant isolation
+Input validation
+Rate limiting
+Secure cookies
+Session security
+Secure headers
+Audit logs
+```
+
+Never trust:
+
+* frontend prices
+* frontend discounts
+* frontend inventory
+* customer payment status
+
+The server is authoritative.
+
+---
+
+# 75. EVENT-DRIVEN FOUNDATION
+
+Build an internal event architecture so future features can subscribe to:
+
+```text
+ProductViewed
+CartCreated
+CartAbandoned
+OrderCreated
+OrderPaid
+OrderDelivered
+MembershipJoined
+ReferralConverted
+CampaignConverted
+```
+
+This allows the platform to evolve without rewriting core commerce logic.
+
+---
+
+# 76. ANALYTICS PRIVACY
+
+Do not put unnecessary personal information into analytics.
+
+Do not store passwords or payment secrets in events.
+
+Use internal IDs where possible.
+
+Provide customer data controls.
+
+---
+
+# 77. AUDIT LOGGING
+
+Record important merchant actions:
+
+```text
+Product created
+Product edited
+Price changed
+Offer created
+Order changed
+Payment verified
+Refund issued
+Customer exported
+Staff permission changed
+Campaign launched
+Membership modified
+```
+
+---
+
+# 78. PERFORMANCE
+
+Mobile-first.
+
+Prioritize:
+
+```text
+fast initial load
+optimized images
+lazy loading
+responsive images
+caching
+CDN
+fast search
+fast cart
+fast checkout
+```
+
+Artificial jewellery depends heavily on visual media, so build a serious image pipeline.
+
+---
+
+# 79. IMAGE INFRASTRUCTURE
+
+Support:
+
+```text
+Primary Image
+Gallery
+Lifestyle Image
+Model Image
+Video
+Thumbnail
+Social Share Image
+```
+
+Generate optimized responsive assets.
+
+---
+
+# 80. SOCIAL-COMMERCE PERFORMANCE
+
+Every campaign and product link must preserve attribution.
+
+Example:
+
+```text
+?src=instagram
+&cmp=bridal
+&method=reel
+&creative=03
+```
+
+Server/event tracking should preserve this information.
+
+---
+
+# 81. QR MARKETING
+
+Create QR campaigns for:
+
+```text
+Packaging
+Counter
+Instagram
+Influencer
+Exhibition
+Flyer
+Business Card
+Storefront
+```
+
+The merchant should know which QR produced customers and revenue.
+
+---
+
+# 82. MARKETING ENGINE PRINCIPLE
+
+Marketing should be:
+
+```text
+Right Customer
++
+Right Product
++
+Right Context
++
+Right Time
++
+Right Offer
+```
+
+Not:
+
+```text
+More Discounts
+More Popups
+More Notifications
+```
+
+---
+
+# 83. NO DARK PATTERNS
+
+Never create:
+
+```text
+fake scarcity
+fake countdowns
+fake reviews
+fake popularity
+fake discounts
+hidden subscriptions
+forced marketing consent
+misleading recommendations
+```
+
+The system should create sales through relevance and trust.
+
+---
+
+# 84. DESIGN SYSTEM
+
+Build reusable components for:
+
+```text
+ProductCard
+ProductGallery
+CollectionCard
+LookCard
+BundleCard
+OfferCard
+RecommendationStrip
+MembershipCard
+CustomerBadge
+OrderCard
+CampaignCard
+InsightCard
+```
+
+But do not allow the UI to become repetitive.
+
+---
+
+# 85. RESPONSIVE EXPERIENCE
+
+Test:
+
+```text
+320
+375
+390
+414
+768
+1024
+1440+
+```
+
+Do not merely shrink desktop.
+
+Build mobile-first.
+
+---
+
+# 86. ACCESSIBILITY
+
+Implement:
+
+```text
+Semantic HTML
+Keyboard Navigation
+Screen Reader Support
+Contrast
+Focus States
+Accessible Forms
+Reduced Motion
+```
+
+---
+
+# 87. ERROR EXPERIENCE
+
+Errors should maintain trust.
+
+Instead of:
+
+```text
+Error
+```
+
+show:
+
+```text
+We couldn't complete your payment yet.
+
+Your order has not been charged through QuickStore.
+
+Please retry or contact the store.
+
+[Retry]
+[Contact Store]
+```
+
+Only state what the system actually knows.
+
+---
+
+# 88. EMPTY STATES
+
+Examples:
+
+```text
+Your bag is empty.
+```
+
+Then:
+
+```text
+Explore New Arrivals
+```
+
+No fake recommendations unless enough data exists.
+
+---
+
+# 89. ARTIFICIAL JEWELLERY-SPECIFIC RECOMMENDATION LOGIC
+
+Example:
+
+```text
+Earrings
+→ matching necklace
+
+Necklace
+→ bracelet
+
+Bridal Set
+→ matching earrings
+
+Minimal Necklace
+→ minimal earrings
+
+Party Set
+→ complementary bracelet
+```
+
+Allow merchant configuration.
+
+Later use actual purchase data.
+
+---
+
+# 90. PRODUCT AFFINITY ENGINE
+
+Track:
+
+```text
+A viewed with B
+A carted with B
+A purchased with B
+```
+
+Generate an affinity score:
+
+```text
+product_a
+product_b
+interaction_count
+purchase_count
+confidence
+```
+
+Use it for "Complete the Look".
+
+---
+
+# 91. CUSTOMER PREFERENCE ENGINE
+
+Eventually infer preferences from real behaviour:
+
+```text
+Gold finish
+Minimal jewellery
+Bridal
+Under ₹1,000
+Earrings
+Traditional
+```
+
+These are behavioural preferences, not sensitive personal assumptions.
+
+---
+
+# 92. OFFER PERSONALIZATION
+
+Possible:
+
+```text
+New customer
+→ first-order offer
+
+Member
+→ member price
+
+Wishlist customer
+→ relevant product reminder
+
+Dormant customer
+→ reactivation campaign
+
+High-value customer
+→ early access
+```
+
+Rules must be merchant-configurable.
+
+---
+
+# 93. MEMBERSHIP RETENTION
+
+Membership should not only mean discount.
+
+Benefits can include:
+
+```text
+Early Access
+Special Collections
+Private Drops
+Birthday Benefit
+Referral Rewards
+Exclusive Bundles
+Member-Only Products
+```
+
+---
+
+# 94. CUSTOMER REFERRAL LOOP
+
+The ideal loop:
+
+```text
+Customer
+↓
+Purchase
+↓
+Membership
+↓
+Referral
+↓
+Friend
+↓
+Purchase
+↓
+New Member
+```
+
+Track every step.
+
+---
+
+# 95. POST-PURCHASE CONTENT
+
+After buying:
+
+```text
+How to style this piece
+Jewellery care
+Matching collection
+New arrivals
+```
+
+This increases the chance of another interaction without immediately pushing another sale.
+
+---
+
+# 96. BUSINESS INSIGHTS
+
+Merchant should eventually be able to ask:
+
+> Which products bring repeat customers?
+
+> Which campaign produced the most new customers?
+
+> Which category has the highest average order?
+
+> What products are frequently bought together?
+
+> Which customers haven't returned?
+
+> Which channel creates the most valuable customers?
+
+The data layer must support these queries.
+
+---
+
+# 97. AI BUSINESS ASSISTANT
+
+Future interface:
+
+```text
+Ask QuickStore
+```
+
+Merchant:
+
+> What should I promote this weekend?
+
+System:
+
+```text
+Recommended:
+Bridal Earrings
+
+Why:
+• 32% increase in views
+• high conversion
+• strong inventory
+• performs well among Instagram visitors
+```
+
+Only use real store data.
+
+---
+
+# 98. AI CATALOGUE ASSISTANT
+
+Merchant:
+
+```text
+Upload product image
+```
+
+AI suggests:
+
+```text
+Product Name
+Category
+Tags
+Description
+SEO
+```
+
+Merchant reviews.
+
+Only then publish.
+
+---
+
+# 99. AI CUSTOMER SHOPPING
+
+Customer:
+
+> Show me elegant earrings under ₹700 for a wedding.
+
+QuickStore searches the actual catalogue.
+
+Return:
+
+```text
+Product image
+Name
+Price
+Style
+Availability
+```
+
+No hallucinated products.
+
+---
+
+# 100. PRODUCT DISCOVERY INTELLIGENCE
+
+The store should understand:
+
+```text
+Category
+Style
+Occasion
+Price range
+Colour
+Collection
+```
+
+This makes browsing conversational and intelligent.
+
+---
+
+# 101. FUTURE VISUAL SEARCH
+
+Architecture should allow:
+
+```text
+Upload Image
+↓
+Find Similar Jewellery
+```
+
+But do not build it unless it can actually return meaningful catalogue matches.
+
+---
+
+# 102. PLATFORM ARCHITECTURE
+
+Use a modular architecture.
+
+Recommended direction:
+
+```text
+Frontend:
+Next.js
+React
+TypeScript
+
+Backend:
+TypeScript
+Node.js / Next.js server architecture
+
+Database:
+PostgreSQL
+
+ORM:
+Prisma or equivalent typed ORM
+
+Cache / Jobs:
+Redis where required
+
+Storage:
+S3-compatible object storage
+
+Search:
+PostgreSQL initially
+Abstract for dedicated search later
+```
+
+Start as a:
+
+# MODULAR MONOLITH
+
+Do not create unnecessary microservices.
+
+---
+
+# 103. MODULES
+
+Create clear modules:
+
+```text
+identity
+customers
+catalog
+inventory
+collections
+bundles
+cart
+checkout
+payments
+orders
+membership
+referrals
+marketing
+campaigns
+analytics
+recommendations
+leads
+notifications
+admin
+```
+
+---
+
+# 104. TESTING
+
+Unit tests:
+
+```text
+pricing
+offers
+bundles
+recommendations
+membership
+referrals
+segmentation
+```
+
+Integration:
+
+```text
+cart
+checkout
+payment
+orders
+inventory
+membership
+campaigns
+```
+
+E2E:
+
+```text
+Customer entry
+Browse
+Search
+Product
+Cart
+Checkout
+Payment submission
+Order
+Membership
+Referral
+Merchant order handling
+Analytics
+```
+
+---
+
+# 105. SECURITY TESTING
+
+Test:
+
+```text
+XSS
+CSRF
+SQL injection
+IDOR
+privilege escalation
+tenant isolation
+price tampering
+discount abuse
+referral abuse
+payment manipulation
+race conditions
+duplicate orders
+```
+
+Most importantly:
+
+```text
+Merchant A
+MUST NEVER
+see
+Merchant B's data.
+```
+
+---
+
+# 106. DEMO DATA
+
+Create realistic artificial jewellery demo products.
+
+Examples:
+
+```text
+Gold-Tone Pearl Drop Earrings
+Minimal Crystal Necklace
+Traditional Bridal Choker
+Rose Gold Charm Bracelet
+Statement Party Earrings
+Layered Fashion Necklace
+Classic Stone Studs
+```
+
+Clearly mark seed/demo data.
+
+Do not fabricate customer reviews and present them as real.
+
+---
+
+# 107. MERCHANT ONBOARDING
+
+Create:
+
+```text
+Business
+↓
+Brand
+↓
+Products
+↓
+Collections
+↓
+Payments
+↓
+Delivery
+↓
+Offers
+↓
+Membership
+↓
+Launch
+```
+
+Provide:
+
+```text
+Store Readiness: 84%
+```
+
+---
+
+# 108. QUICKSTORE READINESS CHECK
+
+Before going live check:
+
+```text
+Logo
+Brand name
+Products
+Product images
+Prices
+Inventory
+Payment configuration
+Delivery
+Return policy
+Contact information
+Membership
+Privacy
+```
+
+Do not publish if mandatory configuration is missing.
+
+---
+
+# 109. QUICKSTORE HOME EXPERIENCE
+
+Potential customer experience:
+
+```text
+Brand Header
+Search
+
+NEW ARRIVALS
+
+Shop by Occasion
+Wedding | Party | Everyday | Gift
+
+SHOP THE LOOK
+
+TRENDING NOW
+
+BEST SELLERS
+
+LIMITED COLLECTION
+
+[BRAND] CLUB
+
+CUSTOMER SPOTLIGHT
+
+NEW DROP
+```
+
+But choose sections dynamically.
+
+---
+
+# 110. THE CRITICAL DIFFERENCE
+
+A conventional artificial jewellery website:
+
+```text
+Product catalogue
++
+Checkout
+```
+
+SouqOne QuickStore:
+
+```text
+Product Catalogue
++
+Customer Identity
++
+Behaviour
++
+Recommendations
++
+Offers
++
+Membership
++
+Referral
++
+Campaigns
++
+Attribution
++
+Analytics
++
+Retention
+```
+
+That is what makes it a QuickStore.
+
+---
+
+# 111. BUSINESS FLYWHEEL
+
+Build around:
+
+```text
+MARKETING
+    ↓
+CUSTOMER
+    ↓
+DISCOVERY
+    ↓
+PRODUCT
+    ↓
+RECOMMENDATION
+    ↓
+CART
+    ↓
+OFFER
+    ↓
+CHECKOUT
+    ↓
+PURCHASE
+    ↓
+MEMBERSHIP
+    ↓
+RETENTION
+    ↓
+REFERRAL
+    ↓
+NEW CUSTOMER
+```
+
+Every cycle creates more useful business data.
+
+---
+
+# 112. DATA FLYWHEEL
+
+```text
+Customer Activity
+       ↓
+Data
+       ↓
+Understanding
+       ↓
+Personalization
+       ↓
+Better Recommendations
+       ↓
+Better Conversion
+       ↓
+More Customer Activity
+```
+
+This should be one of the foundational product philosophies.
+
+---
+
+# 113. DEFINITION OF DONE
+
+The QuickStore is NOT done when the homepage is attractive.
+
+It is done when:
+
+### CUSTOMER
+
+```text
+enters
+↓
+identifies
+↓
+discovers
+↓
+searches
+↓
+views
+↓
+saves
+↓
+adds
+↓
+receives recommendations
+↓
+sees relevant offers
+↓
+checks out
+↓
+pays
+↓
+receives order
+↓
+joins membership
+↓
+returns
+↓
+refers
+```
+
+### MERCHANT
+
+```text
+adds product
+↓
+receives customer
+↓
+receives order
+↓
+manages inventory
+↓
+creates offers
+↓
+creates campaign
+↓
+sees attribution
+↓
+sees customer behaviour
+↓
+manages membership
+↓
+sees repeat purchases
+↓
+understands marketing
+```
+
+---
+
+# 114. FINAL DEVELOPMENT COMMAND
+
+Inspect the repository first.
+
+Then:
+
+1. Understand the existing code.
+2. Establish architecture.
+3. Build the design system.
+4. Build the storefront.
+5. Build the catalogue.
+6. Build QuickPass.
+7. Build customer identity.
+8. Build cart and checkout.
+9. Build QR payment workflow.
+10. Build order management.
+11. Build recommendation system.
+12. Build offers.
+13. Build membership.
+14. Build referral.
+15. Build abandoned cart.
+16. Build campaign engine.
+17. Build attribution.
+18. Build analytics.
+19. Build merchant command center.
+20. Build AI-ready interfaces.
+21. Implement security.
+22. Implement testing.
+23. Optimize performance.
+24. Perform complete UX review.
+25. Fix all broken flows.
+26. Run production build.
+
+Do not merely scaffold.
+
+Do not leave major functionality as placeholder buttons.
+
+Do not fabricate data.
+
+Do not fabricate customer behaviour.
+
+Do not fabricate popularity.
+
+Do not fabricate reviews.
+
+Do not fabricate discounts.
+
+Do not fabricate product claims.
+
+Do not use dark patterns.
+
+Do not make this look like a website template.
+
+Build it like a new category:
+
+# SOUQONE QUICKSTORE
+
+### A digital operating system for a modern local commerce business.
+
+The storefront is only the beginning.
