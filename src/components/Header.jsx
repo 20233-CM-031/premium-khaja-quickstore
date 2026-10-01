@@ -270,27 +270,51 @@ export const Header = () => {
               )}
             </div>
           ) : (
-            /* Guest / Public Mode: Sign In Button */
-            <button 
-              onClick={() => handleOpenAuth('login', 'general')}
-              style={{ 
-                background: 'var(--pk-surface-alt)', 
-                border: '1px solid var(--pk-border)', 
-                borderRadius: 'var(--radius-full)',
-                padding: '0.45rem 0.9rem',
-                fontSize: '0.8rem',
-                fontWeight: 700,
-                color: 'var(--pk-text-primary)',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.2s'
-              }}
-            >
-              <User size={14} />
-              <span>Sign In / Register</span>
-            </button>
+            /* Guest / Public Mode: Member Benefits + Sign In */
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+              <button 
+                onClick={() => setMemberCardOpen(true)}
+                title="Explore PK Club VIP Membership Perks"
+                style={{ 
+                  background: 'rgba(212, 175, 55, 0.15)', 
+                  border: '1px solid var(--pk-border-gold)', 
+                  borderRadius: 'var(--radius-full)',
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 700,
+                  color: 'var(--pk-gold-dark)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Crown size={13} style={{ color: 'var(--pk-gold-dark)' }} />
+                <span>VIP Club (Save 5%)</span>
+              </button>
+
+              <button 
+                onClick={() => handleOpenAuth('login', 'general')}
+                style={{ 
+                  background: 'var(--pk-surface-alt)', 
+                  border: '1px solid var(--pk-border)', 
+                  borderRadius: 'var(--radius-full)',
+                  padding: '0.45rem 0.85rem',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  color: 'var(--pk-text-primary)',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <User size={13} />
+                <span>Sign In</span>
+              </button>
+            </div>
           )}
 
           {/* Wishlist */}

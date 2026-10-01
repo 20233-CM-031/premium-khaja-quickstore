@@ -66,8 +66,30 @@ export const StoreProvider = ({ children }) => {
     return [];
   });
 
-  // Real-time Inventory State
+  // Dynamic Products Catalog (Allows Admins/Merchants to add products from phone/computer)
+  const [products, setProducts] = useState(() => {
+    const saved = localStorage.getItem('pk_custom_products');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const defaultIds = new Set(ALL_PRODUCTS.map(p => p.id));
+          const customOnly = parsed.filter(p => !defaultIds.has(p.id));
+          return [...customOnly, ...ALL_PRODUCTS];
+        }
+      } catch (e) {
+        console.error("Failed to parse custom products", e);
+      }
+    }
+    return ALL_PRODUCTS;
+  });
+
+  // Real-time Inventory State (Persisted)
   const [inventory, setInventory] = useState(() => {
+    const savedStock = localStorage.getItem('pk_inventory');
+    if (savedStock) {
+      try { return JSON.parse(savedStock); } catch (e) { /* ignore */ }
+    }
     const stockMap = {};
     ALL_PRODUCTS.forEach(p => {
       stockMap[p.id] = p.inventoryCount;
@@ -170,6 +192,25 @@ export const StoreProvider = ({ children }) => {
   useEffect(() => {
     localStorage.setItem('pk_celebrity_showcase', JSON.stringify(celebrityShowcase));
   }, [celebrityShowcase]);
+
+  useEffect(() => {
+    // Save custom added products
+    try {
+      const defaultIds = new Set(ALL_PRODUCTS.map(p => p.id));
+      const customItems = products.filter(p => !defaultIds.has(p.id));
+      localStorage.setItem('pk_custom_products', JSON.stringify(customItems));
+    } catch (e) {
+      console.error("Storage error for products", e);
+    }
+  }, [products]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('pk_inventory', JSON.stringify(inventory));
+    } catch (e) {
+      console.error("Storage error for inventory", e);
+    }
+  }, [inventory]);
 
   // Central Event Logger
   const logEvent = (type, metadata = {}) => {
@@ -303,6 +344,78 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  // Customer Authentication: Google / Gmail 1-Click Login
+  const loginWithGoogle = (customGoogleData = null) => {
+    const defaultGoogleUser = {
+      name: "Couture Guest",
+      email: "guest.member@gmail.com"
+    };
+    const target = customGoogleData || defaultGoogleUser;
+    const cleanEmail = target.email.trim().toLowerCase();
+    const cleanName = target.name.trim() || cleanEmail.split('@')[0].replace(/[._]/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    const memberId = `PK-GLD-${Math.floor(1000 + Math.random() * 9000)}`;
+    const referralCode = `KHAJA${Math.floor(100 + Math.random() * 900)}`;
+
+    const loggedIn = {
+      id: `CUST-G-${Date.now().toString().slice(-4)}`,
+      name: cleanName,
+      email: cleanEmail,
+      phone: target.phone || '+91 98201 44521',
+      isLoggedIn: true,
+      isMember: true,
+      tier: 'GOLD',
+      memberId: memberId,
+      joinedDate: new Date().toLocaleDateString(),
+      discountRate: 0.05,
+      referralCode: referralCode,
+      provider: 'GOOGLE_GMAIL'
+    };
+
+    setCustomer(loggedIn);
+
+    // Save into CRM list
+    setCustomersList(prev => {
+      const exists = prev.find(c => c.email.toLowerCase() === cleanEmail);
+      if (exists) {
+        return prev.map(c => c.id === exists.id ? { ...c, isMember: true, tier: 'GOLD' } : c);
+      }
+      return [
+        {
+          id: loggedIn.id,
+          name: loggedIn.name,
+          phone: loggedIn.phone,
+          email: loggedIn.email,
+          tier: 'GOLD',
+          isMember: true,
+          memberId: memberId,
+          firstVisit: new Date().toISOString().split('T')[0],
+          lastPurchase: 'None yet',
+          orderCount: 0,
+          lifetimeSpend: 0,
+          averageOrderValue: 0,
+          favoriteCategory: 'Bangles',
+          rfmSegment: 'VIP Gold Member',
+          recencyDays: 0,
+          acquisitionSource: 'GOOGLE_AUTH',
+          acquisitionMethod: '1-Click OAuth',
+          campaignSource: 'PK Club Membership',
+          status: 'Active',
+          timeline: [
+            { date: new Date().toLocaleDateString(), event: 'Customer Signed In with Gmail & Joined PK Club', amount: 0 }
+          ]
+        },
+        ...prev
+      ];
+    });
+
+    logEvent('CUSTOMER_GOOGLE_LOGIN', { name: loggedIn.name, email: loggedIn.email, memberId });
+    setAuthModalOpen(false);
+
+    if (authIntent === 'checkout') {
+      setCheckoutOpen(true);
+    }
+  };
+
   // Customer Logout
   const logoutCustomer = () => {
     logEvent('CUSTOMER_LOGOUT', { customerId: customer.id });
@@ -322,7 +435,7 @@ export const StoreProvider = ({ children }) => {
     setCustomerPortalOpen(false);
   };
 
-  // Admin Authentication
+  // Admin Authentication (Credentials kept secure - never exposed in UI)
   const loginAdmin = ({ username, password }) => {
     const cleanUser = username.trim().toLowerCase();
     if (
@@ -342,7 +455,7 @@ export const StoreProvider = ({ children }) => {
       logEvent('ADMIN_LOGIN_SUCCESS', { adminId: adminSession.id });
       return { success: true };
     } else {
-      return { success: false, message: 'Invalid Admin credentials or PIN. (Default: admin@premiumkhaja.com / admin123 or PIN: 7860)' };
+      return { success: false, message: 'Invalid administrator credentials or PIN. Access restricted.' };
     }
   };
 
@@ -367,16 +480,10 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
-  // Open Protected Checkout
+  // Open Checkout (Smooth & Non-blocking for both Guest & Member Customers)
   const handleProceedToCheckout = () => {
     setCartOpen(false);
-    if (!customer.isLoggedIn) {
-      setAuthIntent('checkout');
-      setAuthMode('login');
-      setAuthModalOpen(true);
-    } else {
-      setCheckoutOpen(true);
-    }
+    setCheckoutOpen(true);
   };
 
   // QuickPass Action (legacy fast onboarding)
@@ -390,16 +497,8 @@ export const StoreProvider = ({ children }) => {
     setQuickPassOpen(false);
   };
 
-  // Cart operations (Guarded by Login!)
+  // Cart operations (Smooth for both Guest & Logged-In Customers!)
   const addToCart = (product, size = '2.6', quantity = 1) => {
-    // If not logged in, prompt user to log in first!
-    if (!customer.isLoggedIn) {
-      setAuthIntent('cart');
-      setAuthMode('login');
-      setAuthModalOpen(true);
-      return;
-    }
-
     const currentStock = inventory[product.id] ?? 10;
     if (currentStock <= 0) {
       alert("This item is currently out of stock.");
@@ -422,13 +521,6 @@ export const StoreProvider = ({ children }) => {
 
   // Bundle Add (Adds both original product and recommendation with 10% discount)
   const addPairedEnsembleToCart = (originalProd, recommendedProd, origSize = '2.6', recSize = 'Standard') => {
-    if (!customer.isLoggedIn) {
-      setAuthIntent('cart');
-      setAuthMode('login');
-      setAuthModalOpen(true);
-      return;
-    }
-
     addToCart(originalProd, origSize, 1);
     addToCart(recommendedProd, recSize, 1);
     logEvent('PAIRED_ENSEMBLE_ADDED', { origId: originalProd.id, recId: recommendedProd.id });
@@ -458,15 +550,8 @@ export const StoreProvider = ({ children }) => {
     setCart([]);
   };
 
-  // Wishlist toggle (Guarded by Login!)
+  // Wishlist toggle (Works for both Guests and Members!)
   const toggleWishlist = (productId) => {
-    if (!customer.isLoggedIn) {
-      setAuthIntent('wishlist');
-      setAuthMode('login');
-      setAuthModalOpen(true);
-      return;
-    }
-
     setWishlist(prev => {
       const exists = prev.includes(productId);
       if (exists) {
@@ -481,20 +566,69 @@ export const StoreProvider = ({ children }) => {
 
   // Add Complete Look Bundle
   const addLookbookBundle = (lookbook) => {
-    if (!customer.isLoggedIn) {
-      setAuthIntent('cart');
-      setAuthMode('login');
-      setAuthModalOpen(true);
-      return;
-    }
-
     lookbook.items.forEach(item => {
-      const fullProd = ALL_PRODUCTS.find(p => p.id === item.id);
+      const fullProd = products.find(p => p.id === item.id) || ALL_PRODUCTS.find(p => p.id === item.id);
       if (fullProd) {
         addToCart(fullProd, fullProd.sizes?.[0] || '2.6', 1);
       }
     });
     logEvent('BUNDLE_ADDED_TO_CART', { lookbookId: lookbook.id, title: lookbook.title });
+  };
+
+  // Add New Product directly from computer / phone with full persistence & instant showroom sync
+  const addNewProduct = (productData) => {
+    const newId = `pk-prod-${Date.now()}`;
+    const cleanCat = productData.category || 'bangles';
+    const cleanSku = productData.sku?.trim() || `PK-${cleanCat.slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`;
+    
+    const price = Number(productData.price) || 1999;
+    const originalPrice = Number(productData.originalPrice) || Math.round(price * 1.35);
+    const memberPrice = Number(productData.memberPrice) || Math.round(price * 0.95);
+    const discountPercent = Math.max(5, Math.round(((originalPrice - price) / originalPrice) * 100));
+
+    const newProd = {
+      id: newId,
+      sku: cleanSku,
+      name: productData.name.trim(),
+      category: cleanCat,
+      subcategory: productData.subcategory?.trim() || (cleanCat === 'bangles' ? 'Bridal Chura' : 'Artisan Craft'),
+      occasion: productData.occasion || 'Festive & Bridal',
+      price: price,
+      originalPrice: originalPrice,
+      memberPrice: memberPrice,
+      discount: productData.discount || `${discountPercent}% OFF`,
+      tag: productData.tag || 'New Launch',
+      rating: 5.0,
+      reviewsCount: 1,
+      image: productData.image || '/images/bangles/1789662811af3b.png',
+      secondaryImages: [productData.image || '/images/bangles/1789662811af3b.png'],
+      description: productData.description?.trim() || 'Handcrafted luxury designer jewellery by Premium Khaja master artisans with 22K micro-gold plating and anti-tarnish shield.',
+      features: productData.features?.length ? productData.features : [
+        'Pure 22K Micro-Gold Micron Dip',
+        'Hypoallergenic Nickel-Free Brass Base',
+        'Advanced Anti-Tarnish Nano Protective Seal',
+        'Signature Velvet Gift Box Included'
+      ],
+      sizes: productData.sizes?.length ? productData.sizes : ['2.4', '2.6', '2.8'],
+      inventoryCount: Number(productData.inventoryCount) || 15,
+      material: productData.material || '22K Gold Micron Plated Brass Core',
+      finish: productData.finish || 'Antique Royal Gold',
+      careInstructions: 'Avoid direct contact with chemicals or perfume. Wipe with soft cotton cloth after wear.',
+      matchingItemIds: ['bangle-01', 'bangle-05'],
+      isNew: true,
+      isCustomAdded: true,
+      createdAt: new Date().toISOString()
+    };
+
+    setProducts(prev => [newProd, ...prev]);
+    setInventory(prev => ({ ...prev, [newId]: newProd.inventoryCount }));
+    logEvent('PRODUCT_ADDED', { id: newId, name: newProd.name, category: newProd.category, price: newProd.price });
+    return newProd;
+  };
+
+  const deleteProduct = (productId) => {
+    setProducts(prev => prev.filter(p => p.id !== productId));
+    logEvent('PRODUCT_DELETED', { productId });
   };
 
   // Add CRM Lead / Enquiry
@@ -638,6 +772,7 @@ export const StoreProvider = ({ children }) => {
         adminUser,
         signupCustomer,
         loginCustomer,
+        loginWithGoogle,
         logoutCustomer,
         loginAdmin,
         logoutAdmin,
@@ -725,6 +860,10 @@ export const StoreProvider = ({ children }) => {
         activeOccasion,
         setActiveOccasion,
         // Product Catalogs
+        products,
+        setProducts,
+        addNewProduct,
+        deleteProduct,
         ALL_PRODUCTS,
         BANGLES_PRODUCTS
       }}

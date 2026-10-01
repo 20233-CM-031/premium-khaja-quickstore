@@ -22,6 +22,7 @@ import {
 
 export const BanglesSpotlight = () => {
   const { 
+    products,
     addToCart, 
     wishlist, 
     toggleWishlist, 
@@ -36,8 +37,11 @@ export const BanglesSpotlight = () => {
     activeSubcategory,
     setActiveSubcategory,
     activeOccasion,
-    setActiveOccasion
+    setActiveOccasion,
+    setMemberCardOpen
   } = useStore();
+
+  const allAvailableProducts = products || ALL_PRODUCTS;
 
   const [selectedPriceBracket, setSelectedPriceBracket] = useState('ALL');
   const [selectedSizes, setSelectedSizes] = useState({}); // mapped by productId -> size
@@ -47,8 +51,8 @@ export const BanglesSpotlight = () => {
   // Current category config
   const currentCatConfig = CATEGORY_CONFIG[activeCategory] || CATEGORY_CONFIG.bangles;
 
-  // Filter Logic across ALL products with active category & subcategory support
-  const filteredProducts = ALL_PRODUCTS.filter(item => {
+  // Filter Logic across ALL products (including custom admin added products!) with active category & subcategory support
+  const filteredProducts = allAvailableProducts.filter(item => {
     // 1. Search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
@@ -88,8 +92,8 @@ export const BanglesSpotlight = () => {
   };
 
   const getCategoryCount = (catKey) => {
-    if (catKey === 'all') return ALL_PRODUCTS.length;
-    return ALL_PRODUCTS.filter(p => p.category === catKey).length;
+    if (catKey === 'all') return allAvailableProducts.length;
+    return allAvailableProducts.filter(p => p.category === catKey).length;
   };
 
   return (
@@ -287,7 +291,7 @@ export const BanglesSpotlight = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  All Subcategories ({ALL_PRODUCTS.length})
+                  All Subcategories ({allAvailableProducts.length})
                 </button>
                 {['Glass Bangle', 'Stone Bangle', 'Lac Bangles', 'Minakari Bangles', 'Cz', 'AD', 'Real Pearls', 'simple Collage', 'Party', 'family Editon', 'Traditions', 'SImple', 'Tradictnal Were'].map(sub => (
                   <button
@@ -580,8 +584,12 @@ export const BanglesSpotlight = () => {
                           ✓ VIP 5% Privilege Applied
                         </div>
                       ) : (
-                        <div style={{ fontSize: '0.68rem', color: 'var(--pk-text-muted)' }}>
-                          Member: <strong style={{ color: 'var(--pk-gold-dark)' }}>₹{product.memberPrice.toLocaleString()}</strong>
+                        <div 
+                          onClick={() => setMemberCardOpen(true)}
+                          style={{ fontSize: '0.68rem', color: 'var(--pk-gold-dark)', cursor: 'pointer', fontWeight: 600 }}
+                          title="Click to view VIP Member Benefits"
+                        >
+                          Member: <strong>₹{product.memberPrice.toLocaleString()}</strong> (Unlock 5%)
                         </div>
                       )}
                     </div>
@@ -607,7 +615,7 @@ export const BanglesSpotlight = () => {
                     </button>
                   </div>
 
-                  {/* Add To Bag CTA */}
+                  {/* Add To Bag CTA (Enabled for both Guests & Logged-in Customers!) */}
                   <button 
                     disabled={stock === 0}
                     onClick={() => addToCart(product, activeSize, 1)}
@@ -621,7 +629,7 @@ export const BanglesSpotlight = () => {
                     }}
                   >
                     <ShoppingBag size={14} style={{ color: '#E4C88A' }} />
-                    <span>{stock === 0 ? 'Out of Stock' : (customer.isLoggedIn ? 'Add to Bag' : 'Sign In to Buy')}</span>
+                    <span>{stock === 0 ? 'Out of Stock' : 'Add to Bag'}</span>
                   </button>
 
                 </div>

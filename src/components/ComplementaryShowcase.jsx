@@ -160,7 +160,7 @@ export const ComplementaryShowcase = () => {
                       style={{ padding: '0.45rem 0.9rem', fontSize: '0.78rem' }}
                     >
                       <ShoppingBag size={14} />
-                      <span>{customer.isLoggedIn ? 'Add' : 'Sign In'}</span>
+                      <span>+ Add</span>
                     </button>
                   </div>
                 </div>

@@ -33,19 +33,23 @@ export const CartDrawer = () => {
     isEligibleGiftBox,
     setCheckoutOpen,
     addToCart,
-    setQuickPassOpen
+    setQuickPassOpen,
+    setMemberCardOpen,
+    products
   } = useStore();
 
   if (!cartOpen) return null;
+
+  const allAvailableProducts = products || ALL_PRODUCTS;
 
   // Amount needed for thresholds
   const amountToFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
   const amountToGiftBox = Math.max(0, luxuryGiftBoxThreshold - cartSubtotal);
 
   // Recommended complementary item for smart upsell in cart
-  const upsellCandidate = ALL_PRODUCTS.find(p => 
+  const upsellCandidate = allAvailableProducts.find(p => 
     p.category === 'rings' || p.subcategory === 'Contemporary CZ' || p.category === 'earrings'
-  );
+  ) || allAvailableProducts[0];
 
   return (
     <div className="drawer-backdrop" onClick={() => setCartOpen(false)}>
@@ -234,11 +238,11 @@ export const CartDrawer = () => {
                 </div>
               </div>
               <button 
-                onClick={() => setQuickPassOpen(true)}
+                onClick={() => setMemberCardOpen(true)}
                 className="btn-gold" 
-                style={{ padding: '0.35rem 0.65rem', fontSize: '0.72rem' }}
+                style={{ padding: '0.4rem 0.8rem', fontSize: '0.74rem', whiteSpace: 'nowrap' }}
               >
-                Join
+                Unlock with Gmail
               </button>
             </div>
           )}

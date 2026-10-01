@@ -32,8 +32,12 @@ export const ProductDetailModal = () => {
     toggleWishlist, 
     customer, 
     inventory, 
-    setEnquiryProduct 
+    setEnquiryProduct,
+    setMemberCardOpen,
+    products 
   } = useStore();
+
+  const allAvailableProducts = products || ALL_PRODUCTS;
 
   const [selectedSize, setSelectedSize] = useState('2.6');
   const [activeTab, setActiveTab] = useState('SPEC'); // 'SPEC' | 'CARE' | 'STYLING'
@@ -47,7 +51,7 @@ export const ProductDetailModal = () => {
 
   // Matching items for recommendation
   const matchingItems = (currentProduct.matchingItemIds || [])
-    .map(id => ALL_PRODUCTS.find(p => p.id === id))
+    .map(id => allAvailableProducts.find(p => p.id === id))
     .filter(Boolean);
 
   // Close modal
@@ -337,9 +341,13 @@ export const ProductDetailModal = () => {
                     <span>PK Club VIP 5% Privilege applied automatically!</span>
                   </div>
                 ) : (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--pk-text-secondary)', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <div 
+                    onClick={() => setMemberCardOpen(true)}
+                    style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', fontWeight: 600 }}
+                    title="Click to unlock with Gmail"
+                  >
                     <Crown size={12} style={{ color: 'var(--pk-gold-dark)' }} />
-                    <span>Member Price: <strong style={{ color: 'var(--pk-gold-dark)' }}>₹{currentProduct.memberPrice.toLocaleString()}</strong> (Sign in to unlock)</span>
+                    <span>Member Price: <strong>₹{currentProduct.memberPrice.toLocaleString()}</strong> (Login with Gmail to Save 5%)</span>
                   </div>
                 )}
               </div>

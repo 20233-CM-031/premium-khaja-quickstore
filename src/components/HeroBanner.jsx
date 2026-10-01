@@ -4,9 +4,10 @@ import { ALL_PRODUCTS } from '../data/products';
 import { Sparkles, ShieldCheck, Truck, Award, ArrowRight, Crown } from 'lucide-react';
 
 export const HeroBanner = () => {
-  const { setQuickPassOpen, setAiStylistOpen, customer, openProductDetail } = useStore();
+  const { setQuickPassOpen, setAiStylistOpen, customer, openProductDetail, products } = useStore();
+  const allAvailableProducts = products || ALL_PRODUCTS;
 
-  const spotlightProduct = (ALL_PRODUCTS || []).find(p => p.id === 'bangle-01') || (ALL_PRODUCTS && ALL_PRODUCTS[0]);
+  const spotlightProduct = allAvailableProducts.find(p => p.id === 'bangle-01') || allAvailableProducts[0];
 
   return (
     <section className="hero-section" style={{ position: 'relative', overflow: 'hidden', background: '#121110', color: '#FAF8F5' }}>
