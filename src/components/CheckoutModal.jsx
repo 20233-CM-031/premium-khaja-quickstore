@@ -50,6 +50,9 @@ export const CheckoutModal = () => {
     setError('');
     setIsProcessing(true);
 
+    const itemsSummary = cart.map(i => `• ${i.product.name} (Size: ${i.size}, Qty: ${i.quantity}) - ₹${i.product.price * i.quantity}`).join('\n');
+    const formattedMsg = `🛍️ *NEW ORDER & PAYMENT CONFIRMATION — PREMIUM KHAJA*\n━━━━━━━━━━━━━━━━━━━━\n💰 *Total Amount:* ₹${cartTotal.toLocaleString()}\n💳 *Payment Method:* UPI QR (9393056641@upi)\n🔖 *UTR / Reference:* ${utrNumber.trim() || 'Paid via UPI QR'}\n\n👤 *CUSTOMER & DELIVERY ADDRESS:*\n• *Name:* ${name.trim()}\n• *Phone:* ${phone.trim()}\n• *Delivery Address:* ${address.trim()}, ${city.trim()} - ${pincode.trim()}\n\n📦 *ORDERED ITEMS:*\n${itemsSummary}\n━━━━━━━━━━━━━━━━━━━━\nPlease verify payment in UPI app and initiate online delivery dispatch. Thank you!`;
+
     setTimeout(() => {
       processOrder({
         items: cart,
@@ -65,9 +68,19 @@ export const CheckoutModal = () => {
           pincode: pincode.trim()
         }
       });
+      setCheckoutOpen(false);
       setIsProcessing(false);
-    }, 900);
+
+      // Auto-open WhatsApp message directly to Owner (9393056641)
+      const waUrl = `https://wa.me/919393056641?text=${encodeURIComponent(formattedMsg)}`;
+      try {
+        window.open(waUrl, '_blank');
+      } catch (e) {
+        console.error("Window open error", e);
+      }
+    }, 700);
   };
+
 
   return (
     <div className="modal-backdrop" onClick={() => setCheckoutOpen(false)}>

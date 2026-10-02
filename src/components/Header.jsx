@@ -16,7 +16,8 @@ import {
   User,
   LogOut,
   KeyRound,
-  Award
+  Award,
+  Play
 } from 'lucide-react';
 
 export const Header = () => {
@@ -37,8 +38,11 @@ export const Header = () => {
     activeMode, 
     handleAdminModeSwitch,
     searchQuery,
-    setSearchQuery
+    setSearchQuery,
+    setShortsModalOpen,
+    setActiveShortIndex
   } = useStore();
+
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
@@ -173,8 +177,35 @@ export const Header = () => {
         </div>
 
         {/* Right Action Icons & Role-Based Customer Status */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
           
+          {/* Royal Shorts Video Reels Button */}
+          <button 
+            onClick={() => {
+              setActiveShortIndex(0);
+              setShortsModalOpen(true);
+            }}
+            style={{ 
+              background: 'linear-gradient(135deg, #221F1B 0%, #302A24 100%)', 
+              color: '#FAF8F5', 
+              border: '1px solid var(--pk-border-gold)',
+              borderRadius: 'var(--radius-full)',
+              padding: '0.45rem 0.85rem',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'transform 0.2s'
+            }}
+            title="Watch Royal Jewellery Shorts & Video Reels"
+          >
+            <Play size={12} fill="#E4C88A" style={{ color: '#E4C88A' }} />
+            <span>Shorts</span>
+          </button>
+
           {/* AI Stylist Button */}
           <button 
             onClick={() => setAiStylistOpen(true)}
@@ -197,6 +228,7 @@ export const Header = () => {
             <Sparkles size={14} style={{ color: '#E4C88A' }} />
             <span>AI Stylist</span>
           </button>
+
 
           {/* User / Member Role Status */}
           {customer.isLoggedIn ? (

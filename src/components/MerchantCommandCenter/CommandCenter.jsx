@@ -54,7 +54,14 @@ export const CommandCenter = () => {
     addCelebrityShowcaseItem,
     products,
     addNewProduct,
+    updateProduct,
     deleteProduct,
+    importFromSouqOneStudio,
+    shortsList,
+    addNewShort,
+    setShortsList,
+    heroConfig,
+    updateHeroConfig,
     storeOwnerPhone,
     storeOwnerWhatsApp,
     storeUpiId,
@@ -62,6 +69,7 @@ export const CommandCenter = () => {
     uploadStorePaymentQr,
     resetStorePaymentQr
   } = useStore();
+
 
   const allCatalogueProducts = products || ALL_PRODUCTS;
 
@@ -119,6 +127,148 @@ export const CommandCenter = () => {
   // Custom added products filter
   const defaultProductIds = new Set(ALL_PRODUCTS.map(p => p.id));
   const customAddedProducts = allCatalogueProducts.filter(p => !defaultProductIds.has(p.id) || p.isCustomAdded);
+
+  // ================= FULL PRODUCT EDITING STATE =================
+  const editFileInputRef = useRef(null);
+  const [editingProduct, setEditingProduct] = useState(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    sku: '',
+    category: 'bangles',
+    subcategory: '',
+    price: 2499,
+    originalPrice: 3499,
+    memberPrice: 2249,
+    inventoryCount: 15,
+    sizes: ['2.4', '2.6', '2.8'],
+    finish: '22K Antique Micro Gold Plated',
+    material: 'Brass with High-Grade Polki Kundan',
+    image: '',
+    description: '',
+    careInstructions: ''
+  });
+
+  const openEditModal = (prod) => {
+    setEditingProduct(prod);
+    setEditForm({
+      name: prod.name,
+      sku: prod.sku || '',
+      category: prod.category || 'bangles',
+      subcategory: prod.subcategory || '',
+      price: prod.price || 1999,
+      originalPrice: prod.originalPrice || Math.round(prod.price * 1.35),
+      memberPrice: prod.memberPrice || Math.round(prod.price * 0.95),
+      inventoryCount: inventory[prod.id] ?? prod.inventoryCount ?? 15,
+      sizes: prod.sizes || ['2.4', '2.6', '2.8'],
+      finish: prod.finish || '22K Antique Micro Gold Plated',
+      material: prod.material || 'Brass with High-Grade Polki Kundan',
+      image: prod.image || '',
+      description: prod.description || '',
+      careInstructions: prod.careInstructions || ''
+    });
+  };
+
+  const handleEditSave = (e) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    updateProduct(editingProduct.id, editForm);
+    setEditingProduct(null);
+    alert(`"${editForm.name}" updated successfully in live inventory!`);
+  };
+
+  // ================= SOUQONE STUDIO BRIDGE STATE =================
+  const [studioPayloadText, setStudioPayloadText] = useState('');
+  const [studioImportStatus, setStudioImportStatus] = useState('');
+  const [singleStudioLook, setSingleStudioLook] = useState({
+    name: '',
+    category: 'bangles',
+    subcategory: 'Studio Curation',
+    price: 2999,
+    image: '',
+    inventoryCount: 15
+  });
+
+  const handleStudioJsonImport = () => {
+    try {
+      if (!studioPayloadText.trim()) {
+        alert("Please paste SouqOne Studio JSON payload.");
+        return;
+      }
+      const parsed = JSON.parse(studioPayloadText);
+      const res = importFromSouqOneStudio(parsed);
+      if (res.success) {
+        setStudioImportStatus(`✅ Successfully imported ${res.count} showroom look(s) from SouqOne Studio into live inventory!`);
+        setStudioPayloadText('');
+      } else {
+        alert(`Import error: ${res.error}`);
+      }
+    } catch (err) {
+      alert(`Invalid JSON format: ${err.message}`);
+    }
+  };
+
+  const handleSingleStudioLookAdd = (e) => {
+    e.preventDefault();
+    if (!singleStudioLook.name.trim()) return alert("Please enter look name");
+    importFromSouqOneStudio([singleStudioLook]);
+    setStudioImportStatus(`✅ Showroom look "${singleStudioLook.name}" transformed into live inventory!`);
+    setSingleStudioLook({
+      name: '',
+      category: 'bangles',
+      subcategory: 'Studio Curation',
+      price: 2999,
+      image: '',
+      inventoryCount: 15
+    });
+  };
+
+  // ================= HERO & MARKETING ENGINE STATE =================
+  const [heroForm, setHeroForm] = useState({
+    announcementBadge: heroConfig?.announcementBadge || 'Official Partner & Gifted Miss World Contestants ✦ Worn On World Stage',
+    titleLine1: heroConfig?.titleLine1 || 'Royal Splendour.',
+    titleLine2: heroConfig?.titleLine2 || 'Couture Heritage Craft.',
+    description: heroConfig?.description || 'Discover Premium Khaja\'s high artificial jewellery atelier.',
+    spotlightProductId: heroConfig?.spotlightProductId || 'bangle-01'
+  });
+  const [heroSaveSuccess, setHeroSaveSuccess] = useState('');
+
+  const handleHeroConfigSave = (e) => {
+    e.preventDefault();
+    updateHeroConfig(heroForm);
+    setHeroSaveSuccess('✨ Hero banner & marketing controls updated on live storefront!');
+    setTimeout(() => setHeroSaveSuccess(''), 4000);
+  };
+
+  // ================= ROYAL SHORTS MANAGER STATE =================
+  const shortVideoInputRef = useRef(null);
+  const [newShortTitle, setNewShortTitle] = useState('');
+  const [newShortDesc, setNewShortDesc] = useState('');
+  const [newShortUrl, setNewShortUrl] = useState('');
+  const [newShortPoster, setNewShortPoster] = useState('');
+  const [newShortProduct, setNewShortProduct] = useState(allCatalogueProducts[0]?.id || 'bangle-01');
+  const [shortsSuccessMsg, setShortsSuccessMsg] = useState('');
+
+  const handleCreateShort = (e) => {
+    e.preventDefault();
+    if (!newShortTitle.trim() || (!newShortUrl.trim() && !newShortPoster.trim())) {
+      alert("Please provide title and video URL or upload a file.");
+      return;
+    }
+    addNewShort({
+      title: newShortTitle,
+      description: newShortDesc,
+      videoUrl: newShortUrl || 'https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-woman-wearing-golden-jewelry-41315-large.mp4',
+      posterImage: newShortPoster || '/images/bangles/1789662811af3b.png',
+      taggedProductId: newShortProduct
+    });
+    setShortsSuccessMsg('🎬 Royal Short reel published to storefront!');
+    setNewShortTitle('');
+    setNewShortDesc('');
+    setNewShortUrl('');
+    setNewShortPoster('');
+    setTimeout(() => setShortsSuccessMsg(''), 4000);
+  };
+
 
   // ================= IMAGE UPLOAD FROM COMPUTER OR PHONE (DRIVE/WHATSAPP/FILES/GALLERY) =================
   const handleImageFileUpload = (e) => {
@@ -404,8 +554,11 @@ export const CommandCenter = () => {
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
           {[
             { id: 'PRODUCT_STUDIO', label: 'Add Products & AI Studio', icon: Plus, highlight: true },
+            { id: 'INVENTORY', label: `Inventory & Edit Hub (${lowStockCount} Low Alert)`, icon: Package },
+            { id: 'SOUQONE_STUDIO', label: 'SouqOne Studio Bridge', icon: Layers, highlight: false },
+            { id: 'HERO_MARKETING', label: 'Hero & Marketing Engine', icon: Megaphone, highlight: false },
+            { id: 'SHORTS_MANAGER', label: `Royal Shorts Reels (${shortsList.length})`, icon: Sparkles, highlight: false },
             { id: 'PAYMENT_QR', label: 'Store Payment QR Setup', icon: QrCode, highlight: false },
-            { id: 'INVENTORY', label: `Inventory Hub (${lowStockCount} Low Alert)`, icon: Package },
             { id: 'CRM', label: `CRM & Customer AI (${customersList.length})`, icon: Users },
             { id: 'OVERVIEW', label: 'Executive Analytics', icon: TrendingUp },
             { id: 'CATEGORIES_SHOWCASE', label: 'Miss World 2025 PR Hub', icon: Crown },
@@ -1013,6 +1166,15 @@ export const CommandCenter = () => {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             <button
                               type="button"
+                              onClick={() => openEditModal(prod)}
+                              className="btn-outline"
+                              style={{ padding: '0.25rem 0.55rem', fontSize: '0.7rem', borderColor: 'var(--pk-gold-dark)', color: 'var(--pk-gold-dark)', fontWeight: 700 }}
+                              title="Edit name, image, price, quantity, size & color"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => restockItem(prod.id, 10)}
                               className="btn-outline"
                               style={{ padding: '0.25rem 0.55rem', fontSize: '0.7rem' }}
@@ -1377,7 +1539,16 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
                           )}
                         </td>
                         <td style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.3rem' }}>
+                          <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(product)}
+                              className="btn-outline"
+                              style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', borderColor: 'var(--pk-gold-dark)', color: 'var(--pk-gold-dark)', fontWeight: 700 }}
+                              title="Edit name, image, price, quantity, size & color"
+                            >
+                              Edit
+                            </button>
                             <button
                               onClick={() => restockItem(product.id, 10)}
                               className="btn-outline"
@@ -1399,6 +1570,520 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
                   })}
                 </tbody>
               </table>
+            </div>
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: SOUQONE STUDIO BRIDGE (Transform Showroom Looks into Live Inventory)  */}
+        {/* ========================================================================= */}
+        {activeTab === 'SOUQONE_STUDIO' && (
+          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+            
+            <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                    <Layers size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                    External System Bridge
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  SouqOne Studio Bridge — Showroom Lookbook to Live Inventory
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0' }}>
+                  Directly ingest ready-made showroom look images, photoshoot sets, and catalogue items from SouqOne Studio into live inventory.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="live-pulse"></span>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-gold-dark)' }}>
+                  Studio Pipeline Active
+                </span>
+              </div>
+            </div>
+
+            {studioImportStatus && (
+              <div style={{ background: '#E6F4EA', color: '#137333', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.25rem', fontSize: '0.85rem', fontWeight: 600 }}>
+                {studioImportStatus}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.75rem' }}>
+              
+              {/* Method A: Paste SouqOne Studio JSON Payload */}
+              <div style={{ background: 'var(--pk-surface-alt)', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Sparkles size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                  <span>Batch JSON Import from SouqOne Studio</span>
+                </h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--pk-text-muted)', marginBottom: '0.85rem' }}>
+                  Paste a JSON array of ready-made showroom items exported from SouqOne Studio.
+                </p>
+
+                <textarea
+                  rows="8"
+                  value={studioPayloadText}
+                  onChange={(e) => setStudioPayloadText(e.target.value)}
+                  placeholder={`[
+  {
+    "name": "SouqOne Royal Rajwada Choker",
+    "price": 3499,
+    "category": "necklaces",
+    "subcategory": "AD",
+    "image": "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?w=800",
+    "inventoryCount": 10
+  }
+]`}
+                  className="form-textarea"
+                  style={{ fontFamily: 'monospace', fontSize: '0.75rem', marginBottom: '0.85rem' }}
+                />
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    type="button"
+                    onClick={handleStudioJsonImport}
+                    className="btn-gold"
+                    style={{ flex: 1, padding: '0.65rem', fontSize: '0.82rem' }}
+                  >
+                    <Layers size={14} />
+                    <span>Sync Batch into Live Inventory</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStudioPayloadText(JSON.stringify([
+                        {
+                          name: "SouqOne Noor Bridal Polki Set",
+                          price: 4999,
+                          originalPrice: 6999,
+                          memberPrice: 4749,
+                          category: "bangles",
+                          subcategory: "Stone Bangle",
+                          image: "/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png",
+                          inventoryCount: 15
+                        }
+                      ], null, 2));
+                    }}
+                    className="btn-outline"
+                    style={{ padding: '0.65rem 0.85rem', fontSize: '0.75rem' }}
+                  >
+                    Sample
+                  </button>
+                </div>
+              </div>
+
+              {/* Method B: Single Studio Look Direct Add */}
+              <div style={{ background: '#FFFFFF', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 0.5rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Plus size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                  <span>Single Studio Look Uploader</span>
+                </h4>
+                <p style={{ fontSize: '0.75rem', color: 'var(--pk-text-muted)', marginBottom: '0.85rem' }}>
+                  Quickly push an individual photoshoot look directly from SouqOne Studio.
+                </p>
+
+                <form onSubmit={handleSingleStudioLookAdd} style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Showroom Look Name</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. SouqOne Miss World Runway Kada"
+                      value={singleStudioLook.name}
+                      onChange={(e) => setSingleStudioLook({ ...singleStudioLook, name: e.target.value })}
+                      className="form-input"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Category</label>
+                      <select
+                        value={singleStudioLook.category}
+                        onChange={(e) => setSingleStudioLook({ ...singleStudioLook, category: e.target.value })}
+                        className="form-select"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                      >
+                        <option value="bangles">Bangles</option>
+                        <option value="necklaces">Necklaces</option>
+                        <option value="bracelets">Bracelets</option>
+                        <option value="earrings">Earrings</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Selling Price (₹)</label>
+                      <input
+                        type="number"
+                        required
+                        value={singleStudioLook.price}
+                        onChange={(e) => setSingleStudioLook({ ...singleStudioLook, price: Number(e.target.value) })}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Showroom Image URL / Path</label>
+                    <input
+                      type="text"
+                      placeholder="/images/bangles/1789662811af3b.png or https://..."
+                      value={singleStudioLook.image}
+                      onChange={(e) => setSingleStudioLook({ ...singleStudioLook, image: e.target.value })}
+                      className="form-input"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-gold"
+                    style={{ padding: '0.75rem', fontSize: '0.82rem', marginTop: '0.35rem' }}
+                  >
+                    <Plus size={14} />
+                    <span>Transform Look to Live Inventory</span>
+                  </button>
+                </form>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: HERO & MARKETING ENGINE (Control Hero Banner, Headlines & Badges)    */}
+        {/* ========================================================================= */}
+        {activeTab === 'HERO_MARKETING' && (
+          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+            
+            <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                    <Megaphone size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                    Storefront Content Engine
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Hero Banner &amp; Marketing Section Controller
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0' }}>
+                  Update live marketing promotions, top announcements, headline copy, and featured spotlight products.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setActiveMode('storefront')}
+                className="btn-outline"
+                style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+              >
+                <Eye size={14} />
+                <span>Preview Storefront</span>
+              </button>
+            </div>
+
+            {heroSaveSuccess && (
+              <div style={{ background: '#E6F4EA', color: '#137333', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.25rem', fontSize: '0.85rem', fontWeight: 600 }}>
+                {heroSaveSuccess}
+              </div>
+            )}
+
+            <form onSubmit={handleHeroConfigSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem', maxWidth: '720px' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">
+                  <span>Announcement Ticker Badge (Top of Hero)</span>
+                  <span style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)' }}>Appears with crown icon</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={heroForm.announcementBadge}
+                  onChange={(e) => setHeroForm({ ...heroForm, announcementBadge: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Hero Title Line 1</label>
+                  <input
+                    type="text"
+                    required
+                    value={heroForm.titleLine1}
+                    onChange={(e) => setHeroForm({ ...heroForm, titleLine1: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Hero Title Line 2 (Gold Gradient Accent)</label>
+                  <input
+                    type="text"
+                    required
+                    value={heroForm.titleLine2}
+                    onChange={(e) => setHeroForm({ ...heroForm, titleLine2: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Hero Brand Story &amp; Description</label>
+                <textarea
+                  rows="3"
+                  required
+                  value={heroForm.description}
+                  onChange={(e) => setHeroForm({ ...heroForm, description: e.target.value })}
+                  className="form-textarea"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Spotlight Featured Product</label>
+                <select
+                  value={heroForm.spotlightProductId}
+                  onChange={(e) => setHeroForm({ ...heroForm, spotlightProductId: e.target.value })}
+                  className="form-select"
+                >
+                  {allCatalogueProducts.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} (₹{p.price}) — {p.category}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <button
+                type="submit"
+                className="btn-gold"
+                style={{ padding: '0.9rem', fontSize: '0.95rem', fontWeight: 700, width: '100%', marginTop: '0.5rem' }}
+              >
+                <Check size={16} />
+                <span>Save &amp; Update Live Homepage Hero</span>
+              </button>
+            </form>
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: ROYAL SHORTS REELS MANAGER (YouTube Shorts & Instagram Style)         */}
+        {/* ========================================================================= */}
+        {activeTab === 'SHORTS_MANAGER' && (
+          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+            
+            <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                    <Sparkles size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                    Video Commerce Studio
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Royal Shorts &amp; Video Reels Management
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0' }}>
+                  Upload vertical runway &amp; atelier videos (like YouTube Shorts &amp; Instagram Reels). Customers can watch and shop tagged pieces in 1-click.
+                </p>
+              </div>
+
+              <span style={{ fontSize: '0.8rem', color: 'var(--pk-gold-dark)', fontWeight: 700 }}>
+                {shortsList.length} Active Video Reels
+              </span>
+            </div>
+
+            {shortsSuccessMsg && (
+              <div style={{ background: '#E6F4EA', color: '#137333', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.25rem', fontSize: '0.85rem', fontWeight: 600 }}>
+                {shortsSuccessMsg}
+              </div>
+            )}
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '2rem' }}>
+              
+              {/* Upload New Short Form */}
+              <div style={{ background: 'var(--pk-surface-alt)', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 0.85rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Plus size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                  <span>Upload New Royal Short Reel</span>
+                </h4>
+
+                <form onSubmit={handleCreateShort} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Reel Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Royal Rajputi Kundan Kada 360°"
+                      value={newShortTitle}
+                      onChange={(e) => setNewShortTitle(e.target.value)}
+                      className="form-input"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Description</label>
+                    <textarea
+                      rows="2"
+                      placeholder="Describe the craft, occasion and finish..."
+                      value={newShortDesc}
+                      onChange={(e) => setNewShortDesc(e.target.value)}
+                      className="form-textarea"
+                      style={{ minHeight: '60px', padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Video File or URL *</label>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        placeholder="https://... or choose video file"
+                        value={newShortUrl}
+                        onChange={(e) => setNewShortUrl(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem', flex: 1 }}
+                      />
+                      <input
+                        type="file"
+                        ref={shortVideoInputRef}
+                        accept="video/*,.mp4,.webm"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              setNewShortUrl(event.target.result);
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => shortVideoInputRef.current?.click()}
+                        className="btn-outline"
+                        style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                      >
+                        Choose File
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Thumbnail / Poster Image URL</label>
+                    <input
+                      type="text"
+                      placeholder="/images/bangles/... or URL"
+                      value={newShortPoster}
+                      onChange={(e) => setNewShortPoster(e.target.value)}
+                      className="form-input"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Tag Product to Shop in Reel</label>
+                    <select
+                      value={newShortProduct}
+                      onChange={(e) => setNewShortProduct(e.target.value)}
+                      className="form-select"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    >
+                      {allCatalogueProducts.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.name} (₹{p.price})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-gold"
+                    style={{ padding: '0.75rem', fontSize: '0.85rem', marginTop: '0.35rem' }}
+                  >
+                    <Sparkles size={14} />
+                    <span>Publish Short Reel to Storefront</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Current Shorts List */}
+              <div>
+                <h4 style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 0.85rem' }}>
+                  Current Active Shorts ({shortsList.length})
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '450px', overflowY: 'auto' }}>
+                  {shortsList.map(short => {
+                    const prod = allCatalogueProducts.find(p => p.id === short.taggedProductId);
+                    return (
+                      <div
+                        key={short.id}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '0.75rem',
+                          background: 'var(--pk-surface-alt)',
+                          border: '1px solid var(--pk-border)',
+                          borderRadius: 'var(--radius-sm)',
+                          gap: '0.75rem'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                          <img
+                            src={short.posterImage}
+                            alt={short.title}
+                            style={{ width: '45px', height: '60px', objectFit: 'cover', borderRadius: '4px', background: '#121110' }}
+                          />
+                          <div>
+                            <h5 style={{ margin: '0 0 0.2rem', fontSize: '0.85rem', color: 'var(--pk-obsidian)', fontWeight: 700 }}>
+                              {short.title}
+                            </h5>
+                            <div style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)' }}>
+                              Tagged: <strong>{prod ? prod.name : short.taggedProductId}</strong>
+                            </div>
+                            <div style={{ fontSize: '0.68rem', color: 'var(--pk-gold-dark)', marginTop: '0.15rem' }}>
+                              {short.viewsCount || '15K'} views • {short.likesCount || 120} likes
+                            </div>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`Delete reel "${short.title}"?`)) {
+                              setShortsList(prev => prev.filter(s => s.id !== short.id));
+                            }
+                          }}
+                          style={{ background: 'transparent', border: 'none', color: '#9F1239', cursor: 'pointer', padding: '0.4rem' }}
+                          title="Delete reel"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
             </div>
 
           </div>
@@ -1712,6 +2397,225 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
         )}
 
       </div>
+
+      {/* ========================================================================= */}
+      {/* GLOBAL MODAL: FULL END-TO-END PRODUCT EDITOR FOR ALL CATALOGUE ITEMS      */}
+      {/* ========================================================================= */}
+      {editingProduct && (
+        <div className="modal-backdrop" onClick={() => setEditingProduct(null)} style={{ zIndex: 1100 }}>
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ 
+              maxWidth: '680px', 
+              maxHeight: '92vh', 
+              overflowY: 'auto', 
+              padding: '2rem 1.75rem', 
+              background: '#FFFFFF',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+              border: '1px solid var(--pk-gold-dark)' 
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                  Live Inventory Management
+                </span>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: '0.2rem 0 0' }}>
+                  Edit Product: {editingProduct.name}
+                </h3>
+              </div>
+              <button className="btn-icon" onClick={() => setEditingProduct(null)}>
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem' }}>
+              
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Product Name / Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Selling Price (₹) *</label>
+                  <input
+                    type="number"
+                    required
+                    value={editForm.price}
+                    onChange={(e) => {
+                      const p = Number(e.target.value) || 0;
+                      setEditForm({
+                        ...editForm,
+                        price: p,
+                        originalPrice: Math.round(p * 1.35),
+                        memberPrice: Math.round(p * 0.95)
+                      });
+                    }}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">MRP (₹)</label>
+                  <input
+                    type="number"
+                    value={editForm.originalPrice}
+                    onChange={(e) => setEditForm({ ...editForm, originalPrice: Number(e.target.value) })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">VIP Member Price (₹)</label>
+                  <input
+                    type="number"
+                    value={editForm.memberPrice}
+                    onChange={(e) => setEditForm({ ...editForm, memberPrice: Number(e.target.value) })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Stock Units *</label>
+                  <input
+                    type="number"
+                    required
+                    value={editForm.inventoryCount}
+                    onChange={(e) => setEditForm({ ...editForm, inventoryCount: Number(e.target.value) })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Category</label>
+                  <select
+                    value={editForm.category}
+                    onChange={(e) => setEditForm({ ...editForm, category: e.target.value })}
+                    className="form-select"
+                  >
+                    <option value="bangles">Bangles</option>
+                    <option value="necklaces">Necklaces</option>
+                    <option value="bracelets">Bracelets</option>
+                    <option value="earrings">Earrings</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Subcategory / Style</label>
+                  <input
+                    type="text"
+                    value={editForm.subcategory}
+                    onChange={(e) => setEditForm({ ...editForm, subcategory: e.target.value })}
+                    className="form-input"
+                    placeholder="e.g. Stone Bangle, AD, Cz, Lac"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Sizes (comma-separated)</label>
+                  <input
+                    type="text"
+                    value={Array.isArray(editForm.sizes) ? editForm.sizes.join(', ') : editForm.sizes}
+                    onChange={(e) => setEditForm({ ...editForm, sizes: e.target.value.split(',').map(s => s.trim()).filter(Boolean) })}
+                    className="form-input"
+                    placeholder="2.4, 2.6, 2.8"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Color / Finish</label>
+                  <input
+                    type="text"
+                    value={editForm.finish}
+                    onChange={(e) => setEditForm({ ...editForm, finish: e.target.value })}
+                    className="form-input"
+                    placeholder="22K Antique Micro Gold Plated"
+                  />
+                </div>
+              </div>
+
+              {/* Image selector */}
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Product Image (File or URL)</label>
+                <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'center' }}>
+                  {editForm.image && (
+                    <img
+                      src={editForm.image}
+                      alt="preview"
+                      style={{ width: '48px', height: '48px', objectFit: 'contain', background: '#FAF8F5', borderRadius: '4px', border: '1px solid var(--pk-border)' }}
+                    />
+                  )}
+                  <input
+                    type="text"
+                    value={editForm.image}
+                    onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                    placeholder="Image URL or choose file from PC / mobile"
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="file"
+                    ref={editFileInputRef}
+                    accept="image/*,.png,.jpg,.jpeg,.webp,.avif"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setEditForm(prev => ({ ...prev, image: event.target.result }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => editFileInputRef.current?.click()}
+                    className="btn-outline"
+                    style={{ padding: '0.65rem 0.9rem', fontSize: '0.8rem', whiteSpace: 'nowrap' }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Description</label>
+                <textarea
+                  rows="3"
+                  value={editForm.description}
+                  onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                  className="form-textarea"
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" className="btn-gold" style={{ flex: 1, padding: '0.85rem' }}>
+                  <Check size={16} />
+                  <span>Save &amp; Publish Changes to Showroom</span>
+                </button>
+                <button type="button" onClick={() => setEditingProduct(null)} className="btn-outline" style={{ padding: '0.85rem 1.25rem' }}>
+                  Cancel
+                </button>
+              </div>
+
+            </form>
+          </div>
+        </div>
+      )}
 
     </div>
   );

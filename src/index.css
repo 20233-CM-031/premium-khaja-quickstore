@@ -457,3 +457,49 @@ h1, h2, h3, h4, .font-serif {
   }
 }
 
+/* Continuous Fast Marquee Ticker */
+@keyframes marqueeScroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-container {
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.marquee-track:hover {
+  animation-play-state: paused !important;
+}
+
+/* Image Presentation & Zero Cutting Guarantee */
+.product-img-safe {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #FBF9F5;
+  padding: 0.5rem;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.product-card:hover .product-img-safe {
+  transform: scale(1.04);
+}
+
+/* Text & Matter Anti-Overlap Guarantee */
+.product-card-title {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  min-height: 2.6em;
+  line-height: 1.35;
+  word-break: break-word;
+  overflow-wrap: break-word;
+}
+
+

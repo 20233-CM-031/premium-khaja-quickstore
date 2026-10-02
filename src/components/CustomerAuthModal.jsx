@@ -184,64 +184,68 @@ export const CustomerAuthModal = () => {
             {subtitle}
           </p>
 
-          {/* Role Navigation Tabs */}
-          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '1.25rem', background: 'rgba(0,0,0,0.25)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-            <button
-              onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
-              style={{
-                flex: 1,
-                padding: '0.45rem',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: activeTab === 'login' ? 'var(--pk-gold-gradient)' : 'transparent',
-                color: activeTab === 'login' ? '#121110' : '#E8E2D9',
-                transition: 'all 0.2s'
-              }}
-            >
-              Customer Sign In
-            </button>
-            <button
-              onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
-              style={{
-                flex: 1,
-                padding: '0.45rem',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: activeTab === 'signup' ? 'var(--pk-gold-gradient)' : 'transparent',
-                color: activeTab === 'signup' ? '#121110' : '#E8E2D9',
-                transition: 'all 0.2s'
-              }}
-            >
-              New Register
-            </button>
-            <button
-              onClick={() => { setActiveTab('admin'); setErrorMsg(''); }}
-              style={{
-                padding: '0.45rem 0.85rem',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                background: activeTab === 'admin' ? '#D4AF37' : 'transparent',
-                color: activeTab === 'admin' ? '#121110' : '#A89E92',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.3rem',
-                transition: 'all 0.2s'
-              }}
-            >
-              <KeyRound size={13} />
-              <span>Admin</span>
-            </button>
-          </div>
+          {/* Role Navigation Tabs - Customer Facing Only */}
+          {activeTab !== 'admin' && (
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+              <button
+                onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
+                style={{
+                  flex: 1,
+                  padding: '0.55rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: activeTab === 'login' ? 'var(--pk-gold-gradient)' : 'transparent',
+                  color: activeTab === 'login' ? '#121110' : '#E8E2D9',
+                  transition: 'all 0.2s'
+                }}
+              >
+                VIP Member Sign In
+              </button>
+              <button
+                onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
+                style={{
+                  flex: 1,
+                  padding: '0.55rem',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '0.82rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: activeTab === 'signup' ? 'var(--pk-gold-gradient)' : 'transparent',
+                  color: activeTab === 'signup' ? '#121110' : '#E8E2D9',
+                  transition: 'all 0.2s'
+                }}
+              >
+                New Register (Save 5%)
+              </button>
+            </div>
+          )}
+
+          {activeTab === 'admin' && (
+            <div style={{ marginTop: '0.85rem' }}>
+              <button
+                onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: '#E4C88A',
+                  fontSize: '0.78rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem'
+                }}
+              >
+                ← Return to Customer Storefront
+              </button>
+            </div>
+          )}
         </div>
+
 
         {/* Modal Body */}
         <div style={{ padding: '1.5rem', background: '#FFFFFF' }}>
@@ -538,6 +542,44 @@ export const CustomerAuthModal = () => {
                   <span>Create Account & Join PK Club</span>
                 </button>
               </form>
+            </div>
+          )}
+
+          {/* Discrete Merchant / Admin Portal Access for Staff Only */}
+          {activeTab !== 'admin' && (
+            <div style={{ textAlign: 'center', marginTop: '1.5rem', paddingTop: '1rem', borderTop: '1px solid var(--pk-border)' }}>
+              <div style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)', marginBottom: '0.35rem' }}>
+                Store Operations &amp; Inventory Management
+              </div>
+              <button
+                type="button"
+                onClick={() => { setActiveTab('admin'); setErrorMsg(''); }}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--pk-border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.35rem 0.85rem',
+                  color: 'var(--pk-text-secondary)',
+                  fontSize: '0.74rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.35rem',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--pk-gold)';
+                  e.currentTarget.style.color = 'var(--pk-gold-dark)';
+                }}
+                onMouseOut={(e) => {
+                  e.currentTarget.style.borderColor = 'var(--pk-border)';
+                  e.currentTarget.style.color = 'var(--pk-text-secondary)';
+                }}
+              >
+                <KeyRound size={12} />
+                <span>Merchant &amp; Staff Portal Login</span>
+              </button>
             </div>
           )}
 
