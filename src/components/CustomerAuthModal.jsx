@@ -184,66 +184,68 @@ export const CustomerAuthModal = () => {
             {subtitle}
           </p>
 
-          {/* Role Navigation Tabs - Customer Facing Only */}
-          {activeTab !== 'admin' && (
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1.25rem', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
-              <button
-                onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
-                style={{
-                  flex: 1,
-                  padding: '0.55rem',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: activeTab === 'login' ? 'var(--pk-gold-gradient)' : 'transparent',
-                  color: activeTab === 'login' ? '#121110' : '#E8E2D9',
-                  transition: 'all 0.2s'
-                }}
-              >
-                VIP Member Sign In
-              </button>
-              <button
-                onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
-                style={{
-                  flex: 1,
-                  padding: '0.55rem',
-                  border: 'none',
-                  borderRadius: '4px',
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: activeTab === 'signup' ? 'var(--pk-gold-gradient)' : 'transparent',
-                  color: activeTab === 'signup' ? '#121110' : '#E8E2D9',
-                  transition: 'all 0.2s'
-                }}
-              >
-                New Register (Save 5%)
-              </button>
-            </div>
-          )}
-
-          {activeTab === 'admin' && (
-            <div style={{ marginTop: '0.85rem' }}>
-              <button
-                onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: '#E4C88A',
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.35rem'
-                }}
-              >
-                ← Return to Customer Storefront
-              </button>
-            </div>
-          )}
+          {/* Role Navigation Tabs - VIP Member, New Register, Store Admin */}
+          <div style={{ display: 'flex', gap: '0.4rem', marginTop: '1.25rem', background: 'rgba(0,0,0,0.3)', padding: '0.25rem', borderRadius: 'var(--radius-sm)' }}>
+            <button
+              onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
+              style={{
+                flex: 1,
+                padding: '0.55rem 0.4rem',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: activeTab === 'login' ? 'var(--pk-gold-gradient)' : 'transparent',
+                color: activeTab === 'login' ? '#121110' : '#E8E2D9',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              VIP Member Sign In
+            </button>
+            <button
+              onClick={() => { setActiveTab('signup'); setErrorMsg(''); }}
+              style={{
+                flex: 1,
+                padding: '0.55rem 0.4rem',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: activeTab === 'signup' ? 'var(--pk-gold-gradient)' : 'transparent',
+                color: activeTab === 'signup' ? '#121110' : '#E8E2D9',
+                transition: 'all 0.2s',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              New Register (Save 5%)
+            </button>
+            <button
+              onClick={() => { setActiveTab('admin'); setErrorMsg(''); }}
+              style={{
+                flex: 0.9,
+                padding: '0.55rem 0.4rem',
+                border: 'none',
+                borderRadius: '4px',
+                fontSize: '0.78rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                background: activeTab === 'admin' ? 'var(--pk-gold-gradient)' : 'transparent',
+                color: activeTab === 'admin' ? '#121110' : '#E8E2D9',
+                transition: 'all 0.2s',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.25rem',
+                whiteSpace: 'nowrap'
+              }}
+            >
+              <KeyRound size={12} />
+              <span>Store Admin</span>
+            </button>
+          </div>
         </div>
 
 

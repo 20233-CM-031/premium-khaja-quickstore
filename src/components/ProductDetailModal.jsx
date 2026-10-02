@@ -40,7 +40,16 @@ export const ProductDetailModal = () => {
   const allAvailableProducts = products || ALL_PRODUCTS;
 
   const [selectedSize, setSelectedSize] = useState('2.6');
+  const [selectedColor, setSelectedColor] = useState('22K Antique Micron Gold');
+  const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('SPEC'); // 'SPEC' | 'CARE' | 'STYLING'
+
+  const POLISH_OPTIONS = [
+    { id: '22k-antique', name: '22K Antique Gold', color: '#D4AF37' },
+    { id: 'rose-gold', name: 'Royal Rose Gold', color: '#B76E79' },
+    { id: 'yellow-gold', name: 'Classic Yellow Gold', color: '#ECC04C' },
+    { id: 'silver-rhodium', name: 'Silver Rhodium', color: '#94A3B8' }
+  ];
 
   if (!quickProduct) return null;
 
@@ -58,6 +67,25 @@ export const ProductDetailModal = () => {
   const handleClose = () => {
     setQuickProduct(null);
     revertToOriginalSelection();
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+  const handleAddToCart = () => {
+    addToCart({ ...currentProduct, selectedColor }, selectedSize, quantity);
+  };
+
+  const handleWhatsAppOrder = () => {
+    const text = `🛍️ *ORDER INQUIRY - PREMIUM KHAJA*\n----------------------------------------\n• *Product:* ${currentProduct.name}\n• *SKU:* ${currentProduct.sku}\n• *Size Selected:* ${selectedSize}\n• *Finish / Polish:* ${selectedColor}\n• *Quantity:* ${quantity}\n• *Total Price:* ₹${(displayPrice * quantity).toLocaleString()}\n\nHello, I would like to order this piece via online delivery. Please confirm availability and UPI QR payment!`;
+    window.open(`https://wa.me/919393056641?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -305,30 +333,53 @@ export const ProductDetailModal = () => {
               </div>
             </div>
 
-            {/* Right Column: Information & Actions */}
-            <div style={{ padding: '1.75rem', display: 'flex', flexDirection: 'column', maxHeight: '82vh', overflowY: 'auto' }}>
+            {/* Right Column: Information & Actions - Protected Flow, Zero Overlaps */}
+            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem', flexWrap: 'wrap', gap: '0.4rem' }}>
-                <span style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)', fontFamily: 'monospace' }}>
-                  SKU: {currentProduct.sku}
-                </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', fontWeight: 600 }}>
-                  ★ {currentProduct.rating} ({currentProduct.reviewsCount} verified reviews)
-                </span>
+              {/* Product Header & SKU */}
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem', flexWrap: 'wrap', gap: '0.4rem' }}>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)', fontFamily: 'monospace' }}>
+                    SKU: {currentProduct.sku}
+                  </span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+                    <Star size={13} fill="#D4AF37" style={{ color: '#D4AF37' }} />
+                    <span>{currentProduct.rating} ({currentProduct.reviewsCount} reviews)</span>
+                  </span>
+                </div>
+
+                <h2 style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.45rem)', color: 'var(--pk-obsidian)', lineHeight: 1.25, margin: 0, fontWeight: 700 }}>
+                  {currentProduct.name}
+                </h2>
               </div>
 
-              <h2 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', lineHeight: 1.25, marginBottom: '0.6rem' }}>
-                {currentProduct.name}
-              </h2>
+              {/* Miss World 2025 Authenticity Badge */}
+              {currentProduct.tags && currentProduct.tags.some(t => t.toLowerCase().includes('miss world')) && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(125,26,37,0.08) 0%, rgba(212,175,55,0.12) 100%)',
+                  border: '1px solid rgba(212,175,55,0.5)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '0.6rem 0.85rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.55rem',
+                  flexShrink: 0
+                }}>
+                  <Crown size={18} style={{ color: '#AA822A', flexShrink: 0 }} />
+                  <div style={{ fontSize: '0.74rem', color: '#181614', lineHeight: 1.35 }}>
+                    <strong style={{ color: '#7D1A25' }}>MISS WORLD 2025 OFFICIAL SELECTION:</strong> Handcrafted &amp; gifted to Miss World delegates for national runway presentation.
+                  </div>
+                </div>
+              )}
 
-              {/* Price Box */}
-              <div style={{ background: 'var(--pk-surface-alt)', border: '1px solid var(--pk-border-gold)', borderRadius: 'var(--radius-sm)', padding: '0.85rem 1rem', marginBottom: '1.15rem' }}>
+              {/* Price Banner */}
+              <div style={{ background: 'var(--pk-surface-alt)', border: '1px solid var(--pk-border-gold)', borderRadius: 'var(--radius-sm)', padding: '0.75rem 1rem', flexShrink: 0 }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.6rem', marginBottom: '0.2rem' }}>
                   <span style={{ fontSize: '1.45rem', fontWeight: 800, color: 'var(--pk-obsidian)' }}>
-                    ₹{displayPrice.toLocaleString()}
+                    ₹{(displayPrice * quantity).toLocaleString()}
                   </span>
                   <span style={{ fontSize: '0.92rem', color: 'var(--pk-text-muted)', textDecoration: 'line-through' }}>
-                    ₹{currentProduct.originalPrice.toLocaleString()}
+                    ₹{(currentProduct.originalPrice * quantity).toLocaleString()}
                   </span>
                   <span style={{ fontSize: '0.75rem', color: '#1E4635', fontWeight: 700 }}>
                     ({Math.round(((currentProduct.originalPrice - currentProduct.price) / currentProduct.originalPrice) * 100)}% Off)
@@ -336,155 +387,254 @@ export const ProductDetailModal = () => {
                 </div>
 
                 {customer.isLoggedIn && customer.isMember ? (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <div style={{ fontSize: '0.74rem', color: 'var(--pk-gold-dark)', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
                     <Crown size={12} />
                     <span>PK Club VIP 5% Privilege applied automatically!</span>
                   </div>
                 ) : (
                   <div 
                     onClick={() => setMemberCardOpen(true)}
-                    style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', fontWeight: 600 }}
+                    style={{ fontSize: '0.74rem', color: 'var(--pk-gold-dark)', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', fontWeight: 600 }}
                     title="Click to unlock with Gmail"
                   >
                     <Crown size={12} style={{ color: 'var(--pk-gold-dark)' }} />
-                    <span>Member Price: <strong>₹{currentProduct.memberPrice.toLocaleString()}</strong> (Login with Gmail to Save 5%)</span>
+                    <span>VIP Member Price: <strong>₹{(currentProduct.memberPrice * quantity).toLocaleString()}</strong> (Save 5%)</span>
                   </div>
                 )}
               </div>
 
-              {/* Sizes */}
-              {currentProduct.sizes && (
-                <div style={{ marginBottom: '1.15rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
-                    <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
-                      Select Size:
-                    </label>
-                    <span style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', cursor: 'pointer' }}>
-                      Size Guide (2.4, 2.6, 2.8)
-                    </span>
-                  </div>
-                  <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-                    {currentProduct.sizes.map(size => (
+              {/* 1. COLOR & POLISH FINISH SELECTOR */}
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
+                    Select Polish / Color Finish:
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', fontWeight: 600 }}>
+                    {selectedColor}
+                  </span>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.45rem' }}>
+                  {POLISH_OPTIONS.map(opt => {
+                    const isSelected = selectedColor === opt.name;
+                    return (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setSelectedColor(opt.name)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '0.45rem',
+                          padding: '0.45rem 0.65rem',
+                          borderRadius: 'var(--radius-sm)',
+                          border: isSelected ? '2px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
+                          background: isSelected ? '#FFFFFF' : 'var(--pk-bg)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s',
+                          boxShadow: isSelected ? 'var(--shadow-sm)' : 'none'
+                        }}
+                      >
+                        <span style={{ width: '14px', height: '14px', borderRadius: '50%', background: opt.color, display: 'inline-block', border: '1px solid rgba(0,0,0,0.15)', flexShrink: 0 }} />
+                        <span style={{ fontSize: '0.75rem', fontWeight: isSelected ? 700 : 500, color: isSelected ? 'var(--pk-obsidian)' : 'var(--pk-text-secondary)', whiteSpace: 'nowrap' }}>
+                          {opt.name}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 2. SIZE SELECTOR */}
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
+                    Select Size:
+                  </label>
+                  <span style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', cursor: 'pointer', fontWeight: 600 }}>
+                    Size Guide (2.4, 2.6, 2.8)
+                  </span>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {(currentProduct.sizes && currentProduct.sizes.length > 0 ? currentProduct.sizes : ['2.4', '2.6', '2.8', 'Free Size Adjustable']).map(size => {
+                    const isSelected = selectedSize === size;
+                    return (
                       <button
                         key={size}
+                        type="button"
                         onClick={() => setSelectedSize(size)}
                         style={{
-                          padding: '0.35rem 0.75rem',
+                          padding: '0.45rem 0.9rem',
                           borderRadius: 'var(--radius-sm)',
                           fontSize: '0.8rem',
-                          fontWeight: 600,
-                          border: selectedSize === size ? '2px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
-                          background: selectedSize === size ? 'var(--pk-obsidian)' : '#FFFFFF',
-                          color: selectedSize === size ? '#FAF8F5' : 'var(--pk-text-primary)',
-                          cursor: 'pointer'
+                          fontWeight: isSelected ? 700 : 600,
+                          border: isSelected ? '2px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
+                          background: isSelected ? 'var(--pk-obsidian)' : '#FFFFFF',
+                          color: isSelected ? '#FAF8F5' : 'var(--pk-text-primary)',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s'
                         }}
                       >
                         {size}
                       </button>
-                    ))}
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* 3. QUANTITY & SELECTION SUMMARY ROW */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.75rem', background: '#FBF9F5', padding: '0.65rem 0.85rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--pk-border)', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
+                    Quantity:
+                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', background: '#FFFFFF', border: '1px solid var(--pk-border)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                      style={{ padding: '0.2rem 0.6rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem' }}
+                    >
+                      -
+                    </button>
+                    <span style={{ padding: '0.2rem 0.6rem', fontSize: '0.8rem', fontWeight: 700, minWidth: '24px', textAlign: 'center' }}>
+                      {quantity}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setQuantity(quantity + 1)}
+                      style={{ padding: '0.2rem 0.6rem', border: 'none', background: 'transparent', cursor: 'pointer', fontWeight: 800, fontSize: '0.85rem' }}
+                    >
+                      +
+                    </button>
                   </div>
                 </div>
-              )}
 
-              {/* Tab navigation */}
-              <div style={{ display: 'flex', borderBottom: '1px solid var(--pk-border)', marginBottom: '0.85rem' }}>
-                <button
-                  onClick={() => setActiveTab('SPEC')}
-                  style={{
-                    padding: '0.45rem 0.85rem',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: activeTab === 'SPEC' ? '2px solid var(--pk-gold-dark)' : 'none',
-                    fontSize: '0.78rem',
-                    fontWeight: activeTab === 'SPEC' ? 700 : 500,
-                    color: activeTab === 'SPEC' ? 'var(--pk-gold-dark)' : 'var(--pk-text-secondary)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Specifications
-                </button>
-                <button
-                  onClick={() => setActiveTab('CARE')}
-                  style={{
-                    padding: '0.45rem 0.85rem',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: activeTab === 'CARE' ? '2px solid var(--pk-gold-dark)' : 'none',
-                    fontSize: '0.78rem',
-                    fontWeight: activeTab === 'CARE' ? 700 : 500,
-                    color: activeTab === 'CARE' ? 'var(--pk-gold-dark)' : 'var(--pk-text-secondary)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Care & Warranty
-                </button>
-                <button
-                  onClick={() => setActiveTab('STYLING')}
-                  style={{
-                    padding: '0.45rem 0.85rem',
-                    background: 'transparent',
-                    border: 'none',
-                    borderBottom: activeTab === 'STYLING' ? '2px solid var(--pk-gold-dark)' : 'none',
-                    fontSize: '0.78rem',
-                    fontWeight: activeTab === 'STYLING' ? 700 : 500,
-                    color: activeTab === 'STYLING' ? 'var(--pk-gold-dark)' : 'var(--pk-text-secondary)',
-                    cursor: 'pointer'
-                  }}
-                >
-                  Styling Advice
-                </button>
+                <div style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', fontWeight: 700 }}>
+                  ✨ {selectedSize} • {selectedColor}
+                </div>
               </div>
 
-              {/* Tab Content */}
-              <div style={{ fontSize: '0.82rem', color: 'var(--pk-text-secondary)', lineHeight: 1.55, marginBottom: '1.25rem', minHeight: '60px' }}>
-                {activeTab === 'SPEC' && (
-                  <div>
-                    <p style={{ marginBottom: '0.6rem' }}>{currentProduct.description}</p>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.4rem', background: '#FBF9F5', padding: '0.6rem', borderRadius: '4px' }}>
-                      <div><strong>Finish:</strong> {currentProduct.finish}</div>
-                      <div><strong>Material:</strong> {currentProduct.material}</div>
-                      <div><strong>Stones:</strong> {currentProduct.stoneType}</div>
-                      <div><strong>Occasion:</strong> {currentProduct.occasion}</div>
+              {/* 4. SPECIFICATIONS, CARE & STYLING TABS (Structured Card, Zero Clashing) */}
+              <div style={{ flexShrink: 0 }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--pk-border)', marginBottom: '0.6rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('SPEC')}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: activeTab === 'SPEC' ? '2px solid var(--pk-gold-dark)' : 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: activeTab === 'SPEC' ? 700 : 500,
+                      color: activeTab === 'SPEC' ? 'var(--pk-gold-dark)' : 'var(--pk-text-secondary)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Specifications
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('CARE')}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: activeTab === 'CARE' ? '2px solid var(--pk-gold-dark)' : 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: activeTab === 'CARE' ? 700 : 500,
+                      color: activeTab === 'CARE' ? 'var(--pk-gold-dark)' : 'var(--pk-text-secondary)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Care &amp; Warranty
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('STYLING')}
+                    style={{
+                      padding: '0.45rem 0.85rem',
+                      background: 'transparent',
+                      border: 'none',
+                      borderBottom: activeTab === 'STYLING' ? '2px solid var(--pk-gold-dark)' : 'none',
+                      fontSize: '0.78rem',
+                      fontWeight: activeTab === 'STYLING' ? 700 : 500,
+                      color: activeTab === 'STYLING' ? 'var(--pk-gold-dark)' : 'var(--pk-text-secondary)',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Styling Advice
+                  </button>
+                </div>
+
+                {/* Tab Content Box - Distinct background and clear bounds */}
+                <div style={{ 
+                  background: '#FAF8F5', 
+                  border: '1px solid var(--pk-border)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  padding: '0.85rem', 
+                  fontSize: '0.82rem', 
+                  color: 'var(--pk-text-secondary)', 
+                  lineHeight: 1.55 
+                }}>
+                  {activeTab === 'SPEC' && (
+                    <div>
+                      <p style={{ marginBottom: '0.6rem', color: 'var(--pk-obsidian)', fontWeight: 500 }}>
+                        {currentProduct.description}
+                      </p>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '0.5rem', background: '#FFFFFF', padding: '0.65rem', borderRadius: '4px', border: '1px solid var(--pk-border)' }}>
+                        <div><strong>Finish:</strong> {currentProduct.finish}</div>
+                        <div><strong>Material:</strong> {currentProduct.material}</div>
+                        <div><strong>Stones:</strong> {currentProduct.stoneType}</div>
+                        <div><strong>Occasion:</strong> {currentProduct.occasion}</div>
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {activeTab === 'CARE' && (
-                  <div>
-                    <p style={{ marginBottom: '0.4rem' }}><strong>Longevity Care:</strong> {currentProduct.careInstructions}</p>
-                    <ul style={{ paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                      <li>1-Year Micro-Polish Warranty against premature tarnishing.</li>
-                      <li>Always put on jewellery AFTER applying perfumes, hairspray, and lotion.</li>
-                      <li>Store in individual zip pouches provided with your order.</li>
-                    </ul>
-                  </div>
-                )}
+                  {activeTab === 'CARE' && (
+                    <div>
+                      <p style={{ marginBottom: '0.4rem' }}>
+                        <strong>Longevity Care:</strong> {currentProduct.careInstructions}
+                      </p>
+                      <ul style={{ paddingLeft: '1.2rem', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+                        <li>1-Year Micro-Polish Warranty against premature tarnishing.</li>
+                        <li>Always put on jewellery AFTER applying perfumes, hairspray, and lotions.</li>
+                        <li>Store in individual velvet zip pouches provided with your order.</li>
+                      </ul>
+                    </div>
+                  )}
 
-                {activeTab === 'STYLING' && (
-                  <div>
-                    <p style={{ marginBottom: '0.4rem' }}>
-                      <strong>Stylist Note:</strong> Pair this {currentProduct.subcategory} with coordinating Kundan or American Diamond chokers.
-                    </p>
-                    <p>
-                      Ideal for: <strong>{currentProduct.occasion}</strong> events and grand festivities.
-                    </p>
-                  </div>
-                )}
+                  {activeTab === 'STYLING' && (
+                    <div>
+                      <p style={{ marginBottom: '0.4rem' }}>
+                        <strong>Stylist Note:</strong> Pair this {currentProduct.subcategory} with coordinating royal Kundan or American Diamond sets.
+                      </p>
+                      <p>
+                        Ideal for: <strong>{currentProduct.occasion}</strong> events, galas, and celebrations.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Matching "Complete the Look" suggestions (SAFE: Inspects recommendation WITHOUT losing original selection!) */}
+              {/* 5. MATCHING "COORDINATE THE LOOK" SUGGESTIONS (Clean Separate Container) */}
               {matchingItems.length > 0 && (
-                <div style={{ marginBottom: '1.25rem', borderTop: '1px solid var(--pk-border)', paddingTop: '0.85rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                    <span style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--pk-gold-dark)', letterSpacing: '0.04em' }}>
+                <div style={{ 
+                  background: '#FFFFFF', 
+                  border: '1px solid var(--pk-border)', 
+                  borderRadius: 'var(--radius-sm)', 
+                  padding: '0.85rem', 
+                  flexShrink: 0 
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem' }}>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: 'var(--pk-gold-dark)', letterSpacing: '0.04em' }}>
                       ✨ COORDINATE THE LOOK • RECOMMENDED PAIRS
                     </span>
-                    <span style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)' }}>
-                      Click to compare pair
+                    <span style={{ fontSize: '0.68rem', color: 'var(--pk-text-muted)' }}>
+                      Tap to compare &amp; bundle
                     </span>
                   </div>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '0.6rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.6rem' }}>
                     {matchingItems.slice(0, 3).map(item => (
                       <div 
                         key={item.id} 
@@ -495,11 +645,10 @@ export const ProductDetailModal = () => {
                           padding: '0.5rem', 
                           display: 'flex', 
                           alignItems: 'center', 
-                          gap: '0.5rem',
-                          cursor: 'pointer',
-                          background: '#FFFFFF',
-                          transition: 'all 0.2s',
-                          position: 'relative'
+                          gap: '0.5rem', 
+                          cursor: 'pointer', 
+                          background: 'var(--pk-bg)',
+                          transition: 'all 0.2s'
                         }}
                         onMouseOver={(e) => e.currentTarget.style.borderColor = 'var(--pk-gold)'}
                         onMouseOut={(e) => e.currentTarget.style.borderColor = 'var(--pk-border)'}
@@ -522,49 +671,53 @@ export const ProductDetailModal = () => {
                 </div>
               )}
 
-              {/* CTAs */}
-              <div style={{ marginTop: 'auto', display: 'flex', gap: '0.65rem', flexWrap: 'wrap' }}>
+              {/* 6. PRIMARY CTAs - Prominent, Generous Touch Targets, Zero Overlap */}
+              <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', paddingTop: '0.5rem', flexShrink: 0 }}>
                 <button 
-                  onClick={() => addToCart(currentProduct, selectedSize, 1)}
+                  type="button"
+                  onClick={handleAddToCart}
                   className="btn-gold" 
-                  style={{ flex: 1, padding: '0.8rem', minWidth: '180px' }}
+                  style={{ flex: 1, padding: '0.85rem 1rem', minWidth: '180px', fontSize: '0.88rem', fontWeight: 700 }}
                 >
                   <ShoppingBag size={16} />
-                  <span>Add to Bag (₹{displayPrice.toLocaleString()})</span>
+                  <span>Add to Bag (₹{(displayPrice * quantity).toLocaleString()})</span>
                 </button>
 
                 <button 
-                  onClick={() => setEnquiryProduct(currentProduct)}
+                  type="button"
+                  onClick={handleWhatsAppOrder}
                   style={{
                     background: 'transparent',
-                    border: '1px solid #1E4635',
+                    border: '1.5px solid #1E4635',
                     color: '#1E4635',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '0.75rem 0.9rem',
+                    padding: '0.85rem 1rem',
                     fontSize: '0.82rem',
-                    fontWeight: 600,
+                    fontWeight: 700,
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.35rem'
                   }}
                 >
-                  <MessageCircle size={15} style={{ color: '#25D366' }} />
+                  <MessageCircle size={16} style={{ color: '#25D366' }} />
                   <span>WhatsApp</span>
                 </button>
 
                 <button 
+                  type="button"
                   onClick={() => toggleWishlist(currentProduct.id)}
                   style={{
                     background: 'transparent',
                     border: '1px solid var(--pk-border)',
                     borderRadius: 'var(--radius-sm)',
-                    padding: '0.75rem',
+                    padding: '0.85rem',
                     cursor: 'pointer',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center'
                   }}
+                  title="Save to Wishlist"
                 >
                   <Heart size={18} style={{ color: isWishlisted ? '#7D1A25' : '#888', fill: isWishlisted ? '#7D1A25' : 'none' }} />
                 </button>

@@ -254,7 +254,16 @@ export const StoreProvider = ({ children }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState('all'); // 'all' | 'bangles' | 'necklaces' | 'bracelets' | 'earrings'
   const [activeSubcategory, setActiveSubcategory] = useState('all');
-  const [activeOccasion, setActiveOccasion] = useState('all');
+  const [activeOccasion, setActiveOccasion] = useState('ALL'); // Uppercase 'ALL' to match occasion filter constants
+  const [activeFilterTag, setActiveFilterTag] = useState('ALL'); // 'ALL' | 'MISS_WORLD' | 'TRENDING'
+
+  const resetAllFilters = () => {
+    setActiveCategory('all');
+    setActiveSubcategory('all');
+    setActiveOccasion('ALL');
+    setActiveFilterTag('ALL');
+    setSearchQuery('');
+  };
 
   // Persistence
   useEffect(() => {
@@ -968,10 +977,12 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
-  // Category and Subcategory Switcher
+  // Category and Subcategory Switcher with full filter reset
   const handleCategoryChange = (categoryKey) => {
     setActiveCategory(categoryKey);
     setActiveSubcategory('all'); // reset subcategory on main category switch
+    setActiveOccasion('ALL'); // reset occasion filter to ALL
+    setActiveFilterTag('ALL'); // reset custom tag filter
   };
 
   // Cart financial calculations
@@ -1093,6 +1104,9 @@ export const StoreProvider = ({ children }) => {
         setActiveSubcategory,
         activeOccasion,
         setActiveOccasion,
+        activeFilterTag,
+        setActiveFilterTag,
+        resetAllFilters,
         // Product Catalogs
         products,
         setProducts,

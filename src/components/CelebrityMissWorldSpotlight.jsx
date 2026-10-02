@@ -211,27 +211,29 @@ export const CelebrityMissWorldSpotlight = () => {
               </button>
             </div>
 
-            {/* Quick Update Button (Open to user to update new photos as requested) */}
-            <button
-              onClick={() => setModalOpen(true)}
-              style={{
-                background: 'rgba(212, 175, 55, 0.15)',
-                border: '1px solid rgba(212, 175, 55, 0.5)',
-                color: '#E4C88A',
-                borderRadius: 'var(--radius-full)',
-                padding: '0.45rem 1rem',
-                fontSize: '0.8rem',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                transition: 'all 0.2s'
-              }}
-            >
-              <Camera size={14} />
-              <span>+ Update Photos & Celebrities</span>
-            </button>
+            {/* Quick Update Button (Admin Only) */}
+            {adminUser && (
+              <button
+                onClick={() => setModalOpen(true)}
+                style={{
+                  background: 'rgba(212, 175, 55, 0.15)',
+                  border: '1px solid rgba(212, 175, 55, 0.5)',
+                  color: '#E4C88A',
+                  borderRadius: 'var(--radius-full)',
+                  padding: '0.45rem 1rem',
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  transition: 'all 0.2s'
+                }}
+              >
+                <Camera size={14} />
+                <span>+ Update Photos &amp; Celebrities</span>
+              </button>
+            )}
           </div>
 
         </div>

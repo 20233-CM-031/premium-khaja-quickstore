@@ -14,11 +14,11 @@ import React, { useState, useEffect } from 'react';
 export const HyderabadMonumentsBackground = () => {
   const [activeMonument, setActiveMonument] = useState(0);
 
-  // Rotate between Hyderabad's iconic monuments every 16 seconds
+  // Rotate between Hyderabad's iconic monuments + 1 clean no-monument luxury state every 14 seconds
   useEffect(() => {
     const timer = setInterval(() => {
-      setActiveMonument(prev => (prev + 1) % 4);
-    }, 16000);
+      setActiveMonument(prev => (prev + 1) % 5);
+    }, 14000);
     return () => clearInterval(timer);
   }, []);
 
@@ -188,6 +188,21 @@ export const HyderabadMonumentsBackground = () => {
             <line x1="290" y1="370" x2="450" y2="370" stroke="rgba(212, 175, 55, 0.3)" strokeWidth="2" />
             <line x1="750" y1="370" x2="910" y2="370" stroke="rgba(212, 175, 55, 0.3)" strokeWidth="2" />
           </g>
+        </svg>
+      )
+    },
+    {
+      id: 'clean-ambient',
+      name: 'Pure Ambient Luxury — Nizami Gold Luminescence',
+      svg: (
+        <svg viewBox="0 0 1200 600" className="monument-svg" preserveAspectRatio="xMidYMax meet">
+          <defs>
+            <radialGradient id="cleanLuminance" cx="50%" cy="80%" r="65%">
+              <stop offset="0%" stopColor="#D4AF37" stopOpacity="0.04" />
+              <stop offset="100%" stopColor="#121110" stopOpacity="0" />
+            </radialGradient>
+          </defs>
+          <rect x="0" y="0" width="1200" height="600" fill="url(#cleanLuminance)" />
         </svg>
       )
     }

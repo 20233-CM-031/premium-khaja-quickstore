@@ -38,6 +38,9 @@ export const BanglesSpotlight = () => {
     setActiveSubcategory,
     activeOccasion,
     setActiveOccasion,
+    activeFilterTag,
+    setActiveFilterTag,
+    resetAllFilters,
     setMemberCardOpen
   } = useStore();
 
@@ -51,35 +54,64 @@ export const BanglesSpotlight = () => {
   // Current category config
   const currentCatConfig = CATEGORY_CONFIG[activeCategory] || CATEGORY_CONFIG.bangles;
 
-  // Filter Logic across ALL products (including custom admin added products!) with active category & subcategory support
+  const getCategoryCount = (catKey) => {
+    if (catKey === 'all') return allAvailableProducts.length;
+    return allAvailableProducts.filter(p => p.category === catKey).length;
+  };
+
+  const missWorldCount = allAvailableProducts.filter(p => p.tags && p.tags.some(t => t.toLowerCase().includes('miss world'))).length;
+
+  const handleCategoryClick = (catKey) => {
+    setActiveCategory(catKey);
+    setActiveSubcategory('all');
+    setActiveOccasion('ALL');
+    setSelectedPriceBracket('ALL');
+    if (setActiveFilterTag) setActiveFilterTag('ALL');
+    setSearchQuery('');
+  };
+
+  // Resilient Filter Logic with global search support and zero default conflicts
   const filteredProducts = allAvailableProducts.filter(item => {
-    // 1. Search query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      const match = item.name.toLowerCase().includes(q) ||
-                    item.description.toLowerCase().includes(q) ||
-                    item.subcategory.toLowerCase().includes(q) ||
-                    (item.tags && item.tags.some(t => t.toLowerCase().includes(q))) ||
-                    (item.finish && item.finish.toLowerCase().includes(q));
+    // 1. Search query (searches globally if present)
+    if (searchQuery && searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      const match = (item.name && item.name.toLowerCase().includes(q)) ||
+                    (item.description && item.description.toLowerCase().includes(q)) ||
+                    (item.subcategory && item.subcategory.toLowerCase().includes(q)) ||
+                    (item.category && item.category.toLowerCase().includes(q)) ||
+                    (item.material && item.material.toLowerCase().includes(q)) ||
+                    (item.stoneType && item.stoneType.toLowerCase().includes(q)) ||
+                    (item.finish && item.finish.toLowerCase().includes(q)) ||
+                    (item.tags && item.tags.some(t => t.toLowerCase().includes(q)));
       if (!match) return false;
     }
 
-    // 2. Main Category Filter
-    if (activeCategory !== 'all' && item.category !== activeCategory) {
+    // 2. Miss World Dedicated Filter Tag
+    if (activeFilterTag === 'MISS_WORLD') {
+      const isMissWorld = item.tags && item.tags.some(t => t.toLowerCase().includes('miss world'));
+      if (!isMissWorld) return false;
+    }
+
+    // 3. Main Category Filter (Only if not in global search)
+    if ((!searchQuery || !searchQuery.trim()) && activeFilterTag !== 'MISS_WORLD' && activeCategory !== 'all' && item.category !== activeCategory) {
       return false;
     }
 
-    // 3. Subcategory Filter
-    if (activeSubcategory !== 'all' && item.subcategory.toLowerCase() !== activeSubcategory.toLowerCase()) {
-      return false;
+    // 4. Subcategory Filter
+    if ((!searchQuery || !searchQuery.trim()) && activeFilterTag !== 'MISS_WORLD' && activeSubcategory !== 'all') {
+      if (!item.subcategory || item.subcategory.toLowerCase() !== activeSubcategory.toLowerCase()) {
+        return false;
+      }
     }
 
-    // 4. Occasion
-    if (activeOccasion !== 'ALL' && item.occasion !== activeOccasion) {
-      return false;
+    // 5. Occasion (case-insensitive check against ALL)
+    if (activeOccasion && activeOccasion.toUpperCase() !== 'ALL') {
+      if (!item.occasion || item.occasion.toUpperCase() !== activeOccasion.toUpperCase()) {
+        return false;
+      }
     }
 
-    // 5. Price bracket
+    // 6. Price bracket
     if (selectedPriceBracket === 'UNDER_1000' && item.price >= 1000) return false;
     if (selectedPriceBracket === 'UNDER_2000' && (item.price < 1000 || item.price > 2000)) return false;
     if (selectedPriceBracket === 'PREMIUM' && item.price <= 2000) return false;
@@ -91,17 +123,50 @@ export const BanglesSpotlight = () => {
     setSelectedSizes(prev => ({ ...prev, [productId]: size }));
   };
 
-  const getCategoryCount = (catKey) => {
-    if (catKey === 'all') return allAvailableProducts.length;
-    return allAvailableProducts.filter(p => p.category === catKey).length;
-  };
+  const CATEGORY_TABS = [
+    {
+      id: 'all',
+      name: 'All Collections',
+      subtitle: 'Complete Catalog',
+      count: getCategoryCount('all'),
+      image: '/images/bangles/1789662811af3b.png'
+    },
+    {
+      id: 'bangles',
+      name: 'Bangle Atelier',
+      subtitle: '28 Handcrafted Sets',
+      count: getCategoryCount('bangles'),
+      image: '/images/bangles/1789662811af3b.png'
+    },
+    {
+      id: 'necklaces',
+      name: 'Neclace',
+      subtitle: 'Cz, AD, Real Pearls',
+      count: getCategoryCount('necklaces'),
+      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=140&q=80'
+    },
+    {
+      id: 'bracelets',
+      name: 'Bracelet',
+      subtitle: 'Collage, Party, Family',
+      count: getCategoryCount('bracelets'),
+      image: 'https://images.unsplash.com/photo-1611591475847-f5dc837f40ba?auto=format&fit=crop&w=140&q=80'
+    },
+    {
+      id: 'earrings',
+      name: 'Earings',
+      subtitle: 'Traditions, Simple...',
+      count: getCategoryCount('earrings'),
+      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=140&q=80'
+    }
+  ];
 
   return (
-    <section id="bangles-atelier" style={{ padding: '4.5rem 0', background: 'var(--pk-bg)' }}>
+    <section id="bangles-atelier" style={{ padding: '4rem 0', background: 'var(--pk-bg)' }}>
       <div className="container">
         
         {/* Section Header */}
-        <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2.5rem' }}>
+        <div style={{ textAlign: 'center', maxWidth: '800px', margin: '0 auto 2.2rem' }}>
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'var(--pk-gold-bg)', border: '1px solid var(--pk-border-gold)', borderRadius: 'var(--radius-full)', padding: '0.3rem 0.9rem', marginBottom: '0.8rem' }}>
             <Sparkles size={14} style={{ color: 'var(--pk-gold-dark)' }} />
             <span style={{ fontSize: '0.74rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--pk-gold-dark)', fontWeight: 700 }}>
@@ -109,144 +174,128 @@ export const BanglesSpotlight = () => {
             </span>
           </div>
 
-          <h2 style={{ fontSize: 'clamp(2rem, 3.5vw, 2.9rem)', color: 'var(--pk-obsidian)', lineHeight: 1.2, marginBottom: '0.75rem' }}>
-            Heirloom Bangles & Royal Adornments
+          <h2 style={{ fontSize: 'clamp(1.9rem, 3.5vw, 2.8rem)', color: 'var(--pk-obsidian)', lineHeight: 1.2, marginBottom: '0.75rem' }}>
+            Heirloom Bangles &amp; Royal Adornments
           </h2>
           
-          <p style={{ fontSize: '0.98rem', color: 'var(--pk-text-secondary)', lineHeight: 1.6 }}>
+          <p style={{ fontSize: '0.95rem', color: 'var(--pk-text-secondary)', lineHeight: 1.6 }}>
             Each piece is micro-plated in pure 22K gold alloys with certified anti-tarnish coating. Explore authentic glass bangles, stone kadas, organic lac creations, real pearls, and American Diamond couture.
           </p>
         </div>
 
-        {/* 1. PRIMARY CATEGORY TABS (Bangle, Neclace, Bracelet, Earings) */}
+        {/* 1. PRIMARY CATEGORY TABS WITH REAL IMAGE ICONS (Visual Category Selection) */}
         <div style={{ 
           display: 'flex', 
-          justifyContent: 'center', 
-          gap: '0.6rem', 
-          flexWrap: 'wrap', 
-          marginBottom: '1.5rem' 
-        }}>
-          <button
-            onClick={() => setActiveCategory('all')}
-            style={{
-              background: activeCategory === 'all' ? 'var(--pk-obsidian)' : '#FFFFFF',
-              color: activeCategory === 'all' ? '#FAF8F5' : 'var(--pk-text-primary)',
-              border: activeCategory === 'all' ? '1px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
-              borderRadius: 'var(--radius-full)',
-              padding: '0.55rem 1.25rem',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: activeCategory === 'all' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <span>All Collections</span>
-            <span style={{ background: activeCategory === 'all' ? '#D4AF37' : 'var(--pk-surface-alt)', color: activeCategory === 'all' ? '#121110' : 'var(--pk-text-muted)', fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-              {getCategoryCount('all')}
-            </span>
-          </button>
+          justifyContent: 'flex-start', 
+          gap: '0.75rem', 
+          overflowX: 'auto', 
+          padding: '0.25rem 0.25rem 0.75rem',
+          marginBottom: '1.75rem',
+          WebkitOverflowScrolling: 'touch'
+        }} className="category-scroll-container">
+          {CATEGORY_TABS.map(cat => {
+            const isSelected = activeCategory === cat.id && activeFilterTag !== 'MISS_WORLD';
+            return (
+              <button
+                key={cat.id}
+                onClick={() => handleCategoryClick(cat.id)}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.65rem',
+                  padding: '0.45rem 1.1rem 0.45rem 0.5rem',
+                  borderRadius: 'var(--radius-full)',
+                  border: isSelected ? '2px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
+                  background: isSelected ? 'var(--pk-obsidian)' : '#FFFFFF',
+                  color: isSelected ? '#FAF8F5' : 'var(--pk-text-primary)',
+                  cursor: 'pointer',
+                  boxShadow: isSelected ? 'var(--shadow-md)' : 'var(--shadow-sm)',
+                  transition: 'all 0.2s',
+                  flexShrink: 0
+                }}
+              >
+                <img 
+                  src={cat.image} 
+                  alt={cat.name} 
+                  style={{ 
+                    width: '38px', 
+                    height: '38px', 
+                    borderRadius: '50%', 
+                    objectFit: 'cover', 
+                    border: isSelected ? '2px solid #D4AF37' : '1px solid var(--pk-border)' 
+                  }} 
+                />
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '0.82rem', fontWeight: 700, lineHeight: 1.1 }}>
+                    {cat.name}
+                  </div>
+                  {cat.subtitle && (
+                    <div style={{ fontSize: '0.65rem', color: isSelected ? '#E4C88A' : 'var(--pk-text-muted)', marginTop: '0.15rem' }}>
+                      {cat.subtitle}
+                    </div>
+                  )}
+                </div>
+                <span style={{ 
+                  background: isSelected ? '#D4AF37' : 'var(--pk-surface-alt)', 
+                  color: isSelected ? '#121110' : 'var(--pk-text-muted)', 
+                  fontSize: '0.68rem', 
+                  padding: '0.15rem 0.45rem', 
+                  borderRadius: 'var(--radius-full)', 
+                  fontWeight: 700,
+                  marginLeft: '0.2rem'
+                }}>
+                  {cat.count}
+                </span>
+              </button>
+            );
+          })}
 
-          {/* Bangles Category */}
+          {/* Miss World 2025 Worn Pieces Spotlight Button */}
           <button
-            onClick={() => setActiveCategory('bangles')}
+            onClick={() => {
+              setActiveCategory('all');
+              setActiveSubcategory('all');
+              setActiveOccasion('ALL');
+              setSelectedPriceBracket('ALL');
+              setSearchQuery('');
+              if (setActiveFilterTag) setActiveFilterTag(activeFilterTag === 'MISS_WORLD' ? 'ALL' : 'MISS_WORLD');
+            }}
             style={{
-              background: activeCategory === 'bangles' ? 'var(--pk-obsidian)' : '#FFFFFF',
-              color: activeCategory === 'bangles' ? '#FAF8F5' : 'var(--pk-text-primary)',
-              border: activeCategory === 'bangles' ? '1px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
-              borderRadius: 'var(--radius-full)',
-              padding: '0.55rem 1.25rem',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: activeCategory === 'bangles' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <span>Bangle (28 Designs)</span>
-            <span style={{ background: activeCategory === 'bangles' ? '#D4AF37' : 'var(--pk-surface-alt)', color: activeCategory === 'bangles' ? '#121110' : 'var(--pk-text-muted)', fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-              {getCategoryCount('bangles')}
-            </span>
-          </button>
-
-          {/* Necklace Category */}
-          <button
-            onClick={() => setActiveCategory('necklaces')}
-            style={{
-              background: activeCategory === 'necklaces' ? 'var(--pk-obsidian)' : '#FFFFFF',
-              color: activeCategory === 'necklaces' ? '#FAF8F5' : 'var(--pk-text-primary)',
-              border: activeCategory === 'necklaces' ? '1px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
+              gap: '0.6rem',
+              padding: '0.45rem 1.1rem 0.45rem 0.5rem',
               borderRadius: 'var(--radius-full)',
-              padding: '0.55rem 1.25rem',
-              fontSize: '0.85rem',
-              fontWeight: 700,
+              border: activeFilterTag === 'MISS_WORLD' ? '2px solid #7D1A25' : '1px solid rgba(125,26,37,0.35)',
+              background: activeFilterTag === 'MISS_WORLD' ? 'linear-gradient(135deg, #7D1A25 0%, #AA822A 100%)' : '#FFF5F5',
+              color: activeFilterTag === 'MISS_WORLD' ? '#FAF8F5' : '#7D1A25',
               cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: activeCategory === 'necklaces' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s'
+              boxShadow: 'var(--shadow-sm)',
+              transition: 'all 0.2s',
+              flexShrink: 0
             }}
           >
-            <span>Neclace (Cz, AD, Real Pearls)</span>
-            <span style={{ background: activeCategory === 'necklaces' ? '#D4AF37' : 'var(--pk-surface-alt)', color: activeCategory === 'necklaces' ? '#121110' : 'var(--pk-text-muted)', fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-              {getCategoryCount('necklaces')}
-            </span>
-          </button>
-
-          {/* Bracelet Category */}
-          <button
-            onClick={() => setActiveCategory('bracelets')}
-            style={{
-              background: activeCategory === 'bracelets' ? 'var(--pk-obsidian)' : '#FFFFFF',
-              color: activeCategory === 'bracelets' ? '#FAF8F5' : 'var(--pk-text-primary)',
-              border: activeCategory === 'bracelets' ? '1px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
-              borderRadius: 'var(--radius-full)',
-              padding: '0.55rem 1.25rem',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: activeCategory === 'bracelets' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <span>Bracelet (Collage, Party, Family)</span>
-            <span style={{ background: activeCategory === 'bracelets' ? '#D4AF37' : 'var(--pk-surface-alt)', color: activeCategory === 'bracelets' ? '#121110' : 'var(--pk-text-muted)', fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-              {getCategoryCount('bracelets')}
-            </span>
-          </button>
-
-          {/* Earrings Category */}
-          <button
-            onClick={() => setActiveCategory('earrings')}
-            style={{
-              background: activeCategory === 'earrings' ? 'var(--pk-obsidian)' : '#FFFFFF',
-              color: activeCategory === 'earrings' ? '#FAF8F5' : 'var(--pk-text-primary)',
-              border: activeCategory === 'earrings' ? '1px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
-              borderRadius: 'var(--radius-full)',
-              padding: '0.55rem 1.25rem',
-              fontSize: '0.85rem',
-              fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              boxShadow: activeCategory === 'earrings' ? 'var(--shadow-sm)' : 'none',
-              transition: 'all 0.2s'
-            }}
-          >
-            <span>Earings (Traditions, Simple, Party...)</span>
-            <span style={{ background: activeCategory === 'earrings' ? '#D4AF37' : 'var(--pk-surface-alt)', color: activeCategory === 'earrings' ? '#121110' : 'var(--pk-text-muted)', fontSize: '0.7rem', padding: '0.1rem 0.45rem', borderRadius: 'var(--radius-full)', fontWeight: 700 }}>
-              {getCategoryCount('earrings')}
+            <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#AA822A', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Crown size={18} style={{ color: '#FAF8F5' }} />
+            </div>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: '0.82rem', fontWeight: 800, lineHeight: 1.1 }}>
+                Miss World 2025
+              </div>
+              <div style={{ fontSize: '0.65rem', opacity: 0.9, marginTop: '0.1rem' }}>
+                Worn &amp; Gifted Pieces
+              </div>
+            </div>
+            <span style={{ 
+              background: activeFilterTag === 'MISS_WORLD' ? '#FAF8F5' : '#7D1A25', 
+              color: activeFilterTag === 'MISS_WORLD' ? '#7D1A25' : '#FAF8F5', 
+              fontSize: '0.68rem', 
+              padding: '0.15rem 0.45rem', 
+              borderRadius: 'var(--radius-full)', 
+              fontWeight: 800,
+              marginLeft: '0.2rem'
+            }}>
+              {missWorldCount}
             </span>
           </button>
         </div>
@@ -651,6 +700,7 @@ export const BanglesSpotlight = () => {
                 setActiveSubcategory('all');
                 setActiveOccasion('ALL');
                 setSelectedPriceBracket('ALL');
+                if (setActiveFilterTag) setActiveFilterTag('ALL');
                 setSearchQuery('');
               }}
               className="btn-gold"
