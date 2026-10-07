@@ -79,7 +79,7 @@ export const BANGLES_PRODUCTS = [
     memberPrice: 2249,
     inventoryCount: 14,
     status: "IN STOCK",
-    image: "/images/bangles/1789662811af3b.png",
+    image: "/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png",
     description: "An heirloom-grade royal Kada featuring intricate hand-carved floral motifs, embedded uncut Kundan stones, and regal crimson Meenakari along the outer rim. Designed with an easy openable screw clasp for effortless wear.",
     sizes: ["2.4", "2.6", "2.8"],
     isTrending: true,

@@ -42,17 +42,32 @@ export const OrderSuccessModal = () => {
   const activeOwnerPhone = storeOwnerPhone || "9393056641";
   const activeUpiId = storeUpiId || orderSuccessData.upiId || "premiumkhaja@okaxis";
 
-  // Structured Shareable Order Slip
+  // Structured Shareable Order Slip matching Screenshot 4 template exactly
   const generateSlipText = () => {
     const itemsList = orderSuccessData.items
-      .map(i => `• ${i.name} (Qty: ${i.quantity}, Size: ${i.size}) - ₹${(i.price * i.quantity).toLocaleString()}`)
+      .map(i => `• ${i.name} (Qty: ${i.quantity}${i.size ? `, Size: ${i.size}` : ''}) - ₹${(i.price * i.quantity).toLocaleString()}`)
       .join('\n');
 
-    const guidanceBlock = (orderSuccessData.orderGuidance || orderSuccessData.sizePreference || orderSuccessData.guidanceTags?.length > 0)
-      ? `\n🎯 *CUSTOMER ORDER PREFERENCES & GUIDANCE:*\n• *Size Preference:* ${orderSuccessData.sizePreference || 'As Selected'}\n• *Special Notes:* ${orderSuccessData.orderGuidance || 'Standard order'}${orderSuccessData.guidanceTags?.length > 0 ? `\n• *Tags:* ${orderSuccessData.guidanceTags.join(', ')}` : ''}\n`
+    const cleanCustomerPhone = (orderSuccessData.customerPhone || '').replace(/\D/g, '') || '9393056641';
+
+    const guidanceBlock = (orderSuccessData.orderGuidance || (orderSuccessData.guidanceTags && orderSuccessData.guidanceTags.length > 0))
+      ? `\n🎯 *CUSTOMER PREFERENCE / GUIDANCE:*\n• ${orderSuccessData.orderGuidance || 'Standard order'}${orderSuccessData.guidanceTags?.length ? ` (${orderSuccessData.guidanceTags.join(', ')})` : ''}\n`
       : '';
 
-    return `👑 *PREMIUM KHAJA — OFFICIAL ORDER & PAYMENT CONFIRMATION* 👑\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧾 *ORDER INVOICE:* #${orderSuccessData.orderId}\n📅 *TIMESTAMP:* ${orderSuccessData.orderDate}\n💰 *TOTAL AMOUNT PAID:* ₹${orderSuccessData.totalAmount.toLocaleString()}\n💳 *PAYMENT METHOD:* ${orderSuccessData.paymentMethod}\n👤 *MERCHANT PAYEE:* ${activeOwnerName} (${activeUpiId})\n🔖 *UTR / REFERENCE NO:* ${orderSuccessData.utrNumber}\n\n👤 *CUSTOMER & DELIVERY PROFILE:*\n• *Customer Name:* ${orderSuccessData.customerName}\n• *WhatsApp Phone:* ${orderSuccessData.customerPhone || 'Provided'}\n• *Shipping Address:* ${orderSuccessData.shippingAddress}\n${guidanceBlock}\n📦 *ORDERED ATELIER ITEMS:*\n${itemsList}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n• *Final Net Total Paid: ₹${orderSuccessData.totalAmount.toLocaleString()}*\n\n📍 *ATELIER OWNER DISPATCH ACTION:*\nCustomer has sent payment via UPI to ${activeUpiId}. Please verify receipt in Google Pay / UPI app and confirm delivery dispatch via Dunzo / Porter / Delhivery / Speed Post!\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    return `• *Name:* ${orderSuccessData.customerName}
+• *Phone:* ${cleanCustomerPhone}
+• *Delivery Address:* ${orderSuccessData.shippingAddress}
+
+🛒 *ITEMS ORDERED:*
+${itemsList}
+${guidanceBlock}
+💳 *PAYMENT REFERENCE:*
+• Total: ₹${orderSuccessData.totalAmount.toLocaleString()}
+• UTR / Ref: ${orderSuccessData.utrNumber}
+• Payee: ${activeOwnerName} (${activeUpiId})
+
+📍 *DELIVERY DISPATCH ACTION:*
+Customer has made payment via QR code. Please confirm receipt in your UPI App and message customer to request exact location / pin to book online delivery via Dunzo / Porter / Delhivery!`;
   };
 
   const handleShareToWhatsApp = () => {

@@ -22,6 +22,7 @@ export const CelebrityMissWorldSpotlight = () => {
   const { 
     celebrityShowcase, 
     addCelebrityShowcaseItem, 
+    updateCelebrityShowcaseItem,
     deleteCelebrityShowcaseItem,
     openProductDetail, 
     setActiveCategory, 
@@ -34,7 +35,40 @@ export const CelebrityMissWorldSpotlight = () => {
 
   const [activeTab, setActiveTab] = useState('ALL');
   const [modalOpen, setModalOpen] = useState(false);
+  const [editingShowcaseItem, setEditingShowcaseItem] = useState(null);
+  const [editForm, setEditForm] = useState({
+    title: '',
+    subtitle: '',
+    celebrity: '',
+    event: 'Miss World 2025 India',
+    quote: '',
+    image: '',
+    tag: 'Miss World 2025 India',
+    badge: 'Celebrity Choice'
+  });
   const fileInputRef = useRef(null);
+  const editFileInputRef = useRef(null);
+
+  const openDirectEdit = (item) => {
+    setEditingShowcaseItem(item);
+    setEditForm({
+      title: item.title || '',
+      subtitle: item.subtitle || '',
+      celebrity: item.celebrity || '',
+      event: item.event || 'Miss World 2025 India',
+      quote: item.quote || '',
+      image: item.image || '',
+      tag: item.tag || 'Miss World 2025 India',
+      badge: item.badge || 'Official Partner'
+    });
+  };
+
+  const handleEditSave = (e) => {
+    e.preventDefault();
+    if (!editingShowcaseItem) return;
+    updateCelebrityShowcaseItem(editingShowcaseItem.id, editForm);
+    setEditingShowcaseItem(null);
+  };
 
   // Form state for updating new photos/celebrities
   const [newTitle, setNewTitle] = useState('');
@@ -411,27 +445,49 @@ export const CelebrityMissWorldSpotlight = () => {
 
                   {/* Admin Direct Axis Controls */}
                   {adminUser && (
-                    <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(212, 175, 55, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <button
-                        type="button"
-                        onClick={() => setActiveMode('merchant')}
-                        style={{
-                          background: 'rgba(212, 175, 55, 0.15)',
-                          border: '1px solid #D4AF37',
-                          color: '#E4C88A',
-                          borderRadius: '4px',
-                          padding: '0.3rem 0.65rem',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem'
-                        }}
-                      >
-                        <Edit3 size={12} />
-                        <span>Edit in Command Center</span>
-                      </button>
+                    <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(212, 175, 55, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'flex', gap: '0.4rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => openDirectEdit(item)}
+                          style={{
+                            background: 'var(--pk-gold-gradient)',
+                            border: '1px solid #D4AF37',
+                            color: '#121110',
+                            borderRadius: '4px',
+                            padding: '0.3rem 0.65rem',
+                            fontSize: '0.72rem',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                        >
+                          <Edit3 size={12} />
+                          <span>Edit</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveMode('command-center')}
+                          style={{
+                            background: 'rgba(212, 175, 55, 0.15)',
+                            border: '1px solid #D4AF37',
+                            color: '#E4C88A',
+                            borderRadius: '4px',
+                            padding: '0.3rem 0.65rem',
+                            fontSize: '0.72rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '0.3rem'
+                          }}
+                        >
+                          <span>Command Center</span>
+                        </button>
+                      </div>
 
                       <button
                         type="button"
@@ -640,6 +696,179 @@ export const CelebrityMissWorldSpotlight = () => {
                 <Sparkles size={16} />
                 <span>Publish to Extraordinary Showcase</span>
               </button>
+            </form>
+
+          </div>
+        </div>
+      )}
+
+      {/* Direct In-Place Edit Showcase Modal for Storefront */}
+      {editingShowcaseItem && (
+        <div className="modal-backdrop" onClick={() => setEditingShowcaseItem(null)} style={{ zIndex: 1200 }}>
+          <div 
+            className="modal-content" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ maxWidth: '580px', width: '92%', maxHeight: '90vh', overflowY: 'auto', padding: '2rem', background: '#FFFFFF', color: 'var(--pk-obsidian)', borderRadius: 'var(--radius-md)' }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem' }}>
+              <div>
+                <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                  Admin Direct Accolade Editor
+                </span>
+                <h3 style={{ fontSize: '1.25rem', margin: '0.2rem 0 0', color: 'var(--pk-obsidian)', fontFamily: 'var(--font-serif)' }}>
+                  Edit Miss World Accolade
+                </h3>
+              </div>
+              <button 
+                className="btn-icon" 
+                onClick={() => setEditingShowcaseItem(null)}
+                style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '0.25rem' }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Accolade / Feature Title *</label>
+                <input 
+                  type="text" 
+                  required
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Celebrity / Pageant Dignitary *</label>
+                  <input 
+                    type="text" 
+                    required
+                    value={editForm.celebrity}
+                    onChange={(e) => setEditForm({ ...editForm, celebrity: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Event / Pageant Name</label>
+                  <input 
+                    type="text" 
+                    value={editForm.event}
+                    onChange={(e) => setEditForm({ ...editForm, event: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Subtitle Caption</label>
+                <input 
+                  type="text" 
+                  value={editForm.subtitle}
+                  onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Image URL or Photo Upload</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input 
+                    type="text" 
+                    value={editForm.image}
+                    onChange={(e) => setEditForm({ ...editForm, image: e.target.value })}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    ref={editFileInputRef}
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const reader = new FileReader();
+                      reader.onload = (evt) => {
+                        setEditForm({ ...editForm, image: evt.target.result });
+                      };
+                      reader.readAsDataURL(file);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => editFileInputRef.current?.click()}
+                    className="btn-outline"
+                    style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {editForm.image && (
+                  <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <img src={editForm.image} alt="preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                    <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>✓ Image set</span>
+                  </div>
+                )}
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label">Quote or Press Description</label>
+                <textarea 
+                  rows={2}
+                  value={editForm.quote}
+                  onChange={(e) => setEditForm({ ...editForm, quote: e.target.value })}
+                  className="form-textarea"
+                  style={{ minHeight: '70px' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Category Tag</label>
+                  <select 
+                    value={editForm.tag} 
+                    onChange={(e) => setEditForm({ ...editForm, tag: e.target.value })}
+                    className="form-select"
+                  >
+                    <option value="Miss World 2025 India">Miss World 2025 India</option>
+                    <option value="Red Carpet Gala">Red Carpet Gala</option>
+                    <option value="Fashion Editorial">Fashion Editorial</option>
+                  </select>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label">Badge Label</label>
+                  <input 
+                    type="text" 
+                    value={editForm.badge}
+                    onChange={(e) => setEditForm({ ...editForm, badge: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.6rem', marginTop: '0.5rem' }}>
+                <button 
+                  type="submit" 
+                  className="btn-gold" 
+                  style={{ flex: 1, padding: '0.85rem' }}
+                >
+                  <Sparkles size={16} />
+                  <span>Save Accolade Changes</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setEditingShowcaseItem(null)}
+                  className="btn-outline"
+                  style={{ padding: '0.85rem 1.25rem' }}
+                >
+                  Cancel
+                </button>
+              </div>
             </form>
 
           </div>

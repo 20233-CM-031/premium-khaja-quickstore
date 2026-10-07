@@ -364,11 +364,12 @@ h1, h2, h3, h4, .font-serif {
 .product-card .img-wrapper img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 8px;
   transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .product-card:hover .img-wrapper img {
-  transform: scale(1.05);
+  transform: scale(1.04);
 }
 
 /* Pulse animation for live events */

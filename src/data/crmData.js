@@ -5,7 +5,7 @@ export const INITIAL_LOOKBOOKS = [
     id: "look-01",
     title: "The Royal Rajwada Bridal Ensemble",
     subtitle: "Grand Rajputana Wedding Luxury in 22K Antique Micron Gold",
-    image: "/images/bangles/1789662811af3b.png",
+    image: "/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png",
     occasion: "Bridal",
     originalTotal: 7997,
     bundlePrice: 6999,

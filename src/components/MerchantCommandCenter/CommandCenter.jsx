@@ -109,6 +109,8 @@ export const CommandCenter = () => {
   const [newProductDesc, setNewProductDesc] = useState('');
   const [newProductImage, setNewProductImage] = useState('');
   const [imageFileName, setImageFileName] = useState('');
+  const [imageFramingMode, setImageFramingMode] = useState('CONTAIN'); // 'CONTAIN' | 'BOTTOM' | 'CENTER'
+  const [rawUploadedImg, setRawUploadedImg] = useState(null);
   const [imageUploadLoading, setImageUploadLoading] = useState(false);
   const [isAiAutoFilling, setIsAiAutoFilling] = useState(false);
   const [aiFillSuccess, setAiFillSuccess] = useState('');
@@ -339,7 +341,7 @@ export const CommandCenter = () => {
       celebrity: newShowcaseCelebrity,
       event: newShowcaseEvent || 'Miss World 2025 India',
       quote: newShowcaseQuote || 'Honoured to adorn the royal legacy of Premium Khaja on the world stage.',
-      image: newShowcaseImage || '/images/bangles/1789662811af3b.png',
+      image: newShowcaseImage || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
       tag: newShowcaseTag || 'Miss World 2025 India',
       badge: newShowcaseBadge || 'Official Pageant Partner'
     });
@@ -412,7 +414,56 @@ export const CommandCenter = () => {
     setTimeout(() => setMerchantSaveSuccess(''), 4000);
   };
 
-  // ================= IMAGE UPLOAD FROM COMPUTER OR PHONE (DRIVE/WHATSAPP/FILES/GALLERY) =================
+  // ================= IMAGE UPLOAD & AREA FRAMING (NO CUTTING / AREA SELECTION) =================
+  const applyFramingToImage = (imgObj, mode = imageFramingMode, fileName = imageFileName) => {
+    try {
+      const canvas = document.createElement('canvas');
+      const targetDim = 720;
+      canvas.width = targetDim;
+      canvas.height = targetDim;
+      const ctx = canvas.getContext('2d');
+
+      // Luxury neutral backdrop so transparent / contained images look ultra-clean
+      ctx.fillStyle = '#181614';
+      ctx.fillRect(0, 0, targetDim, targetDim);
+
+      const iw = imgObj.naturalWidth || imgObj.width;
+      const ih = imgObj.naturalHeight || imgObj.height;
+
+      if (mode === 'CONTAIN') {
+        // Fit entire image completely without cropping a single corner or edge
+        const scale = Math.min((targetDim - 32) / iw, (targetDim - 32) / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        const dx = (targetDim - dw) / 2;
+        const dy = (targetDim - dh) / 2;
+        ctx.drawImage(imgObj, dx, dy, dw, dh);
+      } else if (mode === 'BOTTOM') {
+        // Prioritize bottom and corners for lower items
+        const scale = Math.max(targetDim / iw, targetDim / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        const dx = (targetDim - dw) / 2;
+        const dy = targetDim - dh; // align to bottom
+        ctx.drawImage(imgObj, dx, dy, dw, dh);
+      } else {
+        // Center fill
+        const scale = Math.max(targetDim / iw, targetDim / ih);
+        const dw = iw * scale;
+        const dh = ih * scale;
+        const dx = (targetDim - dw) / 2;
+        const dy = (targetDim - dh) / 2;
+        ctx.drawImage(imgObj, dx, dy, dw, dh);
+      }
+
+      const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      setNewProductImage(compressedDataUrl);
+      if (fileName) setImageFileName(fileName);
+    } catch (err) {
+      console.error("Framing render error", err);
+    }
+  };
+
   const handleImageFileUpload = (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -423,32 +474,8 @@ export const CommandCenter = () => {
     reader.onload = (event) => {
       const img = new Image();
       img.onload = () => {
-        // Compress & scale to max 720px preserving aspect ratio for safe localStorage quota
-        const canvas = document.createElement('canvas');
-        const maxDim = 720;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          }
-        } else {
-          if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
-        setNewProductImage(compressedDataUrl);
-        setImageFileName(file.name);
+        setRawUploadedImg(img);
+        applyFramingToImage(img, imageFramingMode, file.name);
         setImageUploadLoading(false);
       };
       img.onerror = () => {
@@ -458,6 +485,13 @@ export const CommandCenter = () => {
       img.src = event.target.result;
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleFramingModeChange = (newMode) => {
+    setImageFramingMode(newMode);
+    if (rawUploadedImg) {
+      applyFramingToImage(rawUploadedImg, newMode, imageFileName);
+    }
   };
 
   // Direct Web Image URL apply
@@ -714,9 +748,9 @@ export const CommandCenter = () => {
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 style={{
-                  background: isActive ? (tab.highlight ? 'var(--pk-gold-gradient)' : 'var(--pk-obsidian)') : 'transparent',
-                  color: isActive ? '#121110' : 'var(--pk-text-secondary)',
-                  border: 'none',
+                  background: isActive ? (tab.highlight ? 'var(--pk-gold-gradient)' : '#1A1816') : 'transparent',
+                  color: isActive ? (tab.highlight ? '#121110' : '#FAF8F5') : 'var(--pk-text-secondary)',
+                  border: isActive ? (tab.highlight ? '1px solid #D4AF37' : '1px solid rgba(212, 175, 55, 0.55)') : '1px solid transparent',
                   borderRadius: 'var(--radius-sm)',
                   padding: '0.6rem 1rem',
                   fontSize: '0.82rem',
@@ -726,10 +760,11 @@ export const CommandCenter = () => {
                   gap: '0.4rem',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
+                  boxShadow: isActive ? '0 2px 8px rgba(0,0,0,0.2)' : 'none',
                   transition: 'all 0.15s'
                 }}
               >
-                <Icon size={15} style={{ color: isActive ? '#121110' : 'inherit' }} />
+                <Icon size={15} style={{ color: isActive ? (tab.highlight ? '#121110' : '#E4C88A') : 'inherit' }} />
                 <span>{tab.label}</span>
               </button>
             );
@@ -1090,41 +1125,103 @@ export const CommandCenter = () => {
                     />
 
                     {newProductImage ? (
-                      <div style={{ position: 'relative', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '2px solid var(--pk-gold-dark)', height: '220px', background: '#121110' }}>
-                        <img 
-                          src={newProductImage} 
-                          alt="Product preview" 
-                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
-                        />
-                        <div style={{ position: 'absolute', bottom: '8px', left: '8px', right: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.85)', padding: '0.4rem 0.75rem', borderRadius: '4px', color: '#FAF8F5', fontSize: '0.74rem' }}>
-                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
-                            ✓ {imageFileName || 'Image Ready'}
-                          </span>
-                          <div style={{ display: 'flex', gap: '0.4rem' }}>
-                            <button 
-                              type="button" 
-                              onClick={() => fileInputRef.current?.click()}
-                              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '0.25rem 0.55rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-                              title="Select from Files / Drive / WhatsApp / Gallery"
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                        <div style={{ position: 'relative', borderRadius: 'var(--radius-sm)', overflow: 'hidden', border: '2px solid var(--pk-gold-dark)', height: '220px', background: '#121110' }}>
+                          <img 
+                            src={newProductImage} 
+                            alt="Product preview" 
+                            style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                          />
+                          <div style={{ position: 'absolute', bottom: '8px', left: '8px', right: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'rgba(0,0,0,0.85)', padding: '0.4rem 0.75rem', borderRadius: '4px', color: '#FAF8F5', fontSize: '0.74rem' }}>
+                            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                              ✓ {imageFileName || 'Image Ready'}
+                            </span>
+                            <div style={{ display: 'flex', gap: '0.4rem' }}>
+                              <button 
+                                type="button" 
+                                onClick={() => fileInputRef.current?.click()}
+                                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '0.25rem 0.55rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                title="Select from Files / Drive / WhatsApp / Gallery"
+                              >
+                                <Folder size={11} />
+                                <span>Files</span>
+                              </button>
+                              <button 
+                                type="button" 
+                                onClick={() => cameraInputRef.current?.click()}
+                                style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '0.25rem 0.55rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
+                                title="Snap Live Photo with Camera"
+                              >
+                                <Camera size={11} />
+                                <span>Camera</span>
+                              </button>
+                              <button 
+                                type="button" 
+                                onClick={() => { setNewProductImage(''); setImageFileName(''); setRawUploadedImg(null); }}
+                                style={{ background: '#7D1A25', border: 'none', color: '#fff', padding: '0.25rem 0.55rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.7rem' }}
+                              >
+                                Remove
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Area Framing & Focus Selector */}
+                        <div style={{ padding: '0.55rem', background: '#FAF8F5', borderRadius: '4px', border: '1px solid var(--pk-border)' }}>
+                          <div style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.35rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>📐 Framing &amp; Focus Area:</span>
+                            <span style={{ color: 'var(--pk-gold-dark)' }}>
+                              {imageFramingMode === 'CONTAIN' ? 'Entire Image (No Cutting)' : imageFramingMode === 'BOTTOM' ? 'Focus Bottom / Corner' : 'Center Fill'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.35rem' }}>
+                            <button
+                              type="button"
+                              onClick={() => handleFramingModeChange('CONTAIN')}
+                              style={{
+                                padding: '0.35rem 0.2rem',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                background: imageFramingMode === 'CONTAIN' ? '#121110' : '#fff',
+                                color: imageFramingMode === 'CONTAIN' ? '#FAF8F5' : 'var(--pk-text-primary)',
+                                border: imageFramingMode === 'CONTAIN' ? '1px solid #121110' : '1px solid var(--pk-border)',
+                                borderRadius: '3px',
+                                cursor: 'pointer'
+                              }}
                             >
-                              <Folder size={11} />
-                              <span>Files</span>
+                              Fit Whole (No Crop)
                             </button>
-                            <button 
-                              type="button" 
-                              onClick={() => cameraInputRef.current?.click()}
-                              style={{ background: 'rgba(255,255,255,0.2)', border: 'none', color: '#fff', padding: '0.25rem 0.55rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}
-                              title="Snap Live Photo with Camera"
+                            <button
+                              type="button"
+                              onClick={() => handleFramingModeChange('BOTTOM')}
+                              style={{
+                                padding: '0.35rem 0.2rem',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                background: imageFramingMode === 'BOTTOM' ? '#121110' : '#fff',
+                                color: imageFramingMode === 'BOTTOM' ? '#FAF8F5' : 'var(--pk-text-primary)',
+                                border: imageFramingMode === 'BOTTOM' ? '1px solid #121110' : '1px solid var(--pk-border)',
+                                borderRadius: '3px',
+                                cursor: 'pointer'
+                              }}
                             >
-                              <Camera size={11} />
-                              <span>Camera</span>
+                              Bottom / Corner Focus
                             </button>
-                            <button 
-                              type="button" 
-                              onClick={() => { setNewProductImage(''); setImageFileName(''); }}
-                              style={{ background: '#7D1A25', border: 'none', color: '#fff', padding: '0.25rem 0.55rem', borderRadius: '3px', cursor: 'pointer', fontSize: '0.7rem' }}
+                            <button
+                              type="button"
+                              onClick={() => handleFramingModeChange('CENTER')}
+                              style={{
+                                padding: '0.35rem 0.2rem',
+                                fontSize: '0.68rem',
+                                fontWeight: 700,
+                                background: imageFramingMode === 'CENTER' ? '#121110' : '#fff',
+                                color: imageFramingMode === 'CENTER' ? '#FAF8F5' : 'var(--pk-text-primary)',
+                                border: imageFramingMode === 'CENTER' ? '1px solid #121110' : '1px solid var(--pk-border)',
+                                borderRadius: '3px',
+                                cursor: 'pointer'
+                              }}
                             >
-                              Remove
+                              Center Fill
                             </button>
                           </div>
                         </div>
@@ -1410,7 +1507,7 @@ export const CommandCenter = () => {
                   <div style={{ maxWidth: '320px', margin: '0 auto', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', background: '#FFFFFF', boxShadow: 'var(--shadow-sm)' }}>
                     <div style={{ position: 'relative', height: '240px', background: '#121110', overflow: 'hidden' }}>
                       {newProductImage ? (
-                        <img src={newProductImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        <img src={newProductImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '6px' }} />
                       ) : (
                         <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#A89E92', gap: '0.5rem' }}>
                           <ImageIcon size={32} opacity={0.5} />
@@ -1575,27 +1672,25 @@ export const CommandCenter = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => restockItem(prod.id, 10)}
+                              onClick={() => restockItem(prod.id, 5)}
                               className="btn-outline"
                               style={{ padding: '0.25rem 0.55rem', fontSize: '0.7rem' }}
-                              title="Add 10 units of stock"
+                              title="Add 5 units of stock"
                             >
-                              +10 Stock
+                              +5 Stock
                             </button>
-                            {prod.isCustomAdded && (
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (window.confirm(`Delete "${prod.name}" from showroom?`)) {
-                                    deleteProduct(prod.id);
-                                  }
-                                }}
-                                style={{ background: 'transparent', border: 'none', color: '#9F1239', cursor: 'pointer', padding: '0.25rem' }}
-                                title="Delete custom product"
-                              >
-                                <Trash2 size={15} />
-                              </button>
-                            )}
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to permanently delete "${prod.name}" from showroom and inventory?`)) {
+                                  deleteProduct(prod.id);
+                                }
+                              }}
+                              style={{ background: 'transparent', border: '1px solid #FECDD3', borderRadius: '4px', color: '#9F1239', cursor: 'pointer', padding: '0.2rem 0.35rem', display: 'flex', alignItems: 'center' }}
+                              title="Delete and remove product permanently"
+                            >
+                              <Trash2 size={14} />
+                            </button>
                           </div>
                         </div>
                       ))}
@@ -1764,7 +1859,15 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
 
                   <div style={{ marginTop: '1rem', display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
                     <a
-                      href={`https://wa.me/91${storeOwnerPhone || "9393056641"}?text=${encodeURIComponent("Hello Premium Khaja! Test order confirmation from Admin Command Center.")}`}
+                      href={`https://wa.me/91${(storeOwnerPhone || "9393056641").replace(/\D/g, '')}?text=${encodeURIComponent(`• *Name:* Ayesha Sheikh
+• *Phone:* 9393056641
+• *Delivery Address:* Bandra West, Mumbai - 400050
+
+🛒 *ITEMS ORDERED:*
+• Rajwada Bridal Chura Master Set (Qty: 1, Size: 2.6) - ₹3499
+
+📍 *DELIVERY DISPATCH ACTION:*
+Customer has made payment via QR code. Please confirm receipt in your UPI App and message customer to request exact location / pin to book online delivery via Dunzo / Porter / Delhivery!`)}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="btn-outline"
@@ -1950,18 +2053,32 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
                               Edit
                             </button>
                             <button
-                              onClick={() => restockItem(product.id, 10)}
+                              onClick={() => restockItem(product.id, 5)}
                               className="btn-outline"
                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem' }}
+                              title="Quick restock 5 units"
                             >
-                              +10 Units
+                              +5 Units
                             </button>
                             <button
                               onClick={() => restockItem(product.id, 25)}
                               className="btn-gold"
                               style={{ padding: '0.25rem 0.5rem', fontSize: '0.72rem' }}
+                              title="Bulk restock 25 units"
                             >
                               +25
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`Are you sure you want to permanently delete "${product.name}" from inventory and showroom?`)) {
+                                  deleteProduct(product.id);
+                                }
+                              }}
+                              style={{ background: 'transparent', border: '1px solid #FECDD3', borderRadius: '4px', color: '#9F1239', cursor: 'pointer', padding: '0.2rem 0.35rem', display: 'flex', alignItems: 'center' }}
+                              title="Delete product permanently"
+                            >
+                              <Trash2 size={13} />
                             </button>
                           </div>
                         </td>
@@ -3369,7 +3486,20 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
                       </button>
 
                       <a
-                        href={`https://wa.me/91${merchantSettings.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Test message from Premium Khaja Atelier Merchant Command Center. Verified Merchant: ${merchantSettings.ownerName}, UPI: ${merchantSettings.upiId}.`)}`}
+                        href={`https://wa.me/91${merchantSettings.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`• *Name:* Ayesha Sheikh
+• *Phone:* 9393056641
+• *Delivery Address:* Bandra West, Mumbai - 400050
+
+🛒 *ITEMS ORDERED:*
+• Rajwada Bridal Chura Master Set (Qty: 1, Size: 2.6) - ₹3499
+
+💳 *PAYMENT REFERENCE:*
+• Total: ₹3,499
+• Payee: ${merchantSettings.ownerName} (${merchantSettings.upiId})
+• Method: UPI QR Code
+
+📍 *DELIVERY DISPATCH ACTION:*
+Customer has made payment via QR code. Please confirm receipt in your UPI App and message customer to request exact location / pin to book online delivery via Dunzo / Porter / Delhivery!`)}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="btn-outline"

@@ -129,14 +129,14 @@ export const BanglesSpotlight = () => {
       name: 'All Collections',
       subtitle: 'Complete Catalog',
       count: getCategoryCount('all'),
-      image: '/images/bangles/1789662811af3b.png'
+      image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png'
     },
     {
       id: 'bangles',
       name: 'Bangle Atelier',
       subtitle: '28 Handcrafted Sets',
       count: getCategoryCount('bangles'),
-      image: '/images/bangles/1789662811af3b.png'
+      image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png'
     },
     {
       id: 'necklaces',

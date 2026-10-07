@@ -31,7 +31,7 @@ export const HeroBanner = () => {
       name: 'Bangle Atelier',
       subtitle: 'Glass, Stone, Lac, Minakari',
       count: '28 Designs',
-      image: '/images/bangles/1789662811af3b.png',
+      image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
       badge: '👑 Royal Heritage',
       targetId: 'bangles-atelier'
     },

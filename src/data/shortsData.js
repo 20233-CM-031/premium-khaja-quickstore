@@ -7,7 +7,7 @@ export const INITIAL_SHORTS = [
     title: "Rajputi Royal Kundan Kada — Miss World 2025 Edition",
     description: "Handcrafted 22K antique micro-gold kada with embedded uncut polki kundan and crimson meenakari worn on runway.",
     videoUrl: "https://assets.mixkit.co/videos/preview/mixkit-hands-of-a-woman-wearing-golden-jewelry-41315-large.mp4",
-    posterImage: "/images/bangles/1789662811af3b.png",
+    posterImage: "/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png",
     taggedProductId: "bangle-01",
     likesCount: 1420,
     viewsCount: "18.4K",

@@ -85,25 +85,37 @@ export const StoreProvider = ({ children }) => {
     return [];
   });
 
-  // Dynamic Products Catalog (Allows Admins/Merchants to add products from phone/computer)
+  // BroadcastChannel helper for live multi-tab & multi-client synchronization
+  const broadcastSync = (type, payload) => {
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        const channel = new BroadcastChannel('pk_inventory_sync');
+        channel.postMessage({ type, ...payload });
+        channel.close();
+      }
+    } catch (e) {}
+  };
+
+  // Dynamic Products Catalog (Allows Admins/Merchants to add, edit or permanently delete products)
   const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('pk_custom_products');
+    const saved = localStorage.getItem('pk_showroom_products') || localStorage.getItem('pk_custom_products');
+    const deletedIds = JSON.parse(localStorage.getItem('pk_deleted_product_ids') || '[]');
+    const deletedSet = new Set(deletedIds);
+
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const defaultIds = new Set(ALL_PRODUCTS.map(p => p.id));
-          const customOnly = parsed.filter(p => !defaultIds.has(p.id));
-          return [...customOnly, ...ALL_PRODUCTS];
+          return parsed.filter(p => !deletedSet.has(p.id));
         }
       } catch (e) {
         console.error("Failed to parse custom products", e);
       }
     }
-    return ALL_PRODUCTS;
+    return ALL_PRODUCTS.filter(p => !deletedSet.has(p.id));
   });
 
-  // Real-time Inventory State (Persisted)
+  // Real-time Inventory State (Persisted & Synchronized across all shoppers & admin)
   const [inventory, setInventory] = useState(() => {
     const savedStock = localStorage.getItem('pk_inventory');
     if (savedStock) {
@@ -115,6 +127,45 @@ export const StoreProvider = ({ children }) => {
     });
     return stockMap;
   });
+
+  // Real-time Cross-Tab & Multi-Client Listener
+  useEffect(() => {
+    let channel;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel('pk_inventory_sync');
+        channel.onmessage = (event) => {
+          if (event.data?.type === 'INVENTORY_UPDATE' && event.data.inventory) {
+            setInventory(event.data.inventory);
+          }
+          if (event.data?.type === 'PRODUCT_LIST_UPDATE' && event.data.products) {
+            setProducts(event.data.products);
+          }
+          if (event.data?.type === 'PR_LIST_UPDATE' && event.data.celebrityShowcase) {
+            setCelebrityShowcase(event.data.celebrityShowcase);
+          }
+        };
+      }
+    } catch (e) {}
+
+    const handleStorage = (e) => {
+      if (e.key === 'pk_inventory' && e.newValue) {
+        try { setInventory(JSON.parse(e.newValue)); } catch (err) {}
+      }
+      if (e.key === 'pk_showroom_products' && e.newValue) {
+        try { setProducts(JSON.parse(e.newValue)); } catch (err) {}
+      }
+      if (e.key === 'pk_celebrity_showcase' && e.newValue) {
+        try { setCelebrityShowcase(JSON.parse(e.newValue)); } catch (err) {}
+      }
+    };
+    window.addEventListener('storage', handleStorage);
+
+    return () => {
+      if (channel) channel.close();
+      window.removeEventListener('storage', handleStorage);
+    };
+  }, []);
 
   // Centralized Event Log
   const [events, setEvents] = useState([
@@ -221,6 +272,7 @@ export const StoreProvider = ({ children }) => {
         return item;
       });
       try { localStorage.setItem('pk_celebrity_showcase', JSON.stringify(updated)); } catch (e) {}
+      broadcastSync('PR_LIST_UPDATE', { celebrityShowcase: updated });
       return updated;
     });
   };
@@ -229,6 +281,7 @@ export const StoreProvider = ({ children }) => {
     setCelebrityShowcase(prev => {
       const updated = prev.filter(item => item.id !== id);
       try { localStorage.setItem('pk_celebrity_showcase', JSON.stringify(updated)); } catch (e) {}
+      broadcastSync('PR_LIST_UPDATE', { celebrityShowcase: updated });
       return updated;
     });
   };
@@ -258,7 +311,7 @@ export const StoreProvider = ({ children }) => {
       title: sanitizeInput(shortData.title || "Royal Jewellery Reel"),
       description: sanitizeInput(shortData.description || "Exclusive atelier showcase video."),
       videoUrl: shortData.videoUrl,
-      posterImage: shortData.posterImage || "/images/bangles/1789662811af3b.png",
+      posterImage: shortData.posterImage || "/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png",
       taggedProductId: shortData.taggedProductId || (products[0]?.id || "bangle-01"),
       likesCount: shortData.likesCount || 150,
       viewsCount: shortData.viewsCount || "1.2K",
@@ -888,8 +941,8 @@ export const StoreProvider = ({ children }) => {
       tag: productData.tag || 'New Launch',
       rating: 5.0,
       reviewsCount: 1,
-      image: productData.image || '/images/bangles/1789662811af3b.png',
-      secondaryImages: [productData.image || '/images/bangles/1789662811af3b.png'],
+      image: productData.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
+      secondaryImages: [productData.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png'],
       description: productData.description?.trim() || 'Handcrafted luxury designer jewellery by Premium Khaja master artisans with 22K micro-gold plating and anti-tarnish shield.',
       features: productData.features?.length ? productData.features : [
         'Pure 22K Micro-Gold Micron Dip',
@@ -908,14 +961,44 @@ export const StoreProvider = ({ children }) => {
       createdAt: new Date().toISOString()
     };
 
-    setProducts(prev => [newProd, ...prev]);
-    setInventory(prev => ({ ...prev, [newId]: newProd.inventoryCount }));
+    setProducts(prev => {
+      const updated = [newProd, ...prev];
+      try { localStorage.setItem('pk_showroom_products', JSON.stringify(updated)); } catch (e) {}
+      broadcastSync('PRODUCT_LIST_UPDATE', { products: updated });
+      return updated;
+    });
+    setInventory(prev => {
+      const nextInv = { ...prev, [newId]: newProd.inventoryCount };
+      try { localStorage.setItem('pk_inventory', JSON.stringify(nextInv)); } catch (e) {}
+      broadcastSync('INVENTORY_UPDATE', { inventory: nextInv });
+      return nextInv;
+    });
     logEvent('PRODUCT_ADDED', { id: newId, name: newProd.name, category: newProd.category, price: newProd.price });
     return newProd;
   };
 
   const deleteProduct = (productId) => {
-    setProducts(prev => prev.filter(p => p.id !== productId));
+    setProducts(prev => {
+      const remaining = prev.filter(p => p.id !== productId);
+      try {
+        localStorage.setItem('pk_showroom_products', JSON.stringify(remaining));
+        const deletedIds = JSON.parse(localStorage.getItem('pk_deleted_product_ids') || '[]');
+        if (!deletedIds.includes(productId)) {
+          deletedIds.push(productId);
+          localStorage.setItem('pk_deleted_product_ids', JSON.stringify(deletedIds));
+        }
+      } catch (e) {}
+      broadcastSync('PRODUCT_LIST_UPDATE', { products: remaining });
+      return remaining;
+    });
+
+    setInventory(prev => {
+      const nextInv = { ...prev };
+      delete nextInv[productId];
+      try { localStorage.setItem('pk_inventory', JSON.stringify(nextInv)); } catch (e) {}
+      broadcastSync('INVENTORY_UPDATE', { inventory: nextInv });
+      return nextInv;
+    });
     logEvent('PRODUCT_DELETED', { productId });
   };
 
@@ -944,18 +1027,24 @@ export const StoreProvider = ({ children }) => {
       });
 
       try {
-        localStorage.setItem('pk_custom_products', JSON.stringify(updatedList));
+        localStorage.setItem('pk_showroom_products', JSON.stringify(updatedList));
       } catch (e) {
         console.error("Storage error updating products", e);
       }
+      broadcastSync('PRODUCT_LIST_UPDATE', { products: updatedList });
       return updatedList;
     });
 
     if (updatedFields.inventoryCount !== undefined) {
-      setInventory(prev => ({
-        ...prev,
-        [productId]: Number(updatedFields.inventoryCount)
-      }));
+      setInventory(prev => {
+        const nextInv = {
+          ...prev,
+          [productId]: Number(updatedFields.inventoryCount)
+        };
+        try { localStorage.setItem('pk_inventory', JSON.stringify(nextInv)); } catch (e) {}
+        broadcastSync('INVENTORY_UPDATE', { inventory: nextInv });
+        return nextInv;
+      });
     }
 
     logEvent('PRODUCT_UPDATED', { productId, changes: Object.keys(updatedFields) });
@@ -981,7 +1070,7 @@ export const StoreProvider = ({ children }) => {
           price,
           originalPrice,
           memberPrice,
-          image: item.image || '/images/bangles/1789662811af3b.png',
+          image: item.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
           description: item.description || 'Exclusive SouqOne Studio showroom look piece transformed into live quickstore inventory.',
           sizes: item.sizes?.length ? item.sizes : ['2.4', '2.6', '2.8'],
           finish: item.finish || '22K Antique Micro Gold Plated',
@@ -1038,12 +1127,63 @@ export const StoreProvider = ({ children }) => {
     setLeadsList(prev => prev.map(lead => lead.id === leadId ? { ...lead, status: newStatus } : lead));
   };
 
-  const restockItem = (productId, quantityToAdd = 10) => {
-    setInventory(prev => ({
-      ...prev,
-      [productId]: (prev[productId] || 0) + quantityToAdd
-    }));
+  const restockItem = (productId, quantityToAdd = 5) => {
+    setInventory(prev => {
+      const nextInv = {
+        ...prev,
+        [productId]: (prev[productId] || 0) + quantityToAdd
+      };
+      try { localStorage.setItem('pk_inventory', JSON.stringify(nextInv)); } catch (e) {}
+      broadcastSync('INVENTORY_UPDATE', { inventory: nextInv });
+      return nextInv;
+    });
+
+    setProducts(prev => {
+      const updated = prev.map(p => {
+        if (p.id === productId) {
+          const newStock = (p.inventoryCount || 0) + quantityToAdd;
+          return {
+            ...p,
+            inventoryCount: newStock,
+            status: newStock > 5 ? 'IN STOCK' : (newStock > 0 ? 'LOW STOCK' : 'OUT OF STOCK')
+          };
+        }
+        return p;
+      });
+      try { localStorage.setItem('pk_showroom_products', JSON.stringify(updated)); } catch (e) {}
+      broadcastSync('PRODUCT_LIST_UPDATE', { products: updated });
+      return updated;
+    });
+
     logEvent('INVENTORY_RESTOCKED', { productId, quantityAdded: quantityToAdd });
+  };
+
+  const setStockItem = (productId, exactCount) => {
+    const count = Math.max(0, Number(exactCount) || 0);
+    setInventory(prev => {
+      const nextInv = { ...prev, [productId]: count };
+      try { localStorage.setItem('pk_inventory', JSON.stringify(nextInv)); } catch (e) {}
+      broadcastSync('INVENTORY_UPDATE', { inventory: nextInv });
+      return nextInv;
+    });
+
+    setProducts(prev => {
+      const updated = prev.map(p => {
+        if (p.id === productId) {
+          return {
+            ...p,
+            inventoryCount: count,
+            status: count > 5 ? 'IN STOCK' : (count > 0 ? 'LOW STOCK' : 'OUT OF STOCK')
+          };
+        }
+        return p;
+      });
+      try { localStorage.setItem('pk_showroom_products', JSON.stringify(updated)); } catch (e) {}
+      broadcastSync('PRODUCT_LIST_UPDATE', { products: updated });
+      return updated;
+    });
+
+    logEvent('INVENTORY_SET', { productId, count });
   };
 
   // Add or Update Miss World & Celebrity Showcase Item
@@ -1057,10 +1197,15 @@ export const StoreProvider = ({ children }) => {
       quote: newItem.quote || "Handcrafted by Premium Khaja for royal elegance.",
       celebrity: newItem.celebrity || "Celebrity Guest",
       event: newItem.event || "Miss World 2025 India",
-      image: newItem.image || "/images/bangles/1789662811af3b.png",
+      image: newItem.image || "/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png",
       featuredProductIds: newItem.featuredProductIds || ["bangle-01", "bangle-16"]
     };
-    setCelebrityShowcase(prev => [created, ...prev]);
+    setCelebrityShowcase(prev => {
+      const updated = [created, ...prev];
+      try { localStorage.setItem('pk_celebrity_showcase', JSON.stringify(updated)); } catch (e) {}
+      broadcastSync('PR_LIST_UPDATE', { celebrityShowcase: updated });
+      return updated;
+    });
     logEvent('CELEBRITY_SHOWCASE_ADDED', { id: created.id, title: created.title });
   };
 
@@ -1074,17 +1219,43 @@ export const StoreProvider = ({ children }) => {
     logEvent('ORDER_STATUS_UPDATED', { orderId, status: newStatus });
   };
 
-  // Process Completed Order (Form First -> Guidance Attached -> Dynamic UPI -> WhatsApp Dispatch)
+  // Process Completed Order (Live Stock Reservation -> Atomic Deduct -> Sync Broadcast -> WhatsApp Dispatch Slip)
   const processOrder = (orderPayload) => {
-    // Deduct stock
-    setInventory(prev => {
-      const updated = { ...prev };
-      orderPayload.items.forEach(item => {
-        if (updated[item.product.id]) {
-          updated[item.product.id] = Math.max(0, updated[item.product.id] - item.quantity);
+    // 1. Atomic Stock Verification: Check current fresh stock
+    let freshInventory = { ...inventory };
+    try {
+      const saved = localStorage.getItem('pk_inventory');
+      if (saved) freshInventory = { ...freshInventory, ...JSON.parse(saved) };
+    } catch (e) {}
+
+    // 2. Deduct stock synchronously and persist immediately
+    const updatedInventory = { ...freshInventory };
+    orderPayload.items.forEach(item => {
+      const pId = item.product.id;
+      const current = updatedInventory[pId] !== undefined ? updatedInventory[pId] : (item.product.inventoryCount || 10);
+      updatedInventory[pId] = Math.max(0, current - item.quantity);
+    });
+
+    setInventory(updatedInventory);
+    try { localStorage.setItem('pk_inventory', JSON.stringify(updatedInventory)); } catch (e) {}
+    broadcastSync('INVENTORY_UPDATE', { inventory: updatedInventory });
+
+    // Update product catalogue counts in real time
+    setProducts(prev => {
+      const updatedProds = prev.map(p => {
+        if (updatedInventory[p.id] !== undefined) {
+          const qty = updatedInventory[p.id];
+          return {
+            ...p,
+            inventoryCount: qty,
+            status: qty > 5 ? 'IN STOCK' : (qty > 0 ? 'LOW STOCK' : 'OUT OF STOCK')
+          };
         }
+        return p;
       });
-      return updated;
+      try { localStorage.setItem('pk_showroom_products', JSON.stringify(updatedProds)); } catch (e) {}
+      broadcastSync('PRODUCT_LIST_UPDATE', { products: updatedProds });
+      return updatedProds;
     });
 
     const newOrder = {
@@ -1140,20 +1311,34 @@ export const StoreProvider = ({ children }) => {
     setOrderSuccessData(newOrder);
     setCheckoutOpen(false);
 
-    // Compose formatted WhatsApp alert for Store Owner (Jaffar Mohd - 9393056641)
-    const itemsText = newOrder.items
-      .map(i => `• ${i.name} (Qty: ${i.quantity}, Size: ${i.size}) - ₹${(i.price * i.quantity).toLocaleString()}`)
+    // Exact structured WhatsApp dispatch slip format matching Screenshot 4 template
+    const cleanCustomerPhone = (newOrder.customerPhone || '').replace(/\D/g, '') || '9393056641';
+    const itemsFormatted = newOrder.items
+      .map(i => `• ${i.name} (Qty: ${i.quantity}${i.size ? `, Size: ${i.size}` : ''}) - ₹${(i.price * i.quantity).toLocaleString()}`)
       .join('\n');
 
-    const guidanceBlock = (newOrder.orderGuidance || newOrder.sizePreference || newOrder.guidanceTags?.length > 0)
-      ? `\n🎯 *CUSTOMER ORDER PREFERENCE & GUIDANCE:*\n• *Size Preference:* ${newOrder.sizePreference}\n• *Special Notes:* ${newOrder.orderGuidance || 'Standard order'}${newOrder.guidanceTags?.length > 0 ? `\n• *Tags:* ${newOrder.guidanceTags.join(', ')}` : ''}\n`
+    const guidanceNotes = (newOrder.orderGuidance || newOrder.guidanceTags?.length > 0)
+      ? `\n🎯 *CUSTOMER PREFERENCE / GUIDANCE:*\n• Note: ${newOrder.orderGuidance || 'None'}${newOrder.guidanceTags?.length > 0 ? ` [${newOrder.guidanceTags.join(', ')}]` : ''}\n`
       : '';
 
-    const ownerMsg = `👑 *NEW ORDER & PAYMENT CONFIRMATION — PREMIUM KHAJA* 👑\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧾 *ORDER INVOICE:* #${newOrder.orderId}\n📅 *TIMESTAMP:* ${newOrder.orderDate}\n💰 *TOTAL AMOUNT PAID:* ₹${newOrder.totalAmount.toLocaleString()}\n💳 *PAYMENT METHOD:* UPI QR Code Scanner\n👤 *MERCHANT PAYEE:* ${newOrder.payeeName} (${newOrder.upiId})\n🔖 *UTR / REFERENCE NO:* ${newOrder.utrNumber}\n\n👤 *CUSTOMER & DELIVERY PROFILE:*\n• *Customer Name:* ${newOrder.customerName}\n• *WhatsApp Phone:* ${newOrder.customerPhone}\n• *Shipping Address:* ${newOrder.shippingAddress}\n${guidanceBlock}\n📦 *ORDERED ATELIER ITEMS:*\n${itemsText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n• Bag Subtotal: ₹${newOrder.subtotal?.toLocaleString()}\n• Delivery: ${newOrder.shippingFee === 0 ? 'FREE EXPRESS' : '₹' + newOrder.shippingFee}\n• *Final Net Total Paid: ₹${newOrder.totalAmount.toLocaleString()}*\n\n📍 *ATELIER OWNER DISPATCH ACTION:*\nCustomer has sent payment via UPI to ${newOrder.upiId}. Please verify receipt in Google Pay / UPI app and confirm delivery dispatch via Dunzo / Porter / Delhivery / Speed Post!\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
+    const ownerMsg = `• *Name:* ${newOrder.customerName}
+• *Phone:* ${cleanCustomerPhone}
+• *Delivery Address:* ${newOrder.shippingAddress}
+
+🛒 *ITEMS ORDERED:*
+${itemsFormatted}
+${guidanceNotes}
+💳 *PAYMENT REFERENCE:*
+• Total: ₹${newOrder.totalAmount.toLocaleString()}
+• UTR / Ref: ${newOrder.utrNumber}
+• Payee: ${newOrder.payeeName} (${newOrder.upiId})
+
+📍 *DELIVERY DISPATCH ACTION:*
+Customer has made payment via QR code. Please confirm receipt in your UPI App and message customer to request exact location / pin to book online delivery via Dunzo / Porter / Delhivery!`;
 
     try {
-      const cleanPhone = storeOwnerPhone.replace(/\D/g, '') || "9393056641";
-      const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(ownerMsg)}`;
+      const cleanOwnerPhone = (storeOwnerPhone || '9393056641').replace(/\D/g, '');
+      const waUrl = `https://wa.me/91${cleanOwnerPhone}?text=${encodeURIComponent(ownerMsg)}`;
       window.open(waUrl, '_blank');
     } catch (e) {
       console.warn("Could not automatically open WhatsApp popup", e);
@@ -1217,6 +1402,7 @@ export const StoreProvider = ({ children }) => {
         toggleWishlist,
         inventory,
         restockItem,
+        setStockItem,
         events,
         logEvent,
         attribution,
