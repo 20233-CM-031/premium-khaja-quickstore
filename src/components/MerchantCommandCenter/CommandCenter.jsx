@@ -36,7 +36,14 @@ import {
   QrCode,
   Folder,
   Copy,
-  Link as LinkIcon
+  Link as LinkIcon,
+  X,
+  MessageCircle,
+  Play,
+  Video,
+  Edit3,
+  Phone,
+  FileText
 } from 'lucide-react';
 
 export const CommandCenter = () => {
@@ -52,6 +59,8 @@ export const CommandCenter = () => {
     events,
     celebrityShowcase,
     addCelebrityShowcaseItem,
+    updateCelebrityShowcaseItem,
+    deleteCelebrityShowcaseItem,
     products,
     addNewProduct,
     updateProduct,
@@ -59,17 +68,21 @@ export const CommandCenter = () => {
     importFromSouqOneStudio,
     shortsList,
     addNewShort,
+    updateShort,
+    deleteShort,
     setShortsList,
     heroConfig,
     updateHeroConfig,
+    storeOwnerName,
     storeOwnerPhone,
     storeOwnerWhatsApp,
     storeUpiId,
     storePaymentQr,
     uploadStorePaymentQr,
-    resetStorePaymentQr
+    resetStorePaymentQr,
+    updateMerchantSettings,
+    updateOrderStatus
   } = useStore();
-
 
   const allCatalogueProducts = products || ALL_PRODUCTS;
 
@@ -109,14 +122,58 @@ export const CommandCenter = () => {
   const [catalogSearch, setCatalogSearch] = useState('');
   const [copiedQrUpi, setCopiedQrUpi] = useState(false);
 
-  // Categories Hub State
+  // Miss World & Achievements Hub State (Full Axis Editor)
   const [selectedAdminCategory, setSelectedAdminCategory] = useState('bangles');
   const [newShowcaseTitle, setNewShowcaseTitle] = useState('');
+  const [newShowcaseSubtitle, setNewShowcaseSubtitle] = useState('');
   const [newShowcaseCelebrity, setNewShowcaseCelebrity] = useState('');
   const [newShowcaseEvent, setNewShowcaseEvent] = useState('Miss World 2025 India');
   const [newShowcaseQuote, setNewShowcaseQuote] = useState('');
   const [newShowcaseImage, setNewShowcaseImage] = useState('');
+  const [newShowcaseTag, setNewShowcaseTag] = useState('Miss World 2025 India');
+  const [newShowcaseBadge, setNewShowcaseBadge] = useState('Official Pageant Partner');
   const [showcaseSuccess, setShowcaseSuccess] = useState('');
+  const showcaseFileInputRef = useRef(null);
+
+  // Miss World Achievement Editing State
+  const [editingShowcase, setEditingShowcase] = useState(null);
+  const [showcaseEditForm, setShowcaseEditForm] = useState({
+    title: '',
+    subtitle: '',
+    celebrity: '',
+    event: 'Miss World 2025 India',
+    quote: '',
+    image: '',
+    tag: 'Miss World 2025 India',
+    badge: 'Official Pageant Partner'
+  });
+  const showcaseEditFileInputRef = useRef(null);
+
+  // Royal Shorts Video Reels Editing State & In-Admin Video Preview
+  const [editingShort, setEditingShort] = useState(null);
+  const [shortEditForm, setShortEditForm] = useState({
+    title: '',
+    description: '',
+    videoUrl: '',
+    posterImage: '',
+    taggedProductId: ''
+  });
+  const [previewingVideoUrl, setPreviewingVideoUrl] = useState(null);
+  const editShortVideoRef = useRef(null);
+
+  // Store Owner & UPI Gateway Settings State (Jaffar Mohd - premiumkhaja@okaxis)
+  const [merchantSettings, setMerchantSettings] = useState({
+    ownerName: storeOwnerName || 'Jaffar Mohd',
+    upiId: storeUpiId || 'premiumkhaja@okaxis',
+    phone: storeOwnerPhone || '9393056641'
+  });
+  const [merchantSaveSuccess, setMerchantSaveSuccess] = useState('');
+  const [qrSimAmount, setQrSimAmount] = useState(2499);
+
+  // Orders Management Filters
+  const [orderSearch, setOrderSearch] = useState('');
+  const [orderStatusFilter, setOrderStatusFilter] = useState('ALL');
+  const [selectedOrderForGuidance, setSelectedOrderForGuidance] = useState(null);
 
   // Financial calculations
   const totalRevenue = orders.reduce((sum, o) => sum + o.totalAmount, 0) + 128450;
@@ -269,6 +326,91 @@ export const CommandCenter = () => {
     setTimeout(() => setShortsSuccessMsg(''), 4000);
   };
 
+  // ================= MISS WORLD & CELEBRITY ADVERTISING HANDLERS =================
+  const handleAddShowcaseItem = (e) => {
+    e.preventDefault();
+    if (!newShowcaseTitle.trim() || !newShowcaseCelebrity.trim()) {
+      alert("Please provide achievement title and celebrity name.");
+      return;
+    }
+    addCelebrityShowcaseItem({
+      title: newShowcaseTitle,
+      subtitle: newShowcaseSubtitle || 'Miss World 2025 Pageant Curation',
+      celebrity: newShowcaseCelebrity,
+      event: newShowcaseEvent || 'Miss World 2025 India',
+      quote: newShowcaseQuote || 'Honoured to adorn the royal legacy of Premium Khaja on the world stage.',
+      image: newShowcaseImage || '/images/bangles/1789662811af3b.png',
+      tag: newShowcaseTag || 'Miss World 2025 India',
+      badge: newShowcaseBadge || 'Official Pageant Partner'
+    });
+    setShowcaseSuccess('👑 Miss World achievement / advertisement published to live storefront!');
+    setNewShowcaseTitle('');
+    setNewShowcaseSubtitle('');
+    setNewShowcaseCelebrity('');
+    setNewShowcaseQuote('');
+    setNewShowcaseImage('');
+    setTimeout(() => setShowcaseSuccess(''), 4000);
+  };
+
+  const handleShowcaseImageUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setNewShowcaseImage(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const openEditShowcaseModal = (item) => {
+    setEditingShowcase(item);
+    setShowcaseEditForm({
+      title: item.title || '',
+      subtitle: item.subtitle || '',
+      celebrity: item.celebrity || '',
+      event: item.event || 'Miss World 2025 India',
+      quote: item.quote || '',
+      image: item.image || '',
+      tag: item.tag || 'Miss World 2025 India',
+      badge: item.badge || 'Official Pageant Partner'
+    });
+  };
+
+  const handleEditShowcaseSave = (e) => {
+    e.preventDefault();
+    if (!editingShowcase) return;
+    updateCelebrityShowcaseItem(editingShowcase.id, showcaseEditForm);
+    setEditingShowcase(null);
+    alert(`Achievement "${showcaseEditForm.title}" updated successfully!`);
+  };
+
+  // ================= ROYAL SHORTS EDITING HANDLERS =================
+  const openEditShortModal = (short) => {
+    setEditingShort(short);
+    setShortEditForm({
+      title: short.title || '',
+      description: short.description || '',
+      videoUrl: short.videoUrl || '',
+      posterImage: short.posterImage || '',
+      taggedProductId: short.taggedProductId || (allCatalogueProducts[0]?.id || '')
+    });
+  };
+
+  const handleEditShortSave = (e) => {
+    e.preventDefault();
+    if (!editingShort) return;
+    updateShort(editingShort.id, shortEditForm);
+    setEditingShort(null);
+    alert(`Royal Short "${shortEditForm.title}" updated successfully!`);
+  };
+
+  // ================= STORE OWNER UPI GATEWAY SETTINGS HANDLER =================
+  const handleSaveMerchantSettings = (e) => {
+    e.preventDefault();
+    updateMerchantSettings(merchantSettings);
+    setMerchantSaveSuccess('✓ Jaffar Mohd merchant UPI settings updated successfully across store checkout!');
+    setTimeout(() => setMerchantSaveSuccess(''), 4000);
+  };
 
   // ================= IMAGE UPLOAD FROM COMPUTER OR PHONE (DRIVE/WHATSAPP/FILES/GALLERY) =================
   const handleImageFileUpload = (e) => {
@@ -553,15 +695,16 @@ export const CommandCenter = () => {
       <div style={{ background: '#FFFFFF', borderBottom: '1px solid var(--pk-border)', padding: '0.5rem 1.5rem' }}>
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
           {[
-            { id: 'PRODUCT_STUDIO', label: 'Add Products & AI Studio', icon: Plus, highlight: true },
-            { id: 'INVENTORY', label: `Inventory & Edit Hub (${lowStockCount} Low Alert)`, icon: Package },
-            { id: 'SOUQONE_STUDIO', label: 'SouqOne Studio Bridge', icon: Layers, highlight: false },
+            { id: 'ORDERS', label: `Orders & Dispatch (${orders.length})`, icon: Package, highlight: true },
+            { id: 'CATEGORIES_SHOWCASE', label: `Miss World & PR Ads (${celebrityShowcase.length})`, icon: Crown, highlight: true },
+            { id: 'SHORTS_MANAGER', label: `Royal Shorts Reels (${shortsList.length})`, icon: Sparkles, highlight: true },
+            { id: 'PAYMENT_QR', label: `UPI Gateway (${storeOwnerName || 'Jaffar Mohd'})`, icon: QrCode, highlight: false },
+            { id: 'PRODUCT_STUDIO', label: 'Add Products & AI Studio', icon: Plus, highlight: false },
+            { id: 'INVENTORY', label: `Inventory Hub (${lowStockCount} Low Alert)`, icon: Package, highlight: false },
             { id: 'HERO_MARKETING', label: 'Hero & Marketing Engine', icon: Megaphone, highlight: false },
-            { id: 'SHORTS_MANAGER', label: `Royal Shorts Reels (${shortsList.length})`, icon: Sparkles, highlight: false },
-            { id: 'PAYMENT_QR', label: 'Store Payment QR Setup', icon: QrCode, highlight: false },
+            { id: 'SOUQONE_STUDIO', label: 'SouqOne Studio Bridge', icon: Layers, highlight: false },
             { id: 'CRM', label: `CRM & Customer AI (${customersList.length})`, icon: Users },
             { id: 'OVERVIEW', label: 'Executive Analytics', icon: TrendingUp },
-            { id: 'CATEGORIES_SHOWCASE', label: 'Miss World 2025 PR Hub', icon: Crown },
             { id: 'LEADS', label: `WhatsApp Leads (${leadsList.length})`, icon: MessageSquare }
           ].map(tab => {
             const Icon = tab.icon;
@@ -597,6 +740,263 @@ export const CommandCenter = () => {
       {/* Main Tab Content */}
       <div className="container" style={{ padding: '2rem 1.25rem 4rem' }}>
         
+        {/* ========================================================================= */}
+        {/* TAB 0: CUSTOMER ORDERS, GUIDANCE & DISPATCH VERIFICATION                   */}
+        {/* ========================================================================= */}
+        {activeTab === 'ORDERS' && (
+          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+            
+            {/* Header */}
+            <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                    <Package size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                    Order Fulfillment &amp; Dispatch Engine
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Customer Orders, Guidance &amp; Payment Verification
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0' }}>
+                  Inspect incoming customer orders, review customer customization guidance and size preferences, verify UPI receipts, and dispatch deliveries.
+                </p>
+              </div>
+
+              {/* Status Counters */}
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '0.75rem', fontWeight: 700, padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #FDE68A' }}>
+                  Pending Verification: {orders.filter(o => o.status?.includes('VERIFY')).length}
+                </span>
+                <span style={{ background: '#E0F2FE', color: '#0369A1', fontSize: '0.75rem', fontWeight: 700, padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #BAE6FD' }}>
+                  Total Orders: {orders.length}
+                </span>
+              </div>
+            </div>
+
+            {/* Filter and Search Bar */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div style={{ display: 'flex', gap: '0.35rem', overflowX: 'auto', paddingBottom: '0.2rem' }}>
+                {['ALL', 'PAID - VERIFY & DISPATCH', 'PAYMENT CONFIRMED', 'PACKING', 'DISPATCHED', 'DELIVERED'].map(st => (
+                  <button
+                    key={st}
+                    onClick={() => setOrderStatusFilter(st)}
+                    style={{
+                      padding: '0.35rem 0.75rem',
+                      fontSize: '0.74rem',
+                      fontWeight: 700,
+                      borderRadius: '4px',
+                      border: 'none',
+                      cursor: 'pointer',
+                      background: orderStatusFilter === st ? 'var(--pk-obsidian)' : 'var(--pk-surface-alt)',
+                      color: orderStatusFilter === st ? '#FAF8F5' : 'var(--pk-text-secondary)',
+                      whiteSpace: 'nowrap'
+                    }}
+                  >
+                    {st === 'ALL' ? 'All Orders' : st}
+                  </button>
+                ))}
+              </div>
+
+              <div style={{ position: 'relative', minWidth: '240px' }}>
+                <Search size={14} style={{ position: 'absolute', left: '10px', top: '10px', color: '#888' }} />
+                <input 
+                  type="text" 
+                  placeholder="Search order ID, customer, phone..."
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  style={{ width: '100%', padding: '0.45rem 0.8rem 0.45rem 2rem', fontSize: '0.8rem', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-sm)', outline: 'none' }}
+                />
+              </div>
+            </div>
+
+            {/* Orders Feed */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+              {orders
+                .filter(o => {
+                  if (orderStatusFilter !== 'ALL' && o.status !== orderStatusFilter) return false;
+                  if (orderSearch.trim()) {
+                    const q = orderSearch.toLowerCase();
+                    return (
+                      o.orderId?.toLowerCase().includes(q) ||
+                      o.customerName?.toLowerCase().includes(q) ||
+                      o.customerPhone?.includes(q) ||
+                      o.shippingAddress?.toLowerCase().includes(q)
+                    );
+                  }
+                  return true;
+                })
+                .map((ord, idx) => {
+                  return (
+                    <div 
+                      key={ord.orderId || idx}
+                      style={{ 
+                        border: '1.5px solid var(--pk-border)', 
+                        borderRadius: 'var(--radius-md)', 
+                        padding: '1.25rem', 
+                        background: '#FAF8F5',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+                      }}
+                    >
+                      {/* Top Header Line */}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.85rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.75rem', marginBottom: '0.85rem' }}>
+                        <div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '1.05rem', fontWeight: 900, color: 'var(--pk-obsidian)', fontFamily: 'monospace' }}>
+                              #{ord.orderId}
+                            </span>
+                            <span style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)' }}>
+                              • {ord.orderDate}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: '0.88rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginTop: '0.2rem' }}>
+                            {ord.customerName} • <span style={{ color: 'var(--pk-text-muted)' }}>{ord.customerPhone}</span>
+                          </div>
+                        </div>
+
+                        <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+                          <div style={{ fontSize: '1.3rem', fontWeight: 900, color: 'var(--pk-gold-dark)' }}>
+                            ₹{ord.totalAmount?.toLocaleString()}
+                          </div>
+                          
+                          {/* Status Dropdown */}
+                          <select
+                            value={ord.status}
+                            onChange={(e) => updateOrderStatus(ord.orderId, e.target.value)}
+                            style={{
+                              padding: '0.3rem 0.6rem',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              borderRadius: '4px',
+                              border: '1px solid var(--pk-gold-dark)',
+                              background: ord.status?.includes('VERIFY') ? '#FEF3C7' : ord.status === 'DELIVERED' ? '#E6F4EA' : '#FFFFFF',
+                              color: ord.status?.includes('VERIFY') ? '#92400E' : ord.status === 'DELIVERED' ? '#137333' : 'var(--pk-obsidian)',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="PAID - VERIFY & DISPATCH">PAID - VERIFY & DISPATCH</option>
+                            <option value="PAYMENT CONFIRMED">PAYMENT CONFIRMED</option>
+                            <option value="PACKING">PACKING & QUALITY CHECK</option>
+                            <option value="DISPATCHED">DISPATCHED (ONLINE COURIER)</option>
+                            <option value="DELIVERED">DELIVERED TO CUSTOMER</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Customer Order Guidance & Preferences Box (HIGHLIGHTED) */}
+                      {(ord.orderGuidance || ord.sizePreference || ord.guidanceTags?.length > 0) && (
+                        <div style={{ 
+                          background: '#FFFDF9', 
+                          border: '1.5px dashed var(--pk-gold-dark)', 
+                          borderRadius: '6px', 
+                          padding: '0.85rem 1rem', 
+                          marginBottom: '0.85rem' 
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem' }}>
+                            <Sparkles size={14} style={{ color: 'var(--pk-gold-dark)' }} />
+                            <span style={{ fontSize: '0.72rem', fontWeight: 800, textTransform: 'uppercase', color: 'var(--pk-gold-dark)', letterSpacing: '0.06em' }}>
+                              Customer Customization &amp; Order Guidance:
+                            </span>
+                          </div>
+
+                          {ord.sizePreference && (
+                            <div style={{ fontSize: '0.78rem', color: 'var(--pk-obsidian)', marginBottom: '0.2rem' }}>
+                              <strong>Size Requested:</strong> {ord.sizePreference}
+                            </div>
+                          )}
+
+                          {ord.orderGuidance && (
+                            <div style={{ fontSize: '0.8rem', color: 'var(--pk-text-secondary)', fontStyle: 'italic', marginBottom: '0.35rem' }}>
+                              "{ord.orderGuidance}"
+                            </div>
+                          )}
+
+                          {ord.guidanceTags?.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginTop: '0.25rem' }}>
+                              {ord.guidanceTags.map(tag => (
+                                <span key={tag} style={{ background: 'rgba(212, 175, 55, 0.15)', color: '#8C6D1F', fontSize: '0.68rem', fontWeight: 700, padding: '0.15rem 0.5rem', borderRadius: '4px' }}>
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Items & Payment Grid */}
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '0.85rem' }}>
+                        
+                        {/* Ordered Pieces */}
+                        <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '6px', border: '1px solid var(--pk-border)' }}>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)', textTransform: 'uppercase', fontWeight: 700, marginBottom: '0.5rem' }}>
+                            Ordered Pieces ({ord.items?.length || 0}):
+                          </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                            {ord.items?.map((item, iIdx) => (
+                              <div key={iIdx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: '0.78rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  {item.image && <img src={item.image} alt={item.name} style={{ width: '28px', height: '28px', objectFit: 'cover', borderRadius: '3px' }} />}
+                                  <span><strong>{item.quantity}x</strong> {item.name} <span style={{ color: '#888' }}>({item.size})</span></span>
+                                </div>
+                                <span style={{ fontWeight: 700 }}>₹{(item.price * item.quantity).toLocaleString()}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Payment & Delivery Address Details */}
+                        <div style={{ background: '#FFFFFF', padding: '0.85rem', borderRadius: '6px', border: '1px solid var(--pk-border)', fontSize: '0.78rem', display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                          <div>
+                            <span style={{ color: 'var(--pk-text-muted)' }}>Payment Mode:</span>{' '}
+                            <strong>{ord.paymentMethod || 'UPI QR'}</strong>
+                          </div>
+                          <div>
+                            <span style={{ color: 'var(--pk-text-muted)' }}>UTR / Reference:</span>{' '}
+                            <code style={{ background: '#F1F5F9', padding: '0.1rem 0.35rem', borderRadius: '3px', fontWeight: 700, color: 'var(--pk-obsidian)' }}>
+                              {ord.utrNumber || 'Paid via QR'}
+                            </code>
+                          </div>
+                          <div>
+                            <span style={{ color: 'var(--pk-text-muted)' }}>Shipping Destination:</span>{' '}
+                            <span>{ord.shippingAddress}</span>
+                          </div>
+                        </div>
+
+                      </div>
+
+                      {/* Action Bar */}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', flexWrap: 'wrap', borderTop: '1px solid var(--pk-border)', paddingTop: '0.75rem' }}>
+                        <a
+                          href={`https://wa.me/91${ord.customerPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${ord.customerName}! This is Jaffar Mohd from Premium Khaja Atelier. We have received your order #${ord.orderId} and are preparing your pieces according to your size and preferences. Please share your exact Google Maps location pin so we can schedule direct courier delivery!`)}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-gold"
+                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                        >
+                          <MessageCircle size={14} />
+                          <span>Chat on WhatsApp</span>
+                        </a>
+
+                        <a
+                          href={`tel:${ord.customerPhone?.replace(/\D/g, '')}`}
+                          className="btn-outline"
+                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                        >
+                          <Phone size={14} />
+                          <span>Call Customer</span>
+                        </a>
+                      </div>
+
+                    </div>
+                  );
+                })}
+            </div>
+
+          </div>
+        )}
+
         {/* ========================================================================= */}
         {/* TAB 1: ADD PRODUCTS & AI STUDIO (Upload directly from Phone / Computer)   */}
         {/* ========================================================================= */}
@@ -2066,18 +2466,42 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
                           </div>
                         </div>
 
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(`Delete reel "${short.title}"?`)) {
-                              setShortsList(prev => prev.filter(s => s.id !== short.id));
-                            }
-                          }}
-                          style={{ background: 'transparent', border: 'none', color: '#9F1239', cursor: 'pointer', padding: '0.4rem' }}
-                          title="Delete reel"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => setPreviewingVideoUrl(short.videoUrl)}
+                            className="btn-gold"
+                            style={{ padding: '0.4rem 0.6rem', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            title="Preview Video Reel"
+                          >
+                            <Play size={12} />
+                            <span>Play</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openEditShortModal(short)}
+                            className="btn-outline"
+                            style={{ padding: '0.4rem 0.6rem', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                            title="Edit Reel Details"
+                          >
+                            <Edit3 size={12} />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Delete reel "${short.title}"?`)) {
+                                deleteShort(short.id);
+                              }
+                            }}
+                            style={{ background: 'transparent', border: '1px solid #FECDD3', color: '#9F1239', cursor: 'pointer', padding: '0.4rem', borderRadius: '4px' }}
+                            title="Delete reel"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       </div>
                     );
                   })}
@@ -2332,26 +2756,637 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
         {/* TAB 5: MISS WORLD 2025 CELEBRITY HUB                                      */}
         {/* ========================================================================= */}
         {activeTab === 'CATEGORIES_SHOWCASE' && (
-          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem' }}>
-            <h3 style={{ fontSize: '1.35rem', color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
-              Miss World 2025 India Pageant & Celebrity PR Hub
-            </h3>
-            <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', marginBottom: '1.5rem' }}>
-              Manage pageant runway photos, red carpet accolades, and celebrity endorsement moments.
-            </p>
+          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+            
+            {/* Header */}
+            <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                    <Crown size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                    Official Pageant Partner • Full Axis Admin Control
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Miss World 2025 India Pageant &amp; Celebrity PR Hub
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0' }}>
+                  Publish and manage pageant runway photos, red carpet accolades, celebrity quotes, and national advertisement campaigns in real-time.
+                </p>
+              </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1rem', marginBottom: '2rem' }}>
-              {celebrityShowcase.map(item => (
-                <div key={item.id} style={{ border: '1px solid var(--pk-border)', borderRadius: '4px', overflow: 'hidden', background: 'var(--pk-surface-alt)' }}>
-                  <img src={item.image} alt={item.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
-                  <div style={{ padding: '0.85rem' }}>
-                    <span style={{ fontSize: '0.68rem', color: 'var(--pk-ruby)', fontWeight: 700 }}>{item.tag}</span>
-                    <h5 style={{ margin: '0.2rem 0', fontSize: '0.92rem' }}>{item.title}</h5>
-                    <p style={{ fontSize: '0.75rem', color: 'var(--pk-text-secondary)', fontStyle: 'italic' }}>"{item.quote}"</p>
+              <div style={{ display: 'flex', gap: '0.6rem', alignItems: 'center' }}>
+                <span style={{ background: 'rgba(212, 175, 55, 0.15)', color: '#8C6D1F', fontSize: '0.78rem', fontWeight: 700, padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid rgba(212, 175, 55, 0.3)' }}>
+                  {celebrityShowcase.length} Live PR Highlights
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setActiveMode('storefront')}
+                  className="btn-outline"
+                  style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <Eye size={14} />
+                  <span>View on Storefront</span>
+                </button>
+              </div>
+            </div>
+
+            {showcaseSuccess && (
+              <div style={{ background: '#E6F4EA', color: '#137333', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.25rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle2 size={16} />
+                <span>{showcaseSuccess}</span>
+              </div>
+            )}
+
+            {/* Split Creator Layout */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '2rem' }}>
+              
+              {/* Creator Form */}
+              <div style={{ background: 'var(--pk-surface-alt)', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Plus size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                  <span>Publish New Pageant / Celebrity Advertisement</span>
+                </h4>
+
+                <form onSubmit={handleAddShowcaseItem} style={{ display: 'flex', flexDirection: 'column', gap: '0.9rem' }}>
+                  
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Campaign / Milestone Title *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="e.g. Miss World 2025 India National Gala Walk"
+                      value={newShowcaseTitle}
+                      onChange={(e) => setNewShowcaseTitle(e.target.value)}
+                      className="form-input"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Celebrity / Model Name *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Miss World India Finalists"
+                        value={newShowcaseCelebrity}
+                        onChange={(e) => setNewShowcaseCelebrity(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Pageant / Event</label>
+                      <input
+                        type="text"
+                        placeholder="e.g. Miss World 2025 India"
+                        value={newShowcaseEvent}
+                        onChange={(e) => setNewShowcaseEvent(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Subtitle / Occasion</label>
+                    <input
+                      type="text"
+                      placeholder="e.g. Adorned in Royal Rajwada Antique Kada Set"
+                      value={newShowcaseSubtitle}
+                      onChange={(e) => setNewShowcaseSubtitle(e.target.value)}
+                      className="form-input"
+                      style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.65rem' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Ribbon Tag</label>
+                      <select
+                        value={newShowcaseTag}
+                        onChange={(e) => setNewShowcaseTag(e.target.value)}
+                        className="form-select"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                      >
+                        <option value="Miss World 2025 India">Miss World 2025 India</option>
+                        <option value="Official Pageant Partner">Official Pageant Partner</option>
+                        <option value="Red Carpet Gala">Red Carpet Gala</option>
+                        <option value="Vogue & Press Editorial">Vogue &amp; Press Editorial</option>
+                        <option value="Global Runway Award">Global Runway Award</option>
+                      </select>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Prestige Badge</label>
+                      <select
+                        value={newShowcaseBadge}
+                        onChange={(e) => setNewShowcaseBadge(e.target.value)}
+                        className="form-select"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem' }}
+                      >
+                        <option value="Official Pageant Partner">Official Pageant Partner</option>
+                        <option value="Celebrity Choice">Celebrity Choice</option>
+                        <option value="Royal Heritage Atelier">Royal Heritage Atelier</option>
+                        <option value="Pageant Crown Edition">Pageant Crown Edition</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Celebrity Endorsement Quote / Atelier Story</label>
+                    <textarea
+                      rows="2"
+                      placeholder="e.g. Premium Khaja's jewellery reflects the magnificent royal heritage of India with timeless brilliance."
+                      value={newShowcaseQuote}
+                      onChange={(e) => setNewShowcaseQuote(e.target.value)}
+                      className="form-textarea"
+                      style={{ minHeight: '65px', padding: '0.55rem', fontSize: '0.8rem' }}
+                    />
+                  </div>
+
+                  {/* Photo Uploader / URL */}
+                  <div className="form-group" style={{ marginBottom: 0 }}>
+                    <label className="form-label" style={{ fontSize: '0.75rem' }}>Showcase Photo (File or URL)</label>
+                    <div style={{ display: 'flex', gap: '0.4rem' }}>
+                      <input
+                        type="text"
+                        placeholder="/images/bangles/... or https://..."
+                        value={newShowcaseImage}
+                        onChange={(e) => setNewShowcaseImage(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.8rem', flex: 1 }}
+                      />
+                      <input
+                        type="file"
+                        ref={showcaseFileInputRef}
+                        accept="image/*,.png,.jpg,.jpeg,.webp"
+                        style={{ display: 'none' }}
+                        onChange={handleShowcaseImageUpload}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => showcaseFileInputRef.current?.click()}
+                        className="btn-outline"
+                        style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                      >
+                        Choose Photo
+                      </button>
+                    </div>
+                    {newShowcaseImage && (
+                      <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        <img 
+                          src={newShowcaseImage} 
+                          alt="preview" 
+                          style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--pk-border)' }} 
+                        />
+                        <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>✓ Photo linked & ready</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-gold"
+                    style={{ padding: '0.8rem', fontSize: '0.85rem', marginTop: '0.4rem', fontWeight: 700 }}
+                  >
+                    <Crown size={15} />
+                    <span>Publish Advertisement to Live Storefront</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Current Showcase Items */}
+              <div>
+                <h4 style={{ fontSize: '1.05rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 1rem' }}>
+                  Live Pageant Highlights &amp; Accolades ({celebrityShowcase.length})
+                </h4>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', maxHeight: '550px', overflowY: 'auto' }}>
+                  {celebrityShowcase.map(item => (
+                    <div
+                      key={item.id}
+                      style={{
+                        display: 'flex',
+                        background: '#FFFFFF',
+                        border: '1px solid var(--pk-border)',
+                        borderRadius: 'var(--radius-sm)',
+                        overflow: 'hidden',
+                        boxShadow: 'var(--shadow-sm)'
+                      }}
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.title}
+                        style={{ width: '110px', minHeight: '120px', objectFit: 'cover', background: '#121110' }}
+                      />
+                      <div style={{ padding: '0.85rem', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--pk-ruby)', fontWeight: 700, background: 'rgba(125,26,37,0.1)', padding: '0.15rem 0.4rem', borderRadius: '3px' }}>
+                              {item.tag}
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: 'var(--pk-gold-dark)', fontWeight: 700 }}>
+                              {item.badge}
+                            </span>
+                          </div>
+                          <h5 style={{ margin: '0.35rem 0 0.2rem', fontSize: '0.92rem', color: 'var(--pk-obsidian)', fontWeight: 700 }}>
+                            {item.title}
+                          </h5>
+                          <div style={{ fontSize: '0.74rem', color: 'var(--pk-gold-dark)', fontWeight: 600 }}>
+                            {item.celebrity} • {item.event}
+                          </div>
+                          <p style={{ fontSize: '0.75rem', color: 'var(--pk-text-secondary)', fontStyle: 'italic', margin: '0.3rem 0 0', lineHeight: 1.4 }}>
+                            "{item.quote}"
+                          </p>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.4rem', marginTop: '0.6rem', borderTop: '1px solid var(--pk-surface-alt)', paddingTop: '0.5rem' }}>
+                          <button
+                            type="button"
+                            onClick={() => openEditShowcaseModal(item)}
+                            className="btn-outline"
+                            style={{ padding: '0.3rem 0.6rem', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
+                            <Edit3 size={12} />
+                            <span>Edit</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm(`Delete pageant showcase "${item.title}"?`)) {
+                                deleteCelebrityShowcaseItem(item.id);
+                              }
+                            }}
+                            style={{ background: 'transparent', border: '1px solid #FECDD3', color: '#9F1239', cursor: 'pointer', padding: '0.3rem 0.5rem', borderRadius: '4px', fontSize: '0.72rem', display: 'inline-flex', alignItems: 'center', gap: '0.25rem' }}
+                          >
+                            <Trash2 size={12} />
+                            <span>Delete</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        )}
+
+        {/* ========================================================================= */}
+        {/* TAB: STORE OWNER UPI GATEWAY & SCANNER CONTROL (Jaffar Mohd - premiumkhaja@okaxis) */}
+        {/* ========================================================================= */}
+        {activeTab === 'PAYMENT_QR' && (
+          <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+            
+            {/* Header */}
+            <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                  <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                    <QrCode size={18} />
+                  </div>
+                  <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                    Official Merchant UPI Gateway • Jaffar Mohd Ecosystem
+                  </span>
+                </div>
+                <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Store Owner UPI Gateway &amp; QR Scanner Control
+                </h3>
+                <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0' }}>
+                  Verified Merchant: <strong>{storeOwnerName || 'Jaffar Mohd'}</strong> • UPI: <code>{storeUpiId || 'premiumkhaja@okaxis'}</code> • Direct WhatsApp Sync: <strong>+91 {storeOwnerPhone || '9393056641'}</strong>
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <span style={{ background: '#E6F4EA', color: '#137333', fontSize: '0.75rem', fontWeight: 700, padding: '0.35rem 0.75rem', borderRadius: '4px', border: '1px solid #A7F3D0', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <ShieldCheck size={14} />
+                  <span>Gateway Active &amp; Verified</span>
+                </span>
+              </div>
+            </div>
+
+            {merchantSaveSuccess && (
+              <div style={{ background: '#E6F4EA', color: '#137333', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.5rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <CheckCircle2 size={16} />
+                <span>{merchantSaveSuccess}</span>
+              </div>
+            )}
+
+            {/* Hidden file input for physical Standee photo uploader */}
+            <input
+              type="file"
+              ref={qrFileInputRef}
+              accept="image/*,.png,.jpg,.jpeg,.webp"
+              style={{ display: 'none' }}
+              onChange={handleQrFileUpload}
+            />
+
+            {/* 2-Column Gateway Dashboard */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))', gap: '2rem' }}>
+              
+              {/* Column 1: Official Standee Photo & Security */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {/* Official Physical Standee Scanner Card */}
+                <div style={{ background: 'var(--pk-surface-alt)', border: '1.5px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Camera size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                      <span>Official Physical Standee Scanner</span>
+                    </h4>
+                    <span style={{ background: '#FEF3C7', color: '#92400E', fontSize: '0.7rem', fontWeight: 800, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                      IN CHECKOUT
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ 
+                      width: '160px', 
+                      height: '210px', 
+                      background: '#FFFFFF', 
+                      border: '2px solid var(--pk-gold-dark)', 
+                      borderRadius: '8px', 
+                      overflow: 'hidden', 
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.1)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      padding: '4px'
+                    }}>
+                      <img 
+                        src={storePaymentQr || '/images/jaffar_mohd_upi_qr.jpg'} 
+                        alt="Jaffar Mohd UPI QR Scanner" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                    </div>
+
+                    <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.8rem' }}>
+                      <div>
+                        <span style={{ color: 'var(--pk-text-muted)' }}>Registered Payee:</span>
+                        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--pk-obsidian)' }}>
+                          {storeOwnerName || 'Jaffar Mohd'}
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={{ color: 'var(--pk-text-muted)' }}>Official VPA:</span>
+                        <div style={{ fontWeight: 700, color: 'var(--pk-gold-dark)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <code>{storeUpiId || 'premiumkhaja@okaxis'}</code>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              navigator.clipboard.writeText(storeUpiId || 'premiumkhaja@okaxis');
+                              setCopiedQrUpi(true);
+                              setTimeout(() => setCopiedQrUpi(false), 2000);
+                            }}
+                            style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, color: 'var(--pk-gold-dark)' }}
+                            title="Copy UPI ID"
+                          >
+                            {copiedQrUpi ? <Check size={14} color="#059669" /> : <Copy size={14} />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div>
+                        <span style={{ color: 'var(--pk-text-muted)' }}>Bank Provider:</span>
+                        <div style={{ fontWeight: 600 }}>Google Pay / Axis Bank UPI</div>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginTop: '0.5rem' }}>
+                        <button
+                          type="button"
+                          onClick={() => qrFileInputRef.current?.click()}
+                          className="btn-gold"
+                          style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', width: '100%' }}
+                        >
+                          <Upload size={13} />
+                          <span>Upload New Standee Photo</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={resetStorePaymentQr}
+                          className="btn-outline"
+                          style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', width: '100%' }}
+                        >
+                          <RefreshCw size={13} />
+                          <span>Reset to Jaffar Mohd Default</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              ))}
+
+                {/* Bank-Grade Security & Anti-Tamper Shield Card */}
+                <div style={{ background: '#FFFDF9', border: '1.5px solid rgba(212, 175, 55, 0.4)', borderRadius: 'var(--radius-md)', padding: '1.25rem' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
+                    <ShieldCheck size={18} style={{ color: 'var(--pk-gold-dark)' }} />
+                    <h5 style={{ fontSize: '0.92rem', color: 'var(--pk-obsidian)', margin: 0, fontWeight: 700 }}>
+                      Ecosystem Security &amp; Anti-Tamper Protection
+                    </h5>
+                  </div>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem', fontSize: '0.76rem', color: 'var(--pk-text-secondary)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={13} color="#059669" />
+                      <span><strong>Encrypted Session Tokens:</strong> Cryptographically generated auth tokens with automatic timeout.</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={13} color="#059669" />
+                      <span><strong>Brute-Force Rate Limiter:</strong> 5-attempt threshold with automatic 5-minute lockout security.</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={13} color="#059669" />
+                      <span><strong>Input XSS Neutralizer:</strong> Strict sanitization across customer forms &amp; guidance inputs.</span>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <CheckCircle2 size={13} color="#059669" />
+                      <span><strong>Direct Owner Sync:</strong> Payment receipts are directly dispatched to owner WhatsApp (+91 {storeOwnerPhone || '9393056641'}).</span>
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              {/* Column 2: Dynamic Amount QR Simulator & Gateway Credentials */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                
+                {/* Dynamic QR Simulator Card */}
+                <div style={{ background: 'var(--pk-surface-alt)', border: '1.5px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.5rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.8rem' }}>
+                    <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <Sparkles size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                      <span>Dynamic Total-Amount QR Simulator</span>
+                    </h4>
+                    <span style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', fontWeight: 700 }}>
+                      Live Checkout Emulation
+                    </span>
+                  </div>
+
+                  <p style={{ fontSize: '0.78rem', color: 'var(--pk-text-muted)', margin: '0 0 1rem' }}>
+                    When a customer proceeds to checkout, the system generates a dynamic QR with their exact cart total pre-filled so they can scan and pay seamlessly.
+                  </p>
+
+                  <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                    
+                    {/* Live Dynamic QR Visual */}
+                    <div style={{ 
+                      width: '160px', 
+                      height: '160px', 
+                      background: '#FFFFFF', 
+                      border: '2px solid var(--pk-obsidian)', 
+                      borderRadius: '8px', 
+                      overflow: 'hidden', 
+                      padding: '8px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}>
+                      <img 
+                        src={`https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(`upi://pay?pa=${storeUpiId || 'premiumkhaja@okaxis'}&pn=${encodeURIComponent(storeOwnerName || 'Jaffar Mohd')}&am=${qrSimAmount}&cu=INR&tn=Order%20Payment`)}`} 
+                        alt="Dynamic UPI QR" 
+                        style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                      />
+                    </div>
+
+                    {/* Interactive Simulator Inputs */}
+                    <div style={{ flex: 1, minWidth: '180px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <label style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)' }}>
+                        Simulate Cart Total (₹):
+                      </label>
+                      <input
+                        type="number"
+                        value={qrSimAmount}
+                        onChange={(e) => setQrSimAmount(Number(e.target.value) || 0)}
+                        className="form-input"
+                        style={{ padding: '0.5rem', fontSize: '0.9rem', fontWeight: 800 }}
+                      />
+
+                      {/* Quick amount presets */}
+                      <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                        {[999, 2499, 4999, 8999].map(amt => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => setQrSimAmount(amt)}
+                            style={{
+                              background: qrSimAmount === amt ? 'var(--pk-obsidian)' : '#FFFFFF',
+                              color: qrSimAmount === amt ? '#FAF8F5' : 'var(--pk-obsidian)',
+                              border: '1px solid var(--pk-border)',
+                              borderRadius: '4px',
+                              padding: '0.2rem 0.5rem',
+                              fontSize: '0.72rem',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ₹{amt.toLocaleString()}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)', marginTop: '0.25rem' }}>
+                        Encoded deep link: <br />
+                        <code style={{ fontSize: '0.65rem', wordBreak: 'break-all', color: 'var(--pk-gold-dark)' }}>
+                          upi://pay?pa={storeUpiId || 'premiumkhaja@okaxis'}&amp;pn=Jaffar%20Mohd&amp;am={qrSimAmount}&amp;cu=INR
+                        </code>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Merchant Gateway Credentials Form */}
+                <div style={{ background: '#FFFFFF', border: '1.5px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.5rem', boxShadow: 'var(--shadow-sm)' }}>
+                  <h4 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--pk-obsidian)', margin: '0 0 1rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Edit3 size={16} style={{ color: 'var(--pk-gold-dark)' }} />
+                    <span>Update Merchant Gateway Credentials</span>
+                  </h4>
+
+                  <form onSubmit={handleSaveMerchantSettings} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Business Owner Full Name *</label>
+                      <input
+                        type="text"
+                        required
+                        value={merchantSettings.ownerName}
+                        onChange={(e) => setMerchantSettings({ ...merchantSettings, ownerName: e.target.value })}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.82rem' }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Merchant UPI VPA ID (Virtual Payment Address) *</label>
+                      <input
+                        type="text"
+                        required
+                        value={merchantSettings.upiId}
+                        onChange={(e) => setMerchantSettings({ ...merchantSettings, upiId: e.target.value })}
+                        className="form-input"
+                        style={{ padding: '0.55rem', fontSize: '0.82rem' }}
+                      />
+                      <span style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)' }}>
+                        Default: premiumkhaja@okaxis (Registered under Jaffar Mohd)
+                      </span>
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: 0 }}>
+                      <label className="form-label" style={{ fontSize: '0.75rem' }}>Owner WhatsApp Phone Number (10 Digits) *</label>
+                      <div style={{ display: 'flex', gap: '0.4rem', alignItems: 'center' }}>
+                        <span style={{ padding: '0.55rem 0.65rem', background: '#F1F5F9', border: '1px solid var(--pk-border)', borderRadius: '4px', fontSize: '0.8rem', fontWeight: 700 }}>
+                          +91
+                        </span>
+                        <input
+                          type="tel"
+                          required
+                          maxLength="10"
+                          value={merchantSettings.phone}
+                          onChange={(e) => setMerchantSettings({ ...merchantSettings, phone: e.target.value.replace(/\D/g, '') })}
+                          className="form-input"
+                          style={{ padding: '0.55rem', fontSize: '0.82rem', flex: 1 }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                      <button
+                        type="submit"
+                        className="btn-gold"
+                        style={{ padding: '0.75rem', fontSize: '0.85rem', flex: 1, fontWeight: 700 }}
+                      >
+                        <Check size={15} />
+                        <span>Save &amp; Apply Gateway Settings</span>
+                      </button>
+
+                      <a
+                        href={`https://wa.me/91${merchantSettings.phone.replace(/\D/g, '')}?text=${encodeURIComponent(`Test message from Premium Khaja Atelier Merchant Command Center. Verified Merchant: ${merchantSettings.ownerName}, UPI: ${merchantSettings.upiId}.`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="btn-outline"
+                        style={{ padding: '0.75rem 1rem', fontSize: '0.8rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                        title="Test WhatsApp connection"
+                      >
+                        <MessageCircle size={15} />
+                        <span>Test WhatsApp</span>
+                      </a>
+                    </div>
+                  </form>
+                </div>
+
+              </div>
+
             </div>
+
           </div>
         )}
 
@@ -2613,6 +3648,350 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT MISS WORLD / CELEBRITY PR ITEM                                */}
+      {/* ========================================================================= */}
+      {editingShowcase && (
+        <div className="modal-backdrop" onClick={() => setEditingShowcase(null)} style={{ zIndex: 1100 }}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '580px',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              padding: '1.75rem',
+              background: '#FFFFFF',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+              border: '1.5px solid var(--pk-gold-dark)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Crown size={20} style={{ color: 'var(--pk-gold-dark)' }} />
+                <h3 style={{ fontSize: '1.25rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Edit Miss World / PR Accolade
+                </h3>
+              </div>
+              <button className="btn-icon" onClick={() => setEditingShowcase(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditShowcaseSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Campaign Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={showcaseEditForm.title}
+                  onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, title: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Celebrity / Model *</label>
+                  <input
+                    type="text"
+                    required
+                    value={showcaseEditForm.celebrity}
+                    onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, celebrity: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Pageant / Event</label>
+                  <input
+                    type="text"
+                    value={showcaseEditForm.event}
+                    onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, event: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Subtitle</label>
+                <input
+                  type="text"
+                  value={showcaseEditForm.subtitle}
+                  onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, subtitle: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Ribbon Tag</label>
+                  <input
+                    type="text"
+                    value={showcaseEditForm.tag}
+                    onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, tag: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" style={{ fontSize: '0.75rem' }}>Prestige Badge</label>
+                  <input
+                    type="text"
+                    value={showcaseEditForm.badge}
+                    onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, badge: e.target.value })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Endorsement Quote</label>
+                <textarea
+                  rows="2"
+                  value={showcaseEditForm.quote}
+                  onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, quote: e.target.value })}
+                  className="form-textarea"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Photo Image URL / Asset</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    value={showcaseEditForm.image}
+                    onChange={(e) => setShowcaseEditForm({ ...showcaseEditForm, image: e.target.value })}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="file"
+                    ref={showcaseEditFileInputRef}
+                    accept="image/*,.png,.jpg,.jpeg,.webp"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setShowcaseEditForm(prev => ({ ...prev, image: event.target.result }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => showcaseEditFileInputRef.current?.click()}
+                    className="btn-outline"
+                    style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" className="btn-gold" style={{ flex: 1, padding: '0.75rem', fontWeight: 700 }}>
+                  <Check size={15} />
+                  <span>Update &amp; Save Changes</span>
+                </button>
+                <button type="button" onClick={() => setEditingShowcase(null)} className="btn-outline" style={{ padding: '0.75rem 1rem' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: EDIT ROYAL SHORT REEL                                              */}
+      {/* ========================================================================= */}
+      {editingShort && (
+        <div className="modal-backdrop" onClick={() => setEditingShort(null)} style={{ zIndex: 1100 }}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '560px',
+              maxHeight: '92vh',
+              overflowY: 'auto',
+              padding: '1.75rem',
+              background: '#FFFFFF',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.4)',
+              border: '1.5px solid var(--pk-gold-dark)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Sparkles size={20} style={{ color: 'var(--pk-gold-dark)' }} />
+                <h3 style={{ fontSize: '1.25rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                  Edit Royal Short Reel
+                </h3>
+              </div>
+              <button className="btn-icon" onClick={() => setEditingShort(null)}>
+                <X size={18} />
+              </button>
+            </div>
+
+            <form onSubmit={handleEditShortSave} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Reel Title *</label>
+                <input
+                  type="text"
+                  required
+                  value={shortEditForm.title}
+                  onChange={(e) => setShortEditForm({ ...shortEditForm, title: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Description</label>
+                <textarea
+                  rows="2"
+                  value={shortEditForm.description}
+                  onChange={(e) => setShortEditForm({ ...shortEditForm, description: e.target.value })}
+                  className="form-textarea"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Video URL or Asset Path *</label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <input
+                    type="text"
+                    required
+                    value={shortEditForm.videoUrl}
+                    onChange={(e) => setShortEditForm({ ...shortEditForm, videoUrl: e.target.value })}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="file"
+                    ref={editShortVideoRef}
+                    accept="video/*,.mp4,.webm"
+                    style={{ display: 'none' }}
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = (event) => {
+                          setShortEditForm(prev => ({ ...prev, videoUrl: event.target.result }));
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => editShortVideoRef.current?.click()}
+                    className="btn-outline"
+                    style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                  >
+                    Upload Video
+                  </button>
+                </div>
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Thumbnail / Poster Image</label>
+                <input
+                  type="text"
+                  value={shortEditForm.posterImage}
+                  onChange={(e) => setShortEditForm({ ...shortEditForm, posterImage: e.target.value })}
+                  className="form-input"
+                />
+              </div>
+
+              <div className="form-group" style={{ marginBottom: 0 }}>
+                <label className="form-label" style={{ fontSize: '0.75rem' }}>Tagged Product to Shop in Reel</label>
+                <select
+                  value={shortEditForm.taggedProductId}
+                  onChange={(e) => setShortEditForm({ ...shortEditForm, taggedProductId: e.target.value })}
+                  className="form-select"
+                >
+                  {allCatalogueProducts.map(p => (
+                    <option key={p.id} value={p.id}>
+                      {p.name} (₹{p.price})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button type="submit" className="btn-gold" style={{ flex: 1, padding: '0.75rem', fontWeight: 700 }}>
+                  <Check size={15} />
+                  <span>Update Reel</span>
+                </button>
+                <button type="button" onClick={() => setEditingShort(null)} className="btn-outline" style={{ padding: '0.75rem 1rem' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: IN-ADMIN VIDEO REEL PLAYER PREVIEW                                 */}
+      {/* ========================================================================= */}
+      {previewingVideoUrl && (
+        <div className="modal-backdrop" onClick={() => setPreviewingVideoUrl(null)} style={{ zIndex: 1200 }}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '420px',
+              background: '#0D0C0B',
+              padding: '1.25rem',
+              borderRadius: 'var(--radius-md)',
+              border: '1.5px solid var(--pk-gold-dark)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.7)'
+            }}
+          >
+            <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#E4C88A', fontSize: '0.85rem', fontWeight: 700 }}>
+                <Play size={15} />
+                <span>Video Reel Playback Preview</span>
+              </div>
+              <button
+                className="btn-icon"
+                onClick={() => setPreviewingVideoUrl(null)}
+                style={{ color: '#FAF8F5', background: 'rgba(255,255,255,0.1)' }}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div style={{ width: '100%', height: '520px', background: '#000', borderRadius: '8px', overflow: 'hidden' }}>
+              <video
+                src={previewingVideoUrl}
+                controls
+                autoPlay
+                loop
+                playsInline
+                style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+              />
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setPreviewingVideoUrl(null)}
+              className="btn-gold"
+              style={{ width: '100%', marginTop: '0.85rem', padding: '0.65rem', fontSize: '0.82rem' }}
+            >
+              Close Video Preview
+            </button>
           </div>
         </div>
       )}

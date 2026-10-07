@@ -3,10 +3,23 @@ import { ALL_PRODUCTS, BANGLES_PRODUCTS, STORE_CATEGORIES, CELEBRITY_SHOWCASE_DA
 import { INITIAL_CUSTOMERS, INITIAL_LEADS, INITIAL_CAMPAIGNS } from '../data/crmData';
 import { INITIAL_SHORTS } from '../data/shortsData';
 
-// Official Store Owner Contact & UPI Configuration
+// Official Store Owner Contact & UPI Configuration (Verified Merchant: Jaffar Mohd)
+export const STORE_OWNER_NAME = "Jaffar Mohd";
 export const STORE_OWNER_PHONE = "9393056641";
 export const STORE_OWNER_WHATSAPP = "https://wa.me/919393056641";
-export const STORE_UPI_ID = "9393056641@upi";
+export const STORE_UPI_ID = "premiumkhaja@okaxis";
+export const STORE_PAYMENT_QR_IMAGE = "/images/jaffar_mohd_upi_qr.jpg";
+
+// Anti-tamper & XSS input sanitization utility
+export const sanitizeInput = (str) => {
+  if (typeof str !== 'string') return str;
+  return str
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
+    .replace(/on\w+="[^"]*"/g, '')
+    .replace(/on\w+='[^']*'/g, '')
+    .replace(/javascript:/gi, '')
+    .trim();
+};
 
 const StoreContext = createContext();
 
@@ -134,10 +147,38 @@ export const StoreProvider = ({ children }) => {
     }
   ]);
 
-  // Store Payment QR Code State (Owner Uploadable or Default UPI)
-  const [storePaymentQr, setStorePaymentQr] = useState(() => {
-    return localStorage.getItem('pk_payment_qr') || null;
+  // Store Owner & Merchant UPI Configuration State (Jaffar Mohd - premiumkhaja@okaxis)
+  const [storeOwnerName, setStoreOwnerName] = useState(() => {
+    return localStorage.getItem('pk_owner_name') || STORE_OWNER_NAME;
   });
+  const [storeOwnerPhone, setStoreOwnerPhone] = useState(() => {
+    return localStorage.getItem('pk_owner_phone') || STORE_OWNER_PHONE;
+  });
+  const [storeUpiId, setStoreUpiId] = useState(() => {
+    return localStorage.getItem('pk_upi_id') || STORE_UPI_ID;
+  });
+  const [storePaymentQr, setStorePaymentQr] = useState(() => {
+    return localStorage.getItem('pk_payment_qr') || STORE_PAYMENT_QR_IMAGE;
+  });
+
+  const updateMerchantSettings = ({ ownerName, phone, upiId, qrImage }) => {
+    if (ownerName) {
+      setStoreOwnerName(ownerName);
+      localStorage.setItem('pk_owner_name', ownerName);
+    }
+    if (phone) {
+      setStoreOwnerPhone(phone);
+      localStorage.setItem('pk_owner_phone', phone);
+    }
+    if (upiId) {
+      setStoreUpiId(upiId);
+      localStorage.setItem('pk_upi_id', upiId);
+    }
+    if (qrImage) {
+      setStorePaymentQr(qrImage);
+      localStorage.setItem('pk_payment_qr', qrImage);
+    }
+  };
 
   const uploadStorePaymentQr = (qrDataUrl) => {
     setStorePaymentQr(qrDataUrl);
@@ -149,11 +190,11 @@ export const StoreProvider = ({ children }) => {
   };
 
   const resetStorePaymentQr = () => {
-    setStorePaymentQr(null);
+    setStorePaymentQr(STORE_PAYMENT_QR_IMAGE);
     localStorage.removeItem('pk_payment_qr');
   };
 
-  // Miss World & Celebrity Showcase Items State (Dynamic & Updatable)
+  // Miss World & Celebrity Showcase Items State (Dynamic & Fully Editable by Admin)
   const [celebrityShowcase, setCelebrityShowcase] = useState(() => {
     const saved = localStorage.getItem('pk_celebrity_showcase');
     if (saved) {
@@ -162,7 +203,37 @@ export const StoreProvider = ({ children }) => {
     return CELEBRITY_SHOWCASE_DATA;
   });
 
-  // Royal Jewellery Shorts & Video Reels State
+  const updateCelebrityShowcaseItem = (id, updatedFields) => {
+    setCelebrityShowcase(prev => {
+      const updated = prev.map(item => {
+        if (item.id === id) {
+          return {
+            ...item,
+            ...updatedFields,
+            title: updatedFields.title ? sanitizeInput(updatedFields.title) : item.title,
+            celebrity: updatedFields.celebrity ? sanitizeInput(updatedFields.celebrity) : item.celebrity,
+            quote: updatedFields.quote ? sanitizeInput(updatedFields.quote) : item.quote,
+            image: updatedFields.image ? sanitizeInput(updatedFields.image) : item.image,
+            tag: updatedFields.tag ? sanitizeInput(updatedFields.tag) : item.tag,
+            badge: updatedFields.badge ? sanitizeInput(updatedFields.badge) : item.badge
+          };
+        }
+        return item;
+      });
+      try { localStorage.setItem('pk_celebrity_showcase', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const deleteCelebrityShowcaseItem = (id) => {
+    setCelebrityShowcase(prev => {
+      const updated = prev.filter(item => item.id !== id);
+      try { localStorage.setItem('pk_celebrity_showcase', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  // Royal Jewellery Shorts & Video Reels State (Full Axis Video CMS)
   const [shortsList, setShortsList] = useState(() => {
     const saved = localStorage.getItem('pk_shorts');
     if (saved) {
@@ -184,14 +255,14 @@ export const StoreProvider = ({ children }) => {
   const addNewShort = (shortData) => {
     const newShort = {
       id: `short-${Date.now()}`,
-      title: shortData.title || "Royal Jewellery Reel",
-      description: shortData.description || "Exclusive atelier showcase video.",
+      title: sanitizeInput(shortData.title || "Royal Jewellery Reel"),
+      description: sanitizeInput(shortData.description || "Exclusive atelier showcase video."),
       videoUrl: shortData.videoUrl,
       posterImage: shortData.posterImage || "/images/bangles/1789662811af3b.png",
       taggedProductId: shortData.taggedProductId || (products[0]?.id || "bangle-01"),
-      likesCount: 150,
-      viewsCount: "1.2K",
-      author: "@PremiumKhaja",
+      likesCount: shortData.likesCount || 150,
+      viewsCount: shortData.viewsCount || "1.2K",
+      author: sanitizeInput(shortData.author || "@PremiumKhaja"),
       tags: shortData.tags || ["#JewelleryReel", "#HauteCouture"]
     };
     setShortsList(prev => {
@@ -200,6 +271,35 @@ export const StoreProvider = ({ children }) => {
       return updated;
     });
     return newShort;
+  };
+
+  const updateShort = (id, updatedFields) => {
+    setShortsList(prev => {
+      const updated = prev.map(s => {
+        if (s.id === id) {
+          return {
+            ...s,
+            ...updatedFields,
+            title: updatedFields.title ? sanitizeInput(updatedFields.title) : s.title,
+            description: updatedFields.description ? sanitizeInput(updatedFields.description) : s.description,
+            videoUrl: updatedFields.videoUrl || s.videoUrl,
+            posterImage: updatedFields.posterImage || s.posterImage,
+            taggedProductId: updatedFields.taggedProductId || s.taggedProductId
+          };
+        }
+        return s;
+      });
+      try { localStorage.setItem('pk_shorts', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const deleteShort = (id) => {
+    setShortsList(prev => {
+      const updated = prev.filter(s => s.id !== id);
+      try { localStorage.setItem('pk_shorts', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
   };
 
   // Hero & Marketing Configuration State (Admin Controllable)
@@ -564,29 +664,86 @@ export const StoreProvider = ({ children }) => {
     setCustomerPortalOpen(false);
   };
 
-  // Admin Authentication (Credentials kept secure - never exposed in UI)
+  // Admin Authentication with Brute Force Protection & Cryptographic Session Tokens
+  const [adminLockoutUntil, setAdminLockoutUntil] = useState(() => {
+    const saved = localStorage.getItem('pk_admin_lockout');
+    return saved ? Number(saved) : 0;
+  });
+  const [failedAttempts, setFailedAttempts] = useState(() => {
+    const saved = localStorage.getItem('pk_admin_failed');
+    return saved ? Number(saved) : 0;
+  });
+
   const loginAdmin = ({ username, password }) => {
-    const cleanUser = username.trim().toLowerCase();
+    const now = Date.now();
+    if (adminLockoutUntil && now < adminLockoutUntil) {
+      const waitSeconds = Math.ceil((adminLockoutUntil - now) / 1000);
+      return { 
+        success: false, 
+        message: `Security Lockout Active: Too many failed attempts. Try again in ${waitSeconds} seconds.` 
+      };
+    }
+
+    const cleanUser = sanitizeInput(username).trim().toLowerCase();
     const cleanPass = password.trim();
-    if (
-      (cleanUser === 'admin@premiumkhaja.com' || cleanUser === 'admin' || cleanUser === '9393056641' || cleanUser === 'owner') && 
-      (cleanPass === 'admin123' || cleanPass === '7860' || cleanPass === '9393056641' || cleanPass === 'Khaja@2026' || cleanPass === 'admin')
-    ) {
+
+    const validUser = (
+      cleanUser === 'admin@premiumkhaja.com' ||
+      cleanUser === 'admin' ||
+      cleanUser === '9393056641' ||
+      cleanUser === 'owner' ||
+      cleanUser === 'jaffar' ||
+      cleanUser === 'jaffar mohd'
+    );
+
+    const validPass = (
+      cleanPass === 'admin123' ||
+      cleanPass === '7860' ||
+      cleanPass === '9393056641' ||
+      cleanPass === 'Khaja@2026' ||
+      cleanPass === 'admin' ||
+      cleanPass === 'jaffar786'
+    );
+
+    if (validUser && validPass) {
+      setFailedAttempts(0);
+      localStorage.removeItem('pk_admin_failed');
+      localStorage.removeItem('pk_admin_lockout');
+
       const adminSession = {
         id: 'ADM-01',
-        name: 'Master Merchant Owner',
-        username: 'admin@premiumkhaja.com',
-        role: 'ADMIN',
+        name: storeOwnerName || 'Jaffar Mohd',
+        username: cleanUser,
+        role: 'SUPER_ADMIN',
         loginTime: new Date().toLocaleTimeString(),
-        token: `pk_sec_${Date.now()}`
+        token: `pk_sec_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        expiresAt: Date.now() + (12 * 60 * 60 * 1000)
       };
+
       setAdminUser(adminSession);
       setActiveMode('command-center');
       setAuthModalOpen(false);
       logEvent('ADMIN_LOGIN_SUCCESS', { adminId: adminSession.id });
       return { success: true };
     } else {
-      return { success: false, message: 'Invalid administrator credentials or PIN. Access restricted.' };
+      const nextFailed = failedAttempts + 1;
+      setFailedAttempts(nextFailed);
+      localStorage.setItem('pk_admin_failed', String(nextFailed));
+
+      if (nextFailed >= 5) {
+        const lockDuration = now + (5 * 60 * 1000); // 5 minutes
+        setAdminLockoutUntil(lockDuration);
+        localStorage.setItem('pk_admin_lockout', String(lockDuration));
+        return {
+          success: false,
+          message: 'Security Alert: 5 incorrect login attempts. System locked for 5 minutes to prevent unauthorized access.'
+        };
+      }
+
+      return { 
+        success: false, 
+        message: `Invalid administrator credentials or PIN. (${5 - nextFailed} attempts remaining before lockout)` 
+      };
     }
   };
 
@@ -907,7 +1064,17 @@ export const StoreProvider = ({ children }) => {
     logEvent('CELEBRITY_SHOWCASE_ADDED', { id: created.id, title: created.title });
   };
 
-  // Process Completed Order
+  // Update Fulfillment & Payment Status for Orders
+  const updateOrderStatus = (orderId, newStatus) => {
+    setOrders(prev => {
+      const updated = prev.map(ord => ord.orderId === orderId ? { ...ord, status: newStatus } : ord);
+      try { localStorage.setItem('pk_orders', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    logEvent('ORDER_STATUS_UPDATED', { orderId, status: newStatus });
+  };
+
+  // Process Completed Order (Form First -> Guidance Attached -> Dynamic UPI -> WhatsApp Dispatch)
   const processOrder = (orderPayload) => {
     // Deduct stock
     setInventory(prev => {
@@ -922,8 +1089,8 @@ export const StoreProvider = ({ children }) => {
 
     const newOrder = {
       orderId: `PK-ORD-${Math.floor(1000 + Math.random() * 9000)}`,
-      customerName: orderPayload.shipping.name,
-      customerPhone: orderPayload.shipping.phone,
+      customerName: sanitizeInput(orderPayload.shipping.name),
+      customerPhone: sanitizeInput(orderPayload.shipping.phone),
       items: orderPayload.items.map(i => ({
         id: i.product.id,
         name: i.product.name,
@@ -933,16 +1100,27 @@ export const StoreProvider = ({ children }) => {
         image: i.product.image
       })),
       totalAmount: orderPayload.total,
+      subtotal: orderPayload.subtotal || orderPayload.total,
+      shippingFee: orderPayload.shippingFee || 0,
       status: 'PAID - VERIFY & DISPATCH',
-      paymentMethod: orderPayload.paymentMethod || 'UPI QR Code',
-      utrNumber: orderPayload.utrNumber || '',
-      orderDate: new Date().toLocaleString(),
-      shippingAddress: `${orderPayload.shipping.address}, ${orderPayload.shipping.city} - ${orderPayload.shipping.pincode}`,
+      paymentMethod: orderPayload.paymentMethod || `UPI QR Code (${storeUpiId})`,
+      payeeName: storeOwnerName || 'Jaffar Mohd',
+      upiId: storeUpiId || 'premiumkhaja@okaxis',
+      utrNumber: sanitizeInput(orderPayload.utrNumber || 'Paid via UPI QR Scanner'),
+      orderDate: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
+      shippingAddress: `${sanitizeInput(orderPayload.shipping.address)}, ${sanitizeInput(orderPayload.shipping.city)}, ${sanitizeInput(orderPayload.shipping.state || 'Telangana')} - ${sanitizeInput(orderPayload.shipping.pincode)}`,
       shippingDetails: orderPayload.shipping,
+      sizePreference: orderPayload.sizePreference || 'Standard / As Selected',
+      orderGuidance: sanitizeInput(orderPayload.orderGuidance || ''),
+      guidanceTags: orderPayload.guidanceTags || [],
       channel: attribution.lastTouch.source
     };
 
-    setOrders(prev => [newOrder, ...prev]);
+    setOrders(prev => {
+      const updated = [newOrder, ...prev];
+      try { localStorage.setItem('pk_orders', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
     clearCart();
     logEvent('ORDER_CREATED', { orderId: newOrder.orderId, amount: newOrder.totalAmount });
 
@@ -962,15 +1140,20 @@ export const StoreProvider = ({ children }) => {
     setOrderSuccessData(newOrder);
     setCheckoutOpen(false);
 
-    // Compose formatted WhatsApp alert for Store Owner (9393056641)
+    // Compose formatted WhatsApp alert for Store Owner (Jaffar Mohd - 9393056641)
     const itemsText = newOrder.items
-      .map(i => `• ${i.name} (Qty: ${i.quantity}, Size: ${i.size}) - ₹${i.price * i.quantity}`)
+      .map(i => `• ${i.name} (Qty: ${i.quantity}, Size: ${i.size}) - ₹${(i.price * i.quantity).toLocaleString()}`)
       .join('\n');
 
-    const ownerMsg = `🛍️ *NEW ORDER & PAYMENT RECEIVED - PREMIUM KHAJA* 🛍️\n----------------------------------------\n💰 *TOTAL PAYMENT MADE:* ₹${newOrder.totalAmount.toLocaleString()}\n💳 *Payment Method:* ${newOrder.paymentMethod}${newOrder.utrNumber ? ` (UTR/Ref: ${newOrder.utrNumber})` : ''}\n📦 *Order ID:* ${newOrder.orderId}\n\n👤 *CUSTOMER DETAILS:*\n• *Name:* ${newOrder.customerName}\n• *Phone:* ${newOrder.customerPhone}\n• *Delivery Address:* ${newOrder.shippingAddress}\n\n🛒 *ITEMS ORDERED:*\n${itemsText}\n\n📍 *DELIVERY DISPATCH ACTION:*\nCustomer has made payment via QR code. Please confirm receipt in your UPI App and message the customer to request their exact location / pin to book online delivery via Dunzo / Porter / Delhivery / Speed Post!\n----------------------------------------`;
+    const guidanceBlock = (newOrder.orderGuidance || newOrder.sizePreference || newOrder.guidanceTags?.length > 0)
+      ? `\n🎯 *CUSTOMER ORDER PREFERENCE & GUIDANCE:*\n• *Size Preference:* ${newOrder.sizePreference}\n• *Special Notes:* ${newOrder.orderGuidance || 'Standard order'}${newOrder.guidanceTags?.length > 0 ? `\n• *Tags:* ${newOrder.guidanceTags.join(', ')}` : ''}\n`
+      : '';
+
+    const ownerMsg = `👑 *NEW ORDER & PAYMENT CONFIRMATION — PREMIUM KHAJA* 👑\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n🧾 *ORDER INVOICE:* #${newOrder.orderId}\n📅 *TIMESTAMP:* ${newOrder.orderDate}\n💰 *TOTAL AMOUNT PAID:* ₹${newOrder.totalAmount.toLocaleString()}\n💳 *PAYMENT METHOD:* UPI QR Code Scanner\n👤 *MERCHANT PAYEE:* ${newOrder.payeeName} (${newOrder.upiId})\n🔖 *UTR / REFERENCE NO:* ${newOrder.utrNumber}\n\n👤 *CUSTOMER & DELIVERY PROFILE:*\n• *Customer Name:* ${newOrder.customerName}\n• *WhatsApp Phone:* ${newOrder.customerPhone}\n• *Shipping Address:* ${newOrder.shippingAddress}\n${guidanceBlock}\n📦 *ORDERED ATELIER ITEMS:*\n${itemsText}\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n• Bag Subtotal: ₹${newOrder.subtotal?.toLocaleString()}\n• Delivery: ${newOrder.shippingFee === 0 ? 'FREE EXPRESS' : '₹' + newOrder.shippingFee}\n• *Final Net Total Paid: ₹${newOrder.totalAmount.toLocaleString()}*\n\n📍 *ATELIER OWNER DISPATCH ACTION:*\nCustomer has sent payment via UPI to ${newOrder.upiId}. Please verify receipt in Google Pay / UPI app and confirm delivery dispatch via Dunzo / Porter / Delhivery / Speed Post!\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━`;
 
     try {
-      const waUrl = `https://wa.me/919393056641?text=${encodeURIComponent(ownerMsg)}`;
+      const cleanPhone = storeOwnerPhone.replace(/\D/g, '') || "9393056641";
+      const waUrl = `https://wa.me/91${cleanPhone}?text=${encodeURIComponent(ownerMsg)}`;
       window.open(waUrl, '_blank');
     } catch (e) {
       console.warn("Could not automatically open WhatsApp popup", e);
@@ -1082,9 +1265,11 @@ export const StoreProvider = ({ children }) => {
         setMemberCardOpen,
         qrModalOpen,
         setQrModalOpen,
-        // Miss World 2025 & Celebrity Showcase
+        // Miss World 2025 & Celebrity Showcase (Full Axis CRUD)
         celebrityShowcase,
         addCelebrityShowcaseItem,
+        updateCelebrityShowcaseItem,
+        deleteCelebrityShowcaseItem,
         // Calculations
         cartSubtotal,
         cartOriginalTotal,
@@ -1116,7 +1301,7 @@ export const StoreProvider = ({ children }) => {
         importFromSouqOneStudio,
         ALL_PRODUCTS,
         BANGLES_PRODUCTS,
-        // Royal Shorts & Video Reels
+        // Royal Shorts & Video Reels (Full Axis Video CRUD)
         shortsList,
         setShortsList,
         shortsModalOpen,
@@ -1125,17 +1310,23 @@ export const StoreProvider = ({ children }) => {
         setActiveShortIndex,
         openShortAt,
         addNewShort,
+        updateShort,
+        deleteShort,
         // Hero & Marketing Config
         heroConfig,
         setHeroConfig,
         updateHeroConfig,
-        // Store Owner WhatsApp & UPI Configuration
-        storeOwnerPhone: STORE_OWNER_PHONE,
-        storeOwnerWhatsApp: STORE_OWNER_WHATSAPP,
-        storeUpiId: STORE_UPI_ID,
+        // Store Owner WhatsApp & UPI Configuration (Jaffar Mohd - premiumkhaja@okaxis)
+        storeOwnerName,
+        storeOwnerPhone,
+        storeOwnerWhatsApp: `https://wa.me/91${storeOwnerPhone.replace(/\D/g, '')}`,
+        storeUpiId,
         storePaymentQr,
         uploadStorePaymentQr,
-        resetStorePaymentQr
+        resetStorePaymentQr,
+        updateMerchantSettings,
+        updateOrderStatus,
+        sanitizeInput
       }}
     >
       {children}

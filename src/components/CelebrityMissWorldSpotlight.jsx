@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 import { ALL_PRODUCTS } from '../data/products';
 import { 
@@ -12,16 +12,21 @@ import {
   X, 
   ExternalLink, 
   CheckCircle,
-  Quote
+  Quote,
+  Trash2,
+  Edit3,
+  Upload
 } from 'lucide-react';
 
 export const CelebrityMissWorldSpotlight = () => {
   const { 
     celebrityShowcase, 
     addCelebrityShowcaseItem, 
+    deleteCelebrityShowcaseItem,
     openProductDetail, 
     setActiveCategory, 
     setActiveSubcategory,
+    setActiveMode,
     adminUser,
     setAuthMode,
     setAuthModalOpen
@@ -29,6 +34,7 @@ export const CelebrityMissWorldSpotlight = () => {
 
   const [activeTab, setActiveTab] = useState('ALL');
   const [modalOpen, setModalOpen] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Form state for updating new photos/celebrities
   const [newTitle, setNewTitle] = useState('');
@@ -46,6 +52,16 @@ export const CelebrityMissWorldSpotlight = () => {
     if (activeTab === 'PRESS' && item.tag.includes('Editorial')) return true;
     return true;
   });
+
+  const handleImageFile = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      setNewImageUrl(event.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
 
   const handleCreateHighlight = (e) => {
     e.preventDefault();
@@ -393,6 +409,57 @@ export const CelebrityMissWorldSpotlight = () => {
                     </div>
                   )}
 
+                  {/* Admin Direct Axis Controls */}
+                  {adminUser && (
+                    <div style={{ marginTop: '0.85rem', paddingTop: '0.75rem', borderTop: '1px dashed rgba(212, 175, 55, 0.4)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setActiveMode('merchant')}
+                        style={{
+                          background: 'rgba(212, 175, 55, 0.15)',
+                          border: '1px solid #D4AF37',
+                          color: '#E4C88A',
+                          borderRadius: '4px',
+                          padding: '0.3rem 0.65rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Edit3 size={12} />
+                        <span>Edit in Command Center</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (window.confirm(`Delete advertisement "${item.title}"?`)) {
+                            deleteCelebrityShowcaseItem(item.id);
+                          }
+                        }}
+                        style={{
+                          background: 'rgba(125, 26, 37, 0.2)',
+                          border: '1px solid #7D1A25',
+                          color: '#FDA4AF',
+                          borderRadius: '4px',
+                          padding: '0.3rem 0.6rem',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.3rem'
+                        }}
+                      >
+                        <Trash2 size={12} />
+                        <span>Delete</span>
+                      </button>
+                    </div>
+                  )}
+
                 </div>
 
               </div>
@@ -494,17 +561,38 @@ export const CelebrityMissWorldSpotlight = () => {
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
-                <label className="form-label">Photo Image URL or Local Asset Path</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. /images/bangles/1789662811af3b.png or https://..."
-                  value={newImageUrl}
-                  onChange={(e) => setNewImageUrl(e.target.value)}
-                  className="form-input"
-                />
-                <span style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)' }}>
-                  Tip: Use any image from public/images/bangles or a high-res photo URL.
-                </span>
+                <label className="form-label">Photo Image (File or URL)</label>
+                <div style={{ display: 'flex', gap: '0.4rem' }}>
+                  <input 
+                    type="text" 
+                    placeholder="e.g. /images/bangles/... or https://..."
+                    value={newImageUrl}
+                    onChange={(e) => setNewImageUrl(e.target.value)}
+                    className="form-input"
+                    style={{ flex: 1 }}
+                  />
+                  <input 
+                    type="file"
+                    ref={fileInputRef}
+                    accept="image/*,.png,.jpg,.jpeg,.webp"
+                    style={{ display: 'none' }}
+                    onChange={handleImageFile}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    className="btn-outline"
+                    style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                  >
+                    Upload File
+                  </button>
+                </div>
+                {newImageUrl && (
+                  <div style={{ marginTop: '0.4rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <img src={newImageUrl} alt="preview" style={{ width: '40px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
+                    <span style={{ fontSize: '0.72rem', color: '#059669', fontWeight: 600 }}>✓ Image attached</span>
+                  </div>
+                )}
               </div>
 
               <div className="form-group" style={{ marginBottom: 0 }}>
