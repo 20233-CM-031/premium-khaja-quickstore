@@ -3,7 +3,8 @@ import { useStore } from '../context/StoreContext';
 import { Crown, MessageCircle, QrCode, Shield, Sparkles, LayoutDashboard } from 'lucide-react';
 
 export const Footer = () => {
-  const { setQuickPassOpen, setMemberCardOpen, setQrModalOpen, setAiStylistOpen, setActiveMode } = useStore();
+  const { setQuickPassOpen, setMemberCardOpen, setQrModalOpen, setAiStylistOpen, setActiveMode, storeOwnerPhone } = useStore();
+  const cleanPhone = (storeOwnerPhone || '9393056641').replace(/\D/g, '');
 
   return (
     <footer style={{ background: '#121110', color: '#FAF8F5', borderTop: '1px solid #282522', padding: '4rem 0 2rem' }}>
@@ -63,10 +64,10 @@ export const Footer = () => {
               Have questions regarding custom bangle sizing (2.4, 2.6, 2.8) or wedding trousseau matching?
             </p>
             <div style={{ fontSize: '0.78rem', color: '#E4C88A', fontWeight: 600, marginBottom: '0.75rem' }}>
-              Direct Line / WhatsApp: +91 93930 56641
+              Direct Line / WhatsApp: +91 {cleanPhone.slice(-10)}
             </div>
             <a 
-              href="https://wa.me/919393056641?text=Hello%20Premium%20Khaja!%20I%20need%20assistance%20with%20jewellery%20styling%20and%20orders."
+              href={`https://wa.me/91${cleanPhone}?text=Hello%20Premium%20Khaja!%20I%20need%20assistance%20with%20jewellery%20styling%20and%20orders.`}
               target="_blank"
               rel="noopener noreferrer"
               style={{

@@ -34,7 +34,8 @@ export const ProductDetailModal = () => {
     inventory, 
     setEnquiryProduct,
     setMemberCardOpen,
-    products 
+    products,
+    storeOwnerPhone
   } = useStore();
 
   const allAvailableProducts = products || ALL_PRODUCTS;
@@ -85,7 +86,8 @@ export const ProductDetailModal = () => {
 
   const handleWhatsAppOrder = () => {
     const text = `🛍️ *ORDER INQUIRY - PREMIUM KHAJA*\n----------------------------------------\n• *Product:* ${currentProduct.name}\n• *SKU:* ${currentProduct.sku}\n• *Size Selected:* ${selectedSize}\n• *Finish / Polish:* ${selectedColor}\n• *Quantity:* ${quantity}\n• *Total Price:* ₹${(displayPrice * quantity).toLocaleString()}\n\nHello, I would like to order this piece via online delivery. Please confirm availability and UPI QR payment!`;
-    window.open(`https://wa.me/919393056641?text=${encodeURIComponent(text)}`, '_blank');
+    const cleanPhone = (storeOwnerPhone || '9393056641').replace(/\D/g, '');
+    window.open(`https://wa.me/91${cleanPhone}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
   return (
@@ -312,7 +314,7 @@ export const ProductDetailModal = () => {
               <img 
                 src={currentProduct.image} 
                 alt={currentProduct.name}
-                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '10px' }}
               />
 
               {/* Badges */}

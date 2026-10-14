@@ -3,7 +3,7 @@ import { useStore } from '../context/StoreContext';
 import { X, MessageCircle, Send, ShieldCheck, Sparkles } from 'lucide-react';
 
 export const EnquiryModal = () => {
-  const { enquiryProduct, setEnquiryProduct, addLead, customer } = useStore();
+  const { enquiryProduct, setEnquiryProduct, addLead, customer, storeOwnerPhone } = useStore();
 
   const [name, setName] = useState(customer.name || '');
   const [phone, setPhone] = useState(customer.phone || '');
@@ -27,9 +27,10 @@ export const EnquiryModal = () => {
       message: message.trim() || `Inquiry regarding ${enquiryProduct.name} (SKU: ${enquiryProduct.sku})`
     });
 
-    // Open WhatsApp directly
+    // Open WhatsApp directly to store owner
+    const cleanPhone = (storeOwnerPhone || '9393056641').replace(/\D/g, '');
     const encoded = encodeURIComponent(`Hi Premium Khaja! I have a question about ${enquiryProduct.name} (SKU: ${enquiryProduct.sku}):\n\n${message || 'Please share available sizes and delivery timelines.'}\n\nMy Name: ${name}`);
-    window.open(`https://wa.me/919393056641?text=${encoded}`, '_blank');
+    window.open(`https://wa.me/91${cleanPhone}?text=${encoded}`, '_blank');
 
     setSubmitted(true);
     setTimeout(() => {

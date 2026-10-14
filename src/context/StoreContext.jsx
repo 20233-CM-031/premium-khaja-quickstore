@@ -2,13 +2,16 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { ALL_PRODUCTS, BANGLES_PRODUCTS, STORE_CATEGORIES, CELEBRITY_SHOWCASE_DATA } from '../data/products';
 import { INITIAL_CUSTOMERS, INITIAL_LEADS, INITIAL_CAMPAIGNS } from '../data/crmData';
 import { INITIAL_SHORTS } from '../data/shortsData';
+import { getActiveTenant } from '../config';
 
-// Official Store Owner Contact & UPI Configuration (Verified Merchant: Jaffar Mohd)
-export const STORE_OWNER_NAME = "Jaffar Mohd";
-export const STORE_OWNER_PHONE = "9393056641";
-export const STORE_OWNER_WHATSAPP = "https://wa.me/919393056641";
-export const STORE_UPI_ID = "premiumkhaja@okaxis";
-export const STORE_PAYMENT_QR_IMAGE = "/images/jaffar_mohd_upi_qr.jpg";
+const activeTenantConfig = getActiveTenant();
+
+// Official Store Owner Contact & UPI Configuration dynamically loaded from active tenant
+export const STORE_OWNER_NAME = activeTenantConfig.contact.ownerName;
+export const STORE_OWNER_PHONE = activeTenantConfig.contact.phone;
+export const STORE_OWNER_WHATSAPP = `https://wa.me/${activeTenantConfig.contact.whatsappNumber}`;
+export const STORE_UPI_ID = activeTenantConfig.payment.upiId;
+export const STORE_PAYMENT_QR_IMAGE = activeTenantConfig.payment.qrImage;
 
 // Anti-tamper & XSS input sanitization utility
 export const sanitizeInput = (str) => {
@@ -1260,6 +1263,7 @@ export const StoreProvider = ({ children }) => {
 
     const newOrder = {
       orderId: `PK-ORD-${Math.floor(1000 + Math.random() * 9000)}`,
+      tenantId: activeTenantConfig.id,
       customerName: sanitizeInput(orderPayload.shipping.name),
       customerPhone: sanitizeInput(orderPayload.shipping.phone),
       items: orderPayload.items.map(i => ({
@@ -1273,7 +1277,8 @@ export const StoreProvider = ({ children }) => {
       totalAmount: orderPayload.total,
       subtotal: orderPayload.subtotal || orderPayload.total,
       shippingFee: orderPayload.shippingFee || 0,
-      status: 'PAID - VERIFY & DISPATCH',
+      status: 'payment_verification_pending',
+      paymentStatus: 'submitted_pending_verification',
       paymentMethod: orderPayload.paymentMethod || `UPI QR Code (${storeUpiId})`,
       payeeName: storeOwnerName || 'Jaffar Mohd',
       upiId: storeUpiId || 'premiumkhaja@okaxis',
@@ -1334,7 +1339,7 @@ ${guidanceNotes}
 • Payee: ${newOrder.payeeName} (${newOrder.upiId})
 
 📍 *DELIVERY DISPATCH ACTION:*
-Customer has made payment via QR code. Please confirm receipt in your UPI App and message customer to request exact location / pin to book online delivery via Dunzo / Porter / Delhivery!`;
+Customer has submitted payment reference via QR code. Please verify receipt in your UPI / Bank App before dispatch!`;
 
     try {
       const cleanOwnerPhone = (storeOwnerPhone || '9393056641').replace(/\D/g, '');
@@ -1343,6 +1348,82 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
     } catch (e) {
       console.warn("Could not automatically open WhatsApp popup", e);
     }
+  };
+
+  // Authoritative manual UPI verification by merchant owner/manager
+  const verifyOrderPayment = (orderId, notes = '') => {
+    setOrders(prev => {
+      const updated = prev.map(ord => {
+        if (ord.orderId === orderId) {
+          return {
+            ...ord,
+            status: 'PAYMENT CONFIRMED',
+            paymentStatus: 'verified',
+            verifiedAt: new Date().toLocaleString('en-IN'),
+            verifiedBy: adminUser?.name || storeOwnerName || 'Jaffar Mohd',
+            verificationNotes: notes
+          };
+        }
+        return ord;
+      });
+      try { localStorage.setItem('pk_orders', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    logEvent('PAYMENT_VERIFIED', { orderId, verifier: adminUser?.name || storeOwnerName });
+  };
+
+  // Rejection of invalid UPI reference / unreceived payment
+  const rejectOrderPayment = (orderId, reason = 'Payment not received in merchant account') => {
+    setOrders(prev => {
+      const updated = prev.map(ord => {
+        if (ord.orderId === orderId) {
+          return {
+            ...ord,
+            status: 'PAYMENT REJECTED - RETRY',
+            paymentStatus: 'rejected',
+            rejectionReason: reason,
+            rejectedAt: new Date().toLocaleString('en-IN')
+          };
+        }
+        return ord;
+      });
+      try { localStorage.setItem('pk_orders', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    logEvent('PAYMENT_REJECTED', { orderId, reason });
+  };
+
+  // Order cancellation with automatic inventory restock
+  const cancelOrderWithRestock = (orderId, reason = 'Cancelled by merchant') => {
+    const targetOrder = orders.find(o => o.orderId === orderId);
+    if (!targetOrder) return;
+
+    if (targetOrder.items?.length) {
+      targetOrder.items.forEach(item => {
+        const pId = item.id || item.productId;
+        if (pId) {
+          restockItem(pId, item.quantity);
+        }
+      });
+    }
+
+    setOrders(prev => {
+      const updated = prev.map(ord => {
+        if (ord.orderId === orderId) {
+          return {
+            ...ord,
+            status: 'CANCELLED',
+            paymentStatus: 'cancelled',
+            cancellationReason: reason,
+            cancelledAt: new Date().toLocaleString('en-IN')
+          };
+        }
+        return ord;
+      });
+      try { localStorage.setItem('pk_orders', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    logEvent('ORDER_CANCELLED_RESTOCKED', { orderId, reason });
   };
 
   // Category and Subcategory Switcher with full filter reset
@@ -1512,6 +1593,10 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
         resetStorePaymentQr,
         updateMerchantSettings,
         updateOrderStatus,
+        verifyOrderPayment,
+        rejectOrderPayment,
+        cancelOrderWithRestock,
+        activeTenantConfig,
         sanitizeInput
       }}
     >

@@ -109,13 +109,13 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
         </div>
 
         <span style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
-          Order Confirmed &amp; Payment Slip Generated
+          Order Submitted • Manual Payment Verification Pending
         </span>
         <h2 style={{ fontSize: '1.9rem', color: 'var(--pk-obsidian)', margin: '0.3rem 0 0.4rem', fontFamily: 'var(--font-serif)' }}>
           Thank You, {orderSuccessData.customerName}!
         </h2>
         <p style={{ fontSize: '0.85rem', color: 'var(--pk-text-secondary)', marginBottom: '1.5rem', lineHeight: 1.45 }}>
-          Your handcrafted jewellery order <strong>#{orderSuccessData.orderId}</strong> has been registered. Your payment of <strong>₹{orderSuccessData.totalAmount.toLocaleString()}</strong> to <strong>{activeOwnerName} ({activeUpiId})</strong> is confirmed.
+          Your jewellery order <strong>#{orderSuccessData.orderId}</strong> has been saved. Your payment reference <strong>{orderSuccessData.utrNumber}</strong> has been submitted. Merchant <strong>{activeOwnerName}</strong> will verify receipt in the business account and confirm your order for dispatch.
         </p>
 
         {/* Official Printable Receipt Slip */}
@@ -133,7 +133,7 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
               <div style={{ fontSize: '0.68rem', color: 'var(--pk-gold-dark)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Official Atelier Receipt
+                Official Atelier Order Slip
               </div>
               <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--pk-obsidian)', fontFamily: 'monospace' }}>
                 #{orderSuccessData.orderId}
@@ -145,13 +145,13 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
 
             <div style={{ textAlign: 'right' }}>
               <div style={{ fontSize: '0.68rem', color: 'var(--pk-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
-                Total Paid
+                Total Payable
               </div>
               <div style={{ fontSize: '1.45rem', fontWeight: 900, color: 'var(--pk-obsidian)' }}>
                 ₹{orderSuccessData.totalAmount.toLocaleString()}
               </div>
-              <span style={{ fontSize: '0.68rem', background: '#E6F4EA', color: '#137333', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700 }}>
-                ✓ Paid to {activeOwnerName}
+              <span style={{ fontSize: '0.68rem', background: '#FFF3E0', color: '#E65100', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 700, border: '1px solid #FFE0B2' }}>
+                ⏳ Verification Pending
               </span>
             </div>
           </div>

@@ -81,7 +81,10 @@ export const CommandCenter = () => {
     uploadStorePaymentQr,
     resetStorePaymentQr,
     updateMerchantSettings,
-    updateOrderStatus
+    updateOrderStatus,
+    verifyOrderPayment,
+    rejectOrderPayment,
+    cancelOrderWithRestock
   } = useStore();
 
   const allCatalogueProducts = products || ALL_PRODUCTS;
@@ -1002,26 +1005,102 @@ export const CommandCenter = () => {
                       </div>
 
                       {/* Action Bar */}
-                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', flexWrap: 'wrap', borderTop: '1px solid var(--pk-border)', paddingTop: '0.75rem' }}>
-                        <a
-                          href={`https://wa.me/91${ord.customerPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${ord.customerName}! This is Jaffar Mohd from Premium Khaja Atelier. We have received your order #${ord.orderId} and are preparing your pieces according to your size and preferences. Please share your exact Google Maps location pin so we can schedule direct courier delivery!`)}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="btn-gold"
-                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                        >
-                          <MessageCircle size={14} />
-                          <span>Chat on WhatsApp</span>
-                        </a>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap', borderTop: '1px solid var(--pk-border)', paddingTop: '0.75rem' }}>
+                        
+                        {/* Verification & Fulfillment Controls */}
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                          {(ord.status?.includes('VERIFY') || ord.status === 'payment_verification_pending' || ord.paymentStatus === 'submitted_pending_verification') && (
+                            <>
+                              <button
+                                onClick={() => verifyOrderPayment(ord.orderId, 'Verified in UPI Bank Account')}
+                                style={{
+                                  padding: '0.45rem 0.85rem',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 800,
+                                  background: '#E6F4EA',
+                                  color: '#137333',
+                                  border: '1.5px solid #A8DAB5',
+                                  borderRadius: 'var(--radius-sm)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
+                              >
+                                <CheckCircle2 size={14} />
+                                <span>Verify UPI in Bank</span>
+                              </button>
 
-                        <a
-                          href={`tel:${ord.customerPhone?.replace(/\D/g, '')}`}
-                          className="btn-outline"
-                          style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                        >
-                          <Phone size={14} />
-                          <span>Call Customer</span>
-                        </a>
+                              <button
+                                onClick={() => {
+                                  const reason = window.prompt('Enter rejection reason (e.g. UTR not found in bank ledger):', 'Transaction not found in bank ledger');
+                                  if (reason) rejectOrderPayment(ord.orderId, reason);
+                                }}
+                                style={{
+                                  padding: '0.45rem 0.75rem',
+                                  fontSize: '0.74rem',
+                                  fontWeight: 700,
+                                  background: '#FEE2E2',
+                                  color: '#991B1B',
+                                  border: '1px solid #FCA5A5',
+                                  borderRadius: 'var(--radius-sm)',
+                                  cursor: 'pointer',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '0.35rem'
+                                }}
+                              >
+                                <X size={14} />
+                                <span>Reject Payment</span>
+                              </button>
+                            </>
+                          )}
+
+                          {ord.status !== 'CANCELLED' && ord.status !== 'DELIVERED' && (
+                            <button
+                              onClick={() => {
+                                if (window.confirm(`Cancel order #${ord.orderId} and restore stock to inventory?`)) {
+                                  cancelOrderWithRestock(ord.orderId, 'Cancelled from merchant admin');
+                                }
+                              }}
+                              style={{
+                                padding: '0.4rem 0.65rem',
+                                fontSize: '0.72rem',
+                                fontWeight: 600,
+                                background: 'transparent',
+                                color: '#6B7280',
+                                border: '1px solid #D1D5DB',
+                                borderRadius: 'var(--radius-sm)',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Cancel &amp; Restock
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Customer Direct Contact Links */}
+                        <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <a
+                            href={`https://wa.me/91${ord.customerPhone?.replace(/\D/g, '')}?text=${encodeURIComponent(`Hello ${ord.customerName}! This is Jaffar Mohd from Premium Khaja Atelier. We have received your order #${ord.orderId} and are preparing your pieces according to your size and preferences. Please share your exact Google Maps location pin so we can schedule direct courier delivery!`)}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="btn-gold"
+                            style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                          >
+                            <MessageCircle size={14} />
+                            <span>Chat on WhatsApp</span>
+                          </a>
+
+                          <a
+                            href={`tel:${ord.customerPhone?.replace(/\D/g, '')}`}
+                            className="btn-outline"
+                            style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                          >
+                            <Phone size={14} />
+                            <span>Call Customer</span>
+                          </a>
+                        </div>
                       </div>
 
                     </div>
