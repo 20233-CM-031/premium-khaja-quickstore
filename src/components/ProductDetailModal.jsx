@@ -72,7 +72,19 @@ export const ProductDetailModal = () => {
       }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+
+    // Support phone hardware back button
+    window.history.pushState({ modal: 'product-detail' }, '');
+    const handlePopState = () => {
+      setQuickProduct(null);
+      revertToOriginalSelection();
+    };
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, []);
 
   if (!quickProduct) return null;
@@ -165,18 +177,33 @@ export const ProductDetailModal = () => {
           </div>
 
           <button 
+            type="button"
             className="btn-icon" 
-            onClick={handleClose}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleClose();
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleClose();
+            }}
             aria-label="Close product view"
             style={{ 
               color: '#FAF8F5', 
-              background: 'rgba(255,255,255,0.1)', 
-              width: '32px', 
-              height: '32px',
-              padding: 0
+              background: 'rgba(255,255,255,0.25)', 
+              width: '44px', 
+              height: '44px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              zIndex: 30
             }}
           >
-            <X size={18} />
+            <X size={22} />
           </button>
         </div>
 
@@ -345,15 +372,23 @@ export const ProductDetailModal = () => {
           <div className="product-modal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
             
             {/* Left Column: Image Viewer */}
-            <div className="product-modal-image-col" style={{ background: '#F4EFEB', position: 'relative', minHeight: '340px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <div className="product-modal-image-col" style={{ background: '#F4EFEB', position: 'relative', minHeight: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
               <img 
-                src={currentProduct.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png'} 
+                src={currentProduct.image || '/images/bangles/Screenshot 2026-09-17 202420.png'} 
                 alt={currentProduct.name || 'Jewellery piece'}
-                style={{ width: '100%', height: '100%', maxHeight: '420px', objectFit: 'contain', padding: '15px' }}
+                onError={(e) => {
+                  e.target.onerror = null;
+                  e.target.src = '/images/bangles/Screenshot 2026-09-17 202420.png';
+                }}
+                style={{ width: '100%', height: '100%', maxHeight: '360px', objectFit: 'contain', padding: '12px' }}
               />
+            </div>
 
-              {/* Badges */}
-              <div style={{ position: 'absolute', top: '15px', left: '15px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+            {/* Right Column: Information & Actions */}
+            <div className="product-modal-info-col" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.9rem', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
+              
+              {/* Badges in natural flow - Zero overlap */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', flexWrap: 'wrap' }}>
                 <span className="gold-badge">
                   {currentProduct.subcategory || 'Fashion Jewellery'}
                 </span>
@@ -362,14 +397,10 @@ export const ProductDetailModal = () => {
                     ★ TRENDING
                   </span>
                 )}
-                <span style={{ background: 'rgba(30, 70, 53, 0.9)', color: '#FAF8F5', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
+                <span style={{ background: '#1E4635', color: '#FAF8F5', fontSize: '0.65rem', fontWeight: 700, padding: '0.2rem 0.5rem', borderRadius: '4px' }}>
                   ✓ 100% ARTIFICIAL JEWELLERY
                 </span>
               </div>
-            </div>
-
-            {/* Right Column: Information & Actions */}
-            <div className="product-modal-info-col" style={{ padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '0.9rem', maxHeight: '85vh', overflowY: 'auto', boxSizing: 'border-box' }}>
               
               {/* Product Header & SKU */}
               <div style={{ flexShrink: 0 }}>
@@ -464,15 +495,35 @@ export const ProductDetailModal = () => {
                 </div>
               </div>
 
-              {/* 2. SIZE SELECTOR */}
+              {/* 2. SIZE SELECTOR WITH UNDO/CLEAR CAPABILITY */}
               <div style={{ flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
                   <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
-                    Select Size:
+                    Select Size: <span style={{ fontWeight: 400, color: 'var(--pk-text-muted)', fontSize: '0.7rem' }}>(Tap again to deselect)</span>
                   </label>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--pk-gold-dark)', fontWeight: 600 }}>
-                    Size: {selectedSize}
-                  </span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: selectedSize ? 'var(--pk-gold-dark)' : 'var(--pk-text-muted)', fontWeight: 600 }}>
+                      {selectedSize ? `Size: ${selectedSize}` : 'No size chosen'}
+                    </span>
+                    {selectedSize && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSize('')}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#C92A2A',
+                          fontSize: '0.7rem',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: '0 0.2rem',
+                          textDecoration: 'underline'
+                        }}
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
+                  </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
                   {availableSizes.map(size => {
@@ -481,20 +532,26 @@ export const ProductDetailModal = () => {
                       <button
                         key={size}
                         type="button"
-                        onClick={() => setSelectedSize(size)}
+                        onClick={() => setSelectedSize(isSelected ? '' : size)}
+                        aria-pressed={isSelected}
+                        title={isSelected ? `Size ${size} selected - tap to deselect` : `Select size ${size}`}
                         style={{
-                          padding: '0.4rem 0.85rem',
+                          padding: '0.45rem 0.95rem',
                           borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.78rem',
+                          fontSize: '0.8rem',
                           fontWeight: isSelected ? 700 : 600,
                           border: isSelected ? '2px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
                           background: isSelected ? 'var(--pk-obsidian)' : '#FFFFFF',
                           color: isSelected ? '#FAF8F5' : 'var(--pk-text-primary)',
                           cursor: 'pointer',
-                          transition: 'all 0.15s'
+                          transition: 'all 0.15s',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '0.35rem'
                         }}
                       >
                         {size}
+                        {isSelected && <span style={{ fontSize: '0.7rem', color: 'var(--pk-gold-light)' }}>✓</span>}
                       </button>
                     );
                   })}

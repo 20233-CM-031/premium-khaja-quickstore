@@ -232,7 +232,7 @@ export const HeroSection = () => {
                 fontWeight: 700,
                 textTransform: 'uppercase'
               }}>
-                High Fashion Artificial &amp; Imitation Jewellery Atelier
+                High Fashion Artificial &amp; Imitation Jewellery
               </div>
             </div>
 
@@ -244,7 +244,7 @@ export const HeroSection = () => {
               marginBottom: '1.75rem',
               fontWeight: 300
             }}>
-              Discover Hyderabad’s renowned craftsmanship in handcrafted <strong>Glass, Lac, Stone &amp; Minakari Bangles</strong>, bridal chura sets, and American Diamond couture. Curated for wedding splendor, galas, and festive celebrations.
+              Discover Hyderabad’s renowned craftsmanship in handcrafted <strong>Glass, Lac, Stone &amp; Minakari Bangles</strong>, bridal chura sets, kundan necklaces, and royal accessories. Curated for wedding splendor, galas, and festive celebrations.
             </p>
 
             {/* CTA Buttons */}
@@ -257,7 +257,7 @@ export const HeroSection = () => {
                 className="btn-gold"
                 style={{ cursor: 'pointer', border: 'none', padding: '0.8rem 1.4rem' }}
               >
-                <span>Explore Bangles Atelier</span>
+                <span>Explore Bangles Collection</span>
                 <ArrowRight size={15} />
               </button>
 
@@ -477,7 +477,7 @@ export const HeroSection = () => {
                           borderRadius: 'var(--radius-full)',
                           textTransform: 'uppercase'
                         }}>
-                          {item.subcategory || 'Atelier'}
+                          {item.subcategory || 'Collection'}
                         </span>
 
                         {/* Wishlist quick tap */}
@@ -604,7 +604,7 @@ export const HeroSection = () => {
         <div style={{ marginTop: '3.5rem', paddingTop: '2.5rem', borderTop: '1px solid rgba(212, 175, 55, 0.2)' }}>
           <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
             <span style={{ color: '#E4C88A', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              ✦ Visual Jewellery Atelier Discovery ✦
+              ✦ Visual Jewellery Discovery ✦
             </span>
             <h3 style={{ fontSize: '1.45rem', color: '#FAF8F5', margin: '0.25rem 0 0', fontFamily: 'var(--font-serif)', fontWeight: 500 }}>
               Explore By Royal Category Objects

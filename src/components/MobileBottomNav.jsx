@@ -88,7 +88,7 @@ export const MobileBottomNav = () => {
           <span>Home</span>
         </button>
 
-        {/* Categories */}
+        {/* Products / Shop */}
         <button
           onClick={handleCategoriesClick}
           style={{
@@ -106,7 +106,7 @@ export const MobileBottomNav = () => {
           }}
         >
           <Layers size={18} style={{ color: '#E4C88A' }} />
-          <span>Atelier</span>
+          <span>Shop</span>
         </button>
 
         {/* Shorts */}

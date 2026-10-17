@@ -26,7 +26,7 @@ export const ShortsSection = () => {
             <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(212, 175, 55, 0.15)', border: '1px solid rgba(212, 175, 55, 0.4)', borderRadius: 'var(--radius-full)', padding: '0.3rem 0.85rem', marginBottom: '0.6rem' }}>
               <Flame size={14} style={{ color: '#E4C88A' }} />
               <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#E4C88A', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                Runway & Atelier Reels
+                Trending Reels
               </span>
             </div>
             <h2 style={{ fontSize: 'clamp(1.8rem, 3.2vw, 2.4rem)', color: '#FAF8F5', margin: 0, fontFamily: 'var(--font-serif)', fontWeight: 500 }}>

@@ -76,32 +76,10 @@ export const CartDrawer = () => {
           </button>
         </div>
 
-        {/* Progress Bar for Free Shipping & Luxury Gift Box */}
-        <div style={{ background: '#FAF7F2', padding: '0.9rem 1.5rem', borderBottom: '1px solid var(--pk-border)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.75rem', marginBottom: '0.4rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: isFreeShipping ? '#1E4635' : 'var(--pk-text-primary)' }}>
-              <Truck size={14} />
-              <span>{isFreeShipping ? '✓ Free Express Shipping Unlocked' : `Add ₹${amountToFreeShipping} for Free Shipping`}</span>
-            </div>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: isEligibleGiftBox ? '#1E4635' : 'var(--pk-gold-dark)' }}>
-              <Gift size={14} />
-              <span>{isEligibleGiftBox ? '✓ Free Luxury Box' : `Add ₹${amountToGiftBox} for Luxury Box`}</span>
-            </div>
-          </div>
-
-          {/* Progress track */}
-          <div style={{ width: '100%', height: '6px', background: '#E2DBD0', borderRadius: 'var(--radius-full)', overflow: 'hidden' }}>
-            <div 
-              style={{ 
-                height: '100%', 
-                width: `${Math.min(100, (cartSubtotal / luxuryGiftBoxThreshold) * 100)}%`, 
-                background: 'var(--pk-gold-gradient)',
-                borderRadius: 'var(--radius-full)',
-                transition: 'width 0.3s ease'
-              }}
-            />
-          </div>
+        {/* Clean Free Express Delivery Notice */}
+        <div style={{ background: '#FAF7F2', padding: '0.85rem 1.5rem', borderBottom: '1px solid var(--pk-border)', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#166534', fontSize: '0.8rem', fontWeight: 700 }}>
+          <Truck size={16} />
+          <span>✓ Free Express Shipping on Every Order Across India (₹0 Delivery Fee)</span>
         </div>
 
         {/* Cart Items List */}

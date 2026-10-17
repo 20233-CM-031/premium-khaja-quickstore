@@ -285,24 +285,27 @@ export const StoreProvider = ({ children }) => {
     } catch (e) {}
   };
 
-  // Dynamic Products Catalog (Allows Admins/Merchants to add, edit or permanently delete products)
+  // Dynamic Products Catalog (Admin has full control to add all items)
   const [products, setProducts] = useState(() => {
-    const saved = localStorage.getItem('pk_showroom_products') || localStorage.getItem('pk_custom_products');
-    const deletedIds = JSON.parse(localStorage.getItem('pk_deleted_product_ids') || '[]');
-    const deletedSet = new Set(deletedIds);
-
+    const saved = localStorage.getItem('pk_showroom_products');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          return parsed.filter(p => !deletedSet.has(p.id));
-        }
+        if (Array.isArray(parsed)) return parsed;
       } catch (e) {
         console.error("Failed to parse custom products", e);
       }
     }
-    return ALL_PRODUCTS.filter(p => !deletedSet.has(p.id));
+    // Default to clean empty catalogue so Admin adds authentic products
+    return [];
   });
+
+  const clearAllProducts = () => {
+    setProducts([]);
+    try {
+      localStorage.setItem('pk_showroom_products', JSON.stringify([]));
+    } catch (e) {}
+  };
 
   // Real-time Inventory State (Persisted & Synchronized across all shoppers & admin)
   const [inventory, setInventory] = useState(() => {
@@ -914,11 +917,27 @@ export const StoreProvider = ({ children }) => {
   const proposeCopilotAction = (userPrompt) => {
     const lower = (userPrompt || '').toLowerCase();
     
+    // Intent 0: Clear Catalog / Empty products
+    if (lower.includes('clear catalog') || lower.includes('empty catalog') || lower.includes('delete all products') || lower.includes('reset catalog')) {
+      const draft = {
+        actionType: 'CLEAR_CATALOG',
+        title: 'Empty Storefront Catalog',
+        target: 'Live Products Catalog',
+        currentValue: `${products.length} products currently active`,
+        proposedValue: '0 products (Empty catalog for fresh admin upload)',
+        reason: `Admin requested catalog purge: "${userPrompt}"`,
+        confidence: 'HIGH',
+        requiresConfirmation: true
+      };
+      setCopilotDraft(draft);
+      return draft;
+    }
+
     // Intent 1: Draft new product
-    if (lower.includes('new product') || lower.includes('draft product') || lower.includes('bangle')) {
+    if (lower.includes('new product') || lower.includes('draft product') || lower.includes('add product') || lower.includes('bangle')) {
       const draft = {
         actionType: 'CREATE_PRODUCT_DRAFT',
-        title: 'Draft New Jewellery Piece',
+        title: 'Draft New Artificial Jewellery Piece',
         target: 'New Product Record',
         currentValue: 'None (New Item)',
         proposedValue: {
@@ -926,11 +945,12 @@ export const StoreProvider = ({ children }) => {
           sku: `PK-BGL-${Math.floor(100 + Math.random() * 900)}`,
           category: 'bangles',
           subcategory: 'Lac & Stone',
-          price: 1899,
-          originalPrice: 2499,
+          price: 1499,
+          originalPrice: 1999,
           inventoryCount: 15,
-          finish: '22K Antique Micro Gold Plated',
-          description: 'Handcrafted Hyderabadi emerald lac bangles adorned with fine polki stones.'
+          finish: 'Antique Gold Polish with Anti-Tarnish Seal',
+          material: 'Handcrafted Brass & Lac with Uncut Stones',
+          description: 'Handcrafted Hyderabadi emerald lac bangles adorned with fine polki stones. 100% artificial jewellery with anti-tarnish coating.'
         },
         reason: `Generated from merchant copilot prompt: "${userPrompt}"`,
         confidence: 'HIGH',
@@ -940,19 +960,59 @@ export const StoreProvider = ({ children }) => {
       return draft;
     }
 
-    // Intent 2: Inventory restock
+    // Intent 1B: Add to Hero Star Lane
+    if (lower.includes('hero star') || lower.includes('star lane') || lower.includes('hero product') || lower.includes('hero image')) {
+      const draft = {
+        actionType: 'ADD_HERO_STAR',
+        title: 'Add Featured Piece to Hero Horizontal Star Lane',
+        target: 'Hero Star Lane Moving Strip',
+        currentValue: `${heroStarProducts.length} star items in hero lane`,
+        proposedValue: {
+          name: 'Hyderabad Jadau Chura Set',
+          price: 1299,
+          originalPrice: 1899,
+          memberPrice: 1234,
+          image: '/images/bangles/Screenshot 2026-09-17 202420.png',
+          marketingTag: 'Featured Star Piece'
+        },
+        reason: `Hero star lane addition requested: "${userPrompt}"`,
+        confidence: 'HIGH',
+        requiresConfirmation: true
+      };
+      setCopilotDraft(draft);
+      return draft;
+    }
+
+    // Intent 2: Verify all pending orders
+    if (lower.includes('verify order') || lower.includes('approve order') || lower.includes('confirm order') || lower.includes('verify all')) {
+      const pendingCount = orders.filter(o => o.status === 'payment_verification_pending' || o.paymentStatus === 'submitted_pending_verification').length;
+      const draft = {
+        actionType: 'VERIFY_ALL_ORDERS',
+        title: 'Batch Verify Pending Orders',
+        target: 'Orders Ledger',
+        currentValue: `${pendingCount} orders pending manual UPI verification`,
+        proposedValue: `Mark ${pendingCount} orders as PAYMENT CONFIRMED`,
+        reason: `Automated order verification triggered by admin: "${userPrompt}"`,
+        confidence: 'HIGH',
+        requiresConfirmation: true
+      };
+      setCopilotDraft(draft);
+      return draft;
+    }
+
+    // Intent 3: Inventory restock
     if (lower.includes('stock') || lower.includes('inventory') || lower.includes('restock')) {
       const targetProd = products[0] || ALL_PRODUCTS[0];
       const draft = {
         actionType: 'ADJUST_STOCK',
         title: 'Adjust Product Stock Ledger',
-        target: `${targetProd.name} (${targetProd.sku})`,
-        currentValue: `${inventory[targetProd.id] ?? targetProd.inventoryCount} units`,
-        proposedValue: `${(inventory[targetProd.id] ?? targetProd.inventoryCount) + 10} units (+10)`,
+        target: `${targetProd?.name || 'Store Catalog'} (${targetProd?.sku || 'All Items'})`,
+        currentValue: `${inventory[targetProd?.id] ?? targetProd?.inventoryCount ?? 0} units`,
+        proposedValue: `${(inventory[targetProd?.id] ?? targetProd?.inventoryCount ?? 0) + 15} units (+15)`,
         mutationPayload: {
-          productId: targetProd.id,
-          productName: targetProd.name,
-          changeQty: 10,
+          productId: targetProd?.id,
+          productName: targetProd?.name || 'Jewellery Set',
+          changeQty: 15,
           reason: 'AI_COPILOT_RESTOCK_SUGGESTION'
         },
         reason: `Restock proposal based on command: "${userPrompt}"`,
@@ -963,7 +1023,7 @@ export const StoreProvider = ({ children }) => {
       return draft;
     }
 
-    // Intent 3: Offer / Coupon draft
+    // Intent 4: Offer / Coupon draft
     if (lower.includes('discount') || lower.includes('coupon') || lower.includes('offer')) {
       const draft = {
         actionType: 'CREATE_OFFER',
@@ -971,11 +1031,11 @@ export const StoreProvider = ({ children }) => {
         target: 'Coupons Engine',
         currentValue: 'No matching active coupon',
         proposedValue: {
-          code: 'FESTIVE15',
+          code: 'FESTIVE20',
           discountType: 'percentage',
-          discountValue: 15,
-          minSubtotal: 1999,
-          description: '15% Festive Privilege on orders above ₹1,999'
+          discountValue: 20,
+          minSubtotal: 1499,
+          description: 'Flat 20% Privilege on artificial jewellery orders above ₹1,499'
         },
         reason: `Promotional rule draft from request: "${userPrompt}"`,
         confidence: 'HIGH',
@@ -993,8 +1053,9 @@ export const StoreProvider = ({ children }) => {
       currentValue: 'N/A',
       proposedValue: {
         totalProducts: products.length,
+        heroStarProductsCount: heroStarProducts.length,
         lowStockItems: products.filter(p => (inventory[p.id] ?? 10) <= 5).length,
-        pendingPaymentOrders: orders.filter(o => o.status === 'PAYMENT VERIFICATION PENDING' || o.paymentStatus === 'pending_verification').length,
+        pendingPaymentOrders: orders.filter(o => o.status === 'payment_verification_pending' || o.paymentStatus === 'submitted_pending_verification').length,
         verifiedOrders: orders.filter(o => o.paymentStatus === 'verified' || o.status === 'PAYMENT CONFIRMED').length
       },
       reason: 'AI Operations Digest calculated from canonical tenant state.',
@@ -1008,13 +1069,28 @@ export const StoreProvider = ({ children }) => {
   const executeCopilotAction = (draft) => {
     if (!draft) return;
 
-    if (draft.actionType === 'CREATE_PRODUCT_DRAFT') {
+    if (draft.actionType === 'CLEAR_CATALOG') {
+      clearAllProducts();
+      recordAuditLog('COPILOT_CATALOG_CLEARED', 'Admin AI Copilot purged all default catalog products on request.');
+    } else if (draft.actionType === 'CREATE_PRODUCT_DRAFT') {
       addNewProduct(draft.proposedValue);
-      recordAuditLog('COPILOT_PRODUCT_CREATED', `Created draft product "${draft.proposedValue.name}" via AI Copilot confirmation.`);
+      recordAuditLog('COPILOT_PRODUCT_CREATED', `Created product "${draft.proposedValue.name}" via AI Copilot confirmation.`);
+    } else if (draft.actionType === 'ADD_HERO_STAR') {
+      addHeroStarProduct(draft.proposedValue);
+      recordAuditLog('COPILOT_HERO_STAR_ADDED', `Added hero star lane item "${draft.proposedValue.name}".`);
+    } else if (draft.actionType === 'VERIFY_ALL_ORDERS') {
+      orders.forEach(o => {
+        if (o.status === 'payment_verification_pending' || o.paymentStatus === 'submitted_pending_verification') {
+          verifyOrderPayment(o.orderId, 'Verified via Admin AI Agent');
+        }
+      });
+      recordAuditLog('COPILOT_ORDERS_VERIFIED', 'Batch verified all pending orders via Admin AI Copilot.');
     } else if (draft.actionType === 'ADJUST_STOCK') {
       const { productId, changeQty, reason } = draft.mutationPayload;
-      restockItem(productId, changeQty);
-      recordAuditLog('COPILOT_STOCK_ADJUSTED', `Adjusted stock for ${productId} by +${changeQty} (${reason}).`);
+      if (productId) {
+        restockItem(productId, changeQty);
+        recordAuditLog('COPILOT_STOCK_ADJUSTED', `Adjusted stock for ${productId} by +${changeQty} (${reason}).`);
+      }
     } else if (draft.actionType === 'CREATE_OFFER') {
       addOffer(draft.proposedValue);
       recordAuditLog('COPILOT_OFFER_CREATED', `Created coupon "${draft.proposedValue.code}" via AI Copilot.`);
@@ -2221,12 +2297,10 @@ Customer has submitted payment reference via QR code. Please verify receipt in y
       }, 0)
     : 0;
 
-  const freeShippingThreshold = 1499;
-  const isFreeShipping = cartSubtotal >= freeShippingThreshold;
-  const shippingFee = cartSubtotal > 0 && !isFreeShipping ? 99 : 0;
-
-  const luxuryGiftBoxThreshold = 1999;
-  const isEligibleGiftBox = cartSubtotal >= luxuryGiftBoxThreshold;
+  // Free Shipping Everywhere (No shipping fee for customers)
+  const freeShippingThreshold = 0;
+  const isFreeShipping = true;
+  const shippingFee = 0;
 
   const discountAmount = appliedCoupon ? (
     appliedCoupon.discountType === 'percentage'
@@ -2377,6 +2451,7 @@ Customer has submitted payment reference via QR code. Please verify receipt in y
         // Product Catalogs
         products,
         setProducts,
+        clearAllProducts,
         addNewProduct,
         updateProduct,
         deleteProduct,

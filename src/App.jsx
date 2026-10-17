@@ -3,10 +3,7 @@ import { useStore } from './context/StoreContext';
 import { Header } from './components/Header';
 import { HeroSection } from './components/HeroSection';
 import { ShortsSection } from './components/ShortsSection';
-import { CelebrityMissWorldSpotlight } from './components/CelebrityMissWorldSpotlight';
 import { BanglesSpotlight } from './components/BanglesSpotlight';
-import { LookbookSection } from './components/LookbookSection';
-import { ComplementaryShowcase } from './components/ComplementaryShowcase';
 import { Footer } from './components/Footer';
 import { HyderabadMonumentsBackground } from './components/HyderabadMonumentsBackground';
 import { MobileBottomNav } from './components/MobileBottomNav';
@@ -28,7 +25,17 @@ import { QRCommerceModal } from './components/QRCommerceModal';
 import { CommandCenter } from './components/MerchantCommandCenter/CommandCenter';
 
 export const App = () => {
-  const { activeMode } = useStore();
+  const { activeMode, adminUser, setAuthModalOpen, setAuthMode } = useStore();
+
+  // Strict Access Control: Admin Command Center is only accessible to authenticated administrators
+  const isAuthorizedAdmin = activeMode === 'command-center' && Boolean(adminUser);
+
+  React.useEffect(() => {
+    if (activeMode === 'command-center' && !adminUser) {
+      setAuthMode('admin');
+      setAuthModalOpen(true);
+    }
+  }, [activeMode, adminUser, setAuthMode, setAuthModalOpen]);
 
   return (
     <div className="quickstore-root" style={{ position: 'relative', minHeight: '100vh', background: '#121110' }}>
@@ -36,7 +43,7 @@ export const App = () => {
       {/* Subtle Royal Hyderabad Heritage Monuments Ambient Silhouette */}
       <HyderabadMonumentsBackground />
 
-      {activeMode === 'command-center' ? (
+      {isAuthorizedAdmin ? (
         <CommandCenter />
       ) : (
         <>
@@ -44,12 +51,7 @@ export const App = () => {
           <main style={{ position: 'relative', zIndex: 1 }}>
             <HeroSection />
             <ShortsSection />
-            <div id="celebrity-spotlight">
-              <CelebrityMissWorldSpotlight />
-            </div>
             <BanglesSpotlight />
-            <LookbookSection />
-            <ComplementaryShowcase />
           </main>
           <Footer />
           <MobileBottomNav />

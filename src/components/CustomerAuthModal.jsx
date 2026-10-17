@@ -132,9 +132,9 @@ export const CustomerAuthModal = () => {
       };
     }
     return {
-      title: activeTab === 'signup' ? 'Join Premium Khaja Atelier' : 'Welcome to Premium Khaja',
+      title: activeTab === 'signup' ? 'Create Your Account' : 'Welcome to Premium Khaja',
       subtitle: activeTab === 'signup' 
-        ? 'Create your free account for 5% VIP privileges & complimentary luxury velvet packaging.'
+        ? 'Create your free account for 5% VIP privileges & exclusive artificial jewellery collections.'
         : 'Sign in with Gmail or your account to access member pricing and saved collections.'
     };
   };
@@ -146,28 +146,38 @@ export const CustomerAuthModal = () => {
       <div 
         className="modal-content" 
         onClick={(e) => e.stopPropagation()}
-        style={{ maxWidth: '480px', padding: '0', overflow: 'hidden', borderRadius: 'var(--radius-md)' }}
+        style={{ maxWidth: '480px', padding: '0', maxHeight: '92vh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', borderRadius: 'var(--radius-md)' }}
       >
         {/* Modal Header */}
         <div style={{ 
           background: 'linear-gradient(135deg, #181614 0%, #2A2420 100%)', 
           color: '#FAF8F5', 
-          padding: '1.5rem', 
-          position: 'relative',
+          padding: '1.25rem 1.25rem 1.5rem', 
+          position: 'sticky',
+          top: 0,
+          zIndex: 20,
           borderBottom: '1px solid rgba(212, 175, 55, 0.3)'
         }}>
           <button 
             className="btn-icon" 
             onClick={() => setAuthModalOpen(false)}
+            aria-label="Close Login Modal"
             style={{ 
               position: 'absolute', 
-              top: '14px', 
-              right: '14px', 
+              top: '12px', 
+              right: '12px', 
               color: '#FAF8F5',
-              background: 'rgba(255,255,255,0.1)'
+              background: 'rgba(255,255,255,0.18)',
+              width: '40px',
+              height: '40px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              borderRadius: '50%'
             }}
           >
-            <X size={18} />
+            <X size={20} />
           </button>
 
           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', background: 'rgba(212, 175, 55, 0.2)', padding: '0.2rem 0.6rem', borderRadius: 'var(--radius-full)', marginBottom: '0.5rem' }}>
@@ -355,9 +365,9 @@ export const CustomerAuthModal = () => {
                   <span>PK Club VIP Membership Benefits (Free via Gmail)</span>
                 </div>
                 <div style={{ fontSize: '0.75rem', color: '#78350F', display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <div>• <strong>5% Instant Discount</strong> on every jewellery & bangles order</div>
+                  <div>• <strong>5% Instant Discount</strong> on every jewellery &amp; bangles order</div>
                   <div>• <strong>Digital Holographic Member Card</strong> with instant VIP pass</div>
-                  <div>• <strong>Free Luxury Velvet Gift Box</strong> & Authenticity Card</div>
+                  <div>• <strong>1-Year Anti-Tarnish Guarantee</strong> on micro-gold polish</div>
                 </div>
               </div>
 

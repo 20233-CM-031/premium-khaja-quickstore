@@ -133,7 +133,7 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
               <div style={{ fontSize: '0.68rem', color: 'var(--pk-gold-dark)', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                Official Atelier Order Slip
+                Official Store Order Receipt
               </div>
               <div style={{ fontSize: '1.15rem', fontWeight: 900, color: 'var(--pk-obsidian)', fontFamily: 'monospace' }}>
                 #{orderSuccessData.orderId}
@@ -290,7 +290,7 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
             className="btn-gold" 
             style={{ width: '100%', padding: '0.75rem', fontSize: '0.88rem', marginTop: '0.25rem' }}
           >
-            <span>Continue Browsing Atelier</span>
+            <span>Continue Shopping</span>
           </button>
         </div>
 

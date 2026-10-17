@@ -27,6 +27,27 @@ export const JewelleryShortsModal = () => {
   const currentShort = shortsList && shortsList[activeShortIndex] ? shortsList[activeShortIndex] : null;
   const taggedProduct = currentShort ? products.find(p => p.id === currentShort.taggedProductId) : null;
 
+  // Touch swipe support for vertical reels scrolling
+  const touchStartY = useRef(null);
+  const touchEndY = useRef(null);
+  const wheelLock = useRef(false);
+
+  // Hardware Back Button listener
+  useEffect(() => {
+    if (!shortsModalOpen) return;
+
+    window.history.pushState({ pkModal: 'shorts' }, '');
+
+    const handlePopState = () => {
+      setShortsModalOpen(false);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [shortsModalOpen, setShortsModalOpen]);
+
   // Sync play state when changing shorts
   useEffect(() => {
     if (videoRef.current) {
@@ -62,6 +83,46 @@ export const JewelleryShortsModal = () => {
   }, [shortsModalOpen, activeShortIndex, shortsList]);
 
   if (!shortsModalOpen || !currentShort) return null;
+
+  const handleTouchStart = (e) => {
+    touchStartY.current = e.touches[0].clientY;
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchMove = (e) => {
+    touchEndY.current = e.touches[0].clientY;
+  };
+
+  const handleTouchEnd = () => {
+    if (touchStartY.current === null || touchEndY.current === null) return;
+    const diff = touchStartY.current - touchEndY.current;
+    const threshold = 45; // 45px swipe threshold
+
+    if (diff > threshold) {
+      // Swiped UP -> Next video
+      handleNext();
+    } else if (diff < -threshold) {
+      // Swiped DOWN -> Prev video
+      handlePrev();
+    }
+    touchStartY.current = null;
+    touchEndY.current = null;
+  };
+
+  const handleWheelScroll = (e) => {
+    if (wheelLock.current) return;
+    if (Math.abs(e.deltaY) > 25) {
+      wheelLock.current = true;
+      if (e.deltaY > 0) {
+        handleNext();
+      } else {
+        handlePrev();
+      }
+      setTimeout(() => {
+        wheelLock.current = false;
+      }, 400);
+    }
+  };
 
   const togglePlay = () => {
     if (videoRef.current) {
@@ -147,9 +208,14 @@ export const JewelleryShortsModal = () => {
           display: 'flex',
           flexDirection: 'column',
           boxShadow: '0 25px 60px rgba(0,0,0,0.8), 0 0 0 1px rgba(212, 175, 55, 0.35)',
-          animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)'
+          animation: 'scaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+          touchAction: 'pan-y'
         }}
         onClick={(e) => e.stopPropagation()}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+        onWheel={handleWheelScroll}
       >
         {/* Top Control Bar */}
         <div style={{
