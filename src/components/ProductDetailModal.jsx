@@ -80,9 +80,17 @@ export const ProductDetailModal = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
 
+  const [sizeError, setSizeError] = useState('');
+
   const handleAddToCart = () => {
+    if (!selectedSize) {
+      setSizeError('Please select your preferred bangle size before adding to bag.');
+      return;
+    }
+    setSizeError('');
     addToCart({ ...currentProduct, selectedColor }, selectedSize, quantity);
   };
+
 
   const handleWhatsAppOrder = () => {
     const text = `🛍️ *ORDER INQUIRY - PREMIUM KHAJA*\n----------------------------------------\n• *Product:* ${currentProduct.name}\n• *SKU:* ${currentProduct.sku}\n• *Size Selected:* ${selectedSize}\n• *Finish / Polish:* ${selectedColor}\n• *Quantity:* ${quantity}\n• *Total Price:* ₹${(displayPrice * quantity).toLocaleString()}\n\nHello, I would like to order this piece via online delivery. Please confirm availability and UPI QR payment!`;
@@ -344,15 +352,16 @@ export const ProductDetailModal = () => {
                   <span style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)', fontFamily: 'monospace' }}>
                     SKU: {currentProduct.sku}
                   </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
-                    <Star size={13} fill="#D4AF37" style={{ color: '#D4AF37' }} />
-                    <span>{currentProduct.rating} ({currentProduct.reviewsCount} reviews)</span>
+                  <span style={{ fontSize: '0.75rem', color: 'var(--pk-gold-dark)', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                    <Sparkles size={13} style={{ color: 'var(--pk-gold-dark)' }} />
+                    <span>Handcrafted Atelier Craft</span>
                   </span>
                 </div>
 
                 <h2 style={{ fontSize: 'clamp(1.2rem, 2.5vw, 1.45rem)', color: 'var(--pk-obsidian)', lineHeight: 1.25, margin: 0, fontWeight: 700 }}>
                   {currentProduct.name}
                 </h2>
+
               </div>
 
               {/* Miss World 2025 Authenticity Badge */}
@@ -673,6 +682,13 @@ export const ProductDetailModal = () => {
                 </div>
               )}
 
+              {/* Size selection error feedback */}
+              {sizeError && (
+                <div style={{ color: '#E11D48', fontSize: '0.78rem', fontWeight: 600, background: '#FFF1F2', padding: '0.45rem 0.75rem', borderRadius: '4px', border: '1px solid #FECDD3' }}>
+                  ⚠️ {sizeError}
+                </div>
+              )}
+
               {/* 6. PRIMARY CTAs - Prominent, Generous Touch Targets, Zero Overlap */}
               <div style={{ display: 'flex', gap: '0.65rem', flexWrap: 'wrap', paddingTop: '0.5rem', flexShrink: 0 }}>
                 <button 
@@ -684,6 +700,7 @@ export const ProductDetailModal = () => {
                   <ShoppingBag size={16} />
                   <span>Add to Bag (₹{(displayPrice * quantity).toLocaleString()})</span>
                 </button>
+
 
                 <button 
                   type="button"

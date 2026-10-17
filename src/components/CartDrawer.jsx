@@ -35,10 +35,18 @@ export const CartDrawer = () => {
     addToCart,
     setQuickPassOpen,
     setMemberCardOpen,
-    products
+    products,
+    appliedCoupon,
+    couponError,
+    applyCoupon,
+    removeCoupon,
+    discountAmount
   } = useStore();
 
+  const [couponInput, setCouponInput] = useState('');
+
   if (!cartOpen) return null;
+
 
   const allAvailableProducts = products || ALL_PRODUCTS;
 
@@ -265,15 +273,74 @@ export const CartDrawer = () => {
               </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: 'var(--pk-text-secondary)', marginBottom: '0.75rem' }}>
-              <span>Express Delivery</span>
-              <span>{isFreeShipping ? <strong style={{ color: '#1E4635' }}>FREE</strong> : `₹${shippingFee}`}</span>
+            {/* Promotional Coupon Application Section */}
+            <div style={{ marginBottom: '0.85rem', paddingTop: '0.6rem', borderTop: '1px dashed var(--pk-border)' }}>
+              {appliedCoupon ? (
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#F0FDF4', border: '1px solid #BBF7D0', padding: '0.5rem 0.75rem', borderRadius: 'var(--radius-sm)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <Sparkles size={14} style={{ color: '#16A34A' }} />
+                    <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#166534' }}>
+                      {appliedCoupon.code} Applied (-₹{discountAmount.toLocaleString()})
+                    </span>
+                  </div>
+                  <button 
+                    onClick={removeCoupon}
+                    style={{ background: 'transparent', border: 'none', color: '#DC2626', fontSize: '0.72rem', cursor: 'pointer', fontWeight: 700 }}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <input 
+                      type="text" 
+                      placeholder="Promo code (e.g. ROYAL10)" 
+                      value={couponInput}
+                      onChange={(e) => setCouponInput(e.target.value.toUpperCase())}
+                      style={{
+                        flex: 1,
+                        padding: '0.45rem 0.65rem',
+                        border: '1px solid var(--pk-border)',
+                        borderRadius: 'var(--radius-sm)',
+                        fontSize: '0.78rem',
+                        outline: 'none'
+                      }}
+                    />
+                    <button
+                      onClick={() => {
+                        if (couponInput.trim()) {
+                          applyCoupon(couponInput);
+                          setCouponInput('');
+                        }
+                      }}
+                      className="btn-outline"
+                      style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer' }}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                  {couponError && (
+                    <div style={{ color: '#DC2626', fontSize: '0.72rem', marginTop: '0.3rem' }}>
+                      {couponError}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
+
+            {discountAmount > 0 && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', color: '#16A34A', marginBottom: '0.35rem', fontWeight: 600 }}>
+                <span>Coupon Savings ({appliedCoupon?.code})</span>
+                <span>-₹{discountAmount.toLocaleString()}</span>
+              </div>
+            )}
 
             <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '1.15rem', fontWeight: 800, color: 'var(--pk-obsidian)', borderTop: '1px solid var(--pk-border)', paddingTop: '0.75rem', marginBottom: '1rem' }}>
               <span>Total Payable</span>
               <span>₹{cartTotal.toLocaleString()}</span>
             </div>
+
 
             <button 
               onClick={() => {

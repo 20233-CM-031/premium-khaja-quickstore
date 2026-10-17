@@ -15,7 +15,8 @@ import {
   Quote,
   Trash2,
   Edit3,
-  Upload
+  Upload,
+  ShieldAlert
 } from 'lucide-react';
 
 export const CelebrityMissWorldSpotlight = () => {
@@ -30,8 +31,11 @@ export const CelebrityMissWorldSpotlight = () => {
     setActiveMode,
     adminUser,
     setAuthMode,
-    setAuthModalOpen
+    setAuthModalOpen,
+    claimGate
   } = useStore();
+
+  const isClaimPublished = claimGate?.claimStatus === 'published';
 
   const [activeTab, setActiveTab] = useState('ALL');
   const [modalOpen, setModalOpen] = useState(false);
@@ -103,10 +107,10 @@ export const CelebrityMissWorldSpotlight = () => {
 
     addCelebrityShowcaseItem({
       title: newTitle,
-      subtitle: newCelebrity ? `Worn by ${newCelebrity}` : "Miss World 2025 India Official Appearance",
-      celebrity: newCelebrity || "Miss World 2025 Dignitary",
-      event: newEvent || "Miss World 2025 India",
-      quote: newQuote || "Crafted by Premium Khaja for royal stage brilliance.",
+      subtitle: newCelebrity ? `Worn by ${newCelebrity}` : "Runway Feature",
+      celebrity: newCelebrity || "Runway Dignitary",
+      event: newEvent || "National Couture Gala",
+      quote: newQuote || "Crafted by Premium Khaja for royal brilliance.",
       image: newImageUrl || "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?auto=format&fit=crop&w=1200&q=80",
       tag: newTag,
       badge: newBadge
@@ -154,6 +158,36 @@ export const CelebrityMissWorldSpotlight = () => {
 
       <div className="container" style={{ position: 'relative', zIndex: 2 }}>
         
+        {/* Admin Publication Gate Notice (Internal Only) */}
+        {adminUser && !isClaimPublished && (
+          <div style={{
+            background: 'rgba(212, 175, 55, 0.12)',
+            border: '1px dashed #D4AF37',
+            borderRadius: 'var(--radius-md)',
+            padding: '0.75rem 1.25rem',
+            marginBottom: '2rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '1rem',
+            flexWrap: 'wrap'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.82rem', color: '#E4C88A' }}>
+              <ShieldAlert size={18} />
+              <span>
+                <strong>Section 4 Publication Gate:</strong> Gifting claim is currently <em>{claimGate?.claimStatus || 'draft_unverified'}</em>. Public copy displays conservative wording until verified.
+              </span>
+            </div>
+            <button
+              onClick={() => setActiveMode('command-center')}
+              className="btn-gold"
+              style={{ padding: '0.35rem 0.85rem', fontSize: '0.74rem', border: 'none', cursor: 'pointer' }}
+            >
+              Open Verification Panel →
+            </button>
+          </div>
+        )}
+
         {/* Top Prestige Emblem & Header */}
         <div style={{ textAlign: 'center', maxWidth: '840px', margin: '0 auto 3rem' }}>
           
@@ -170,7 +204,7 @@ export const CelebrityMissWorldSpotlight = () => {
           }}>
             <Crown size={15} style={{ color: '#E4C88A' }} />
             <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#E4C88A', letterSpacing: '0.12em', textTransform: 'uppercase' }}>
-              OFFICIAL PARTICIPANT • MISS WORLD 2025 INDIA
+              {isClaimPublished ? 'OFFICIAL VERIFIED GIFTING • PAGEANT SHOWCASE' : '✦ HAUTE COUTURE ATELIER • RUNWAY SHOWCASE ✦'}
             </span>
             <Sparkles size={15} style={{ color: '#E4C88A' }} />
           </div>
@@ -182,15 +216,33 @@ export const CelebrityMissWorldSpotlight = () => {
             fontFamily: 'var(--font-serif)',
             color: '#FAF8F5'
           }}>
-            Adorning Miss World 2025 India<br />
-            <span className="gold-gradient-text" style={{ fontStyle: 'italic', fontWeight: 600 }}>
-              & Celebrities on the World Stage
-            </span>
+            {isClaimPublished ? (
+              <>
+                Adorning Pageant Dignitaries<br />
+                <span className="gold-gradient-text" style={{ fontStyle: 'italic', fontWeight: 600 }}>
+                  &amp; Celebrities on the World Stage
+                </span>
+              </>
+            ) : (
+              <>
+                Adorning Runways &amp; Gala Celebrations<br />
+                <span className="gold-gradient-text" style={{ fontStyle: 'italic', fontWeight: 600 }}>
+                  &amp; Celebrated Personalities
+                </span>
+              </>
+            )}
           </h2>
 
           <p style={{ fontSize: '1.02rem', color: '#D4C9BC', lineHeight: 1.6, fontWeight: 300, marginBottom: '1.75rem' }}>
-            When the finalists of <strong>Miss World 2025 India</strong> and leading celebrities illuminated the national gala runway, they were adorned in <strong>Premium Khaja's</strong> handcrafted 22K micro-gold plated bangles, royal polki kadas, and couture necklaces. An extraordinary milestone in authentic Indian jewellery craft.
+            {isClaimPublished ? (
+              claimGate?.approvedWording || "Handcrafted jewellery creations presented to national and international pageant personalities."
+            ) : (
+              <>
+                Handcrafted 22K micro-gold plated bangles, royal polki kadas, and couture necklaces curated for high-fashion runways and celebrity celebrations. An extraordinary milestone in authentic Indian jewellery craft.
+              </>
+            )}
           </p>
+
 
           {/* Interactive Navigation Filter & Add Photo Button */}
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>

@@ -30,14 +30,16 @@ export const CheckoutModal = () => {
     setCheckoutOpen, 
     cart, 
     customer, 
-    cartSubtotal,
+    cartSubtotal, 
     cartTotal, 
     shippingFee, 
-    processOrder,
-    storeOwnerName,
-    storeOwnerPhone,
-    storeUpiId,
-    storePaymentQr
+    processOrder, 
+    storeOwnerName, 
+    storeOwnerPhone, 
+    storeUpiId, 
+    storePaymentQr,
+    discountAmount,
+    appliedCoupon
   } = useStore();
 
   // Multi-step Checkout Flow: Step 1 (Form First & Guidance) -> Step 2 (UPI QR & Share)
@@ -50,6 +52,7 @@ export const CheckoutModal = () => {
   const [city, setCity] = useState('');
   const [state, setState] = useState('Telangana');
   const [pincode, setPincode] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState(false);
   
   // Customization & Guidance for the Order
   const [sizePreference, setSizePreference] = useState('2.4 (Small / 2-4/16")');
@@ -62,6 +65,7 @@ export const CheckoutModal = () => {
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
+
 
   if (!checkoutOpen) return null;
 
@@ -130,6 +134,9 @@ export const CheckoutModal = () => {
       subtotal: cartSubtotal,
       total: cartTotal,
       shippingFee,
+      discountAmount,
+      appliedCoupon: appliedCoupon?.code || null,
+      marketingConsent,
       paymentMethod: `UPI QR Scanner (${activeUpiId})`,
       utrNumber: utrNumber.trim() || 'Paid via UPI QR Scanner',
       shipping: {
@@ -144,6 +151,7 @@ export const CheckoutModal = () => {
       orderGuidance: orderGuidance.trim(),
       guidanceTags: selectedTags
     };
+
 
     setTimeout(() => {
       processOrder(orderPayload);
@@ -532,6 +540,24 @@ export const CheckoutModal = () => {
 
             </div>
 
+            {/* DPDP Consent & Privacy Protection (Section 12 Compliance) */}
+            <div style={{ background: '#FAF8F5', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--pk-border)' }}>
+              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--pk-text-secondary)', lineHeight: 1.4 }}>
+                <input 
+                  type="checkbox" 
+                  checked={marketingConsent} 
+                  onChange={(e) => setMarketingConsent(e.target.checked)}
+                  style={{ accentColor: 'var(--pk-gold-dark)', width: '16px', height: '16px', marginTop: '2px', flexShrink: 0 }}
+                />
+                <span>
+                  <strong>Optional Updates:</strong> Send me occasional collection releases and festive gifting offers via WhatsApp. (Unchecked by default; not required to place your order).
+                </span>
+              </label>
+              <div style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)', marginTop: '0.4rem', paddingLeft: '1.6rem' }}>
+                Under the DPDP Act 2023, your contact information is collected strictly for order verification, address validation, and express courier delivery.
+              </div>
+            </div>
+
             {/* Next Button */}
             <button 
               type="submit" 
@@ -550,6 +576,7 @@ export const CheckoutModal = () => {
               }}
             >
               <span>Continue to UPI Payment (₹{cartTotal.toLocaleString()})</span>
+
               <ArrowRight size={18} />
             </button>
 

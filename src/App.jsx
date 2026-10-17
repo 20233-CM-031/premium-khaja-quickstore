@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from './context/StoreContext';
 import { Header } from './components/Header';
-import { HeroBanner } from './components/HeroBanner';
+import { HeroCarousel } from './components/HeroCarousel';
 import { ShortsSection } from './components/ShortsSection';
 import { CelebrityMissWorldSpotlight } from './components/CelebrityMissWorldSpotlight';
 import { BanglesSpotlight } from './components/BanglesSpotlight';
@@ -9,6 +9,7 @@ import { LookbookSection } from './components/LookbookSection';
 import { ComplementaryShowcase } from './components/ComplementaryShowcase';
 import { Footer } from './components/Footer';
 import { HyderabadMonumentsBackground } from './components/HyderabadMonumentsBackground';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 // Drawers & Modals
 import { JewelleryShortsModal } from './components/JewelleryShortsModal';
@@ -41,7 +42,7 @@ export const App = () => {
         <>
           <Header />
           <main style={{ position: 'relative', zIndex: 1 }}>
-            <HeroBanner />
+            <HeroCarousel />
             <ShortsSection />
             <div id="celebrity-spotlight">
               <CelebrityMissWorldSpotlight />
@@ -51,6 +52,7 @@ export const App = () => {
             <ComplementaryShowcase />
           </main>
           <Footer />
+          <MobileBottomNav />
         </>
       )}
 
@@ -70,3 +72,4 @@ export const App = () => {
     </div>
   );
 };
+
