@@ -28,9 +28,7 @@ export const CartDrawer = () => {
     shippingFee, 
     cartTotal,
     freeShippingThreshold,
-    luxuryGiftBoxThreshold,
     isFreeShipping,
-    isEligibleGiftBox,
     setCheckoutOpen,
     addToCart,
     setQuickPassOpen,
@@ -47,12 +45,7 @@ export const CartDrawer = () => {
 
   if (!cartOpen) return null;
 
-
   const allAvailableProducts = products || ALL_PRODUCTS;
-
-  // Amount needed for thresholds
-  const amountToFreeShipping = Math.max(0, freeShippingThreshold - cartSubtotal);
-  const amountToGiftBox = Math.max(0, luxuryGiftBoxThreshold - cartSubtotal);
 
   // Recommended complementary item for smart upsell in cart
   const upsellCandidate = allAvailableProducts.find(p => 

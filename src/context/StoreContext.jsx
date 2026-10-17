@@ -2301,6 +2301,8 @@ Customer has submitted payment reference via QR code. Please verify receipt in y
   const freeShippingThreshold = 0;
   const isFreeShipping = true;
   const shippingFee = 0;
+  const luxuryGiftBoxThreshold = 0;
+  const isEligibleGiftBox = false;
 
   const discountAmount = appliedCoupon ? (
     appliedCoupon.discountType === 'percentage'
