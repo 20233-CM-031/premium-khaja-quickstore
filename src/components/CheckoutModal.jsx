@@ -55,9 +55,7 @@ export const CheckoutModal = () => {
   const [marketingConsent, setMarketingConsent] = useState(false);
   
   // Customization & Guidance for the Order
-  const [sizePreference, setSizePreference] = useState('2.4 (Small / 2-4/16")');
   const [orderGuidance, setOrderGuidance] = useState('');
-  const [selectedTags, setSelectedTags] = useState(['🎁 Complimentary Velvet Gift Box']);
 
   // Step 2: Payment Details
   const [utrNumber, setUtrNumber] = useState('');
@@ -65,7 +63,6 @@ export const CheckoutModal = () => {
   const [copiedUpi, setCopiedUpi] = useState(false);
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
-
 
   if (!checkoutOpen) return null;
 
@@ -80,29 +77,8 @@ export const CheckoutModal = () => {
   // Authentic Google Pay standee photo provided by owner
   const officialScannerPhoto = storePaymentQr || '/images/jaffar_mohd_upi_qr.jpg';
 
-  const quickGuidanceTags = [
-    '🎁 Complimentary Velvet Gift Box',
-    '⚡ Urgent Express Dispatch',
-    '📞 Call / WhatsApp Before Delivery',
-    '🎨 Custom Bangle Colour Mixing',
-    '💌 Handwritten Royal Gift Note',
-    '💎 Request Extra Latkan / Tassels'
-  ];
-
-  const bangleSizeOptions = [
-    { id: '2.2', label: '2.2 (Petite / 2-2/16")' },
-    { id: '2.4', label: '2.4 (Small / 2-4/16")' },
-    { id: '2.6', label: '2.6 (Standard / 2-6/16")' },
-    { id: '2.8', label: '2.8 (Large / 2-8/16")' },
-    { id: '2.10', label: '2.10 (Extra Large)' },
-    { id: 'CUSTOM', label: 'Custom / Free Size' }
-  ];
-
-  const handleToggleTag = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
-    );
-  };
+  // Selected sizes summary from cart
+  const itemsSizeSummary = cart.map(i => `${i.product.name} (${i.size || 'Standard'})`).join(', ');
 
   const handleCopyUpi = () => {
     navigator.clipboard?.writeText(activeUpiId);
@@ -147,9 +123,9 @@ export const CheckoutModal = () => {
         state: state.trim(),
         pincode: pincode.trim()
       },
-      sizePreference,
+      sizePreference: itemsSizeSummary || 'As Selected in Cart',
       orderGuidance: orderGuidance.trim(),
-      guidanceTags: selectedTags
+      guidanceTags: []
     };
 
 
@@ -177,7 +153,7 @@ export const CheckoutModal = () => {
       >
         
         {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem', position: 'sticky', top: 0, zIndex: 10, background: '#FFFFFF' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
               <span className="live-pulse"></span>
@@ -445,52 +421,35 @@ export const CheckoutModal = () => {
               </div>
             </div>
 
-            {/* ORDER PREFERENCES & GUIDANCE BLOCK */}
+            {/* ORDER ITEMS & GUIDANCE BLOCK */}
             <div style={{ background: '#FFFDF9', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--pk-gold-dark)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
                 <Sparkles size={17} style={{ color: 'var(--pk-gold-dark)' }} />
                 <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--pk-obsidian)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                  2. Order Customization &amp; Artisan Guidance
+                  2. Selected Items &amp; Guidance Notes (Optional)
                 </h4>
               </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--pk-text-secondary)', marginBottom: '1rem', lineHeight: 1.4 }}>
-                Personalize your order instructions directly for master artisan <strong>{activeOwnerName}</strong>. These notes will be attached to your official WhatsApp order slip.
+              <p style={{ fontSize: '0.78rem', color: 'var(--pk-text-secondary)', marginBottom: '0.85rem', lineHeight: 1.4 }}>
+                Review your items and bangle sizes chosen in bag. Master artisan <strong>{activeOwnerName}</strong> will inspect and prepare each piece before WhatsApp dispatch.
               </p>
 
-              {/* Bangle / Wrist Size Preference */}
-              <div style={{ marginBottom: '1.1rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.4rem', color: 'var(--pk-obsidian)' }}>
-                  Wrist / Bangle Size Preference for Sets:
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '0.5rem' }}>
-                  {bangleSizeOptions.map(opt => (
-                    <button
-                      key={opt.id}
-                      type="button"
-                      onClick={() => setSizePreference(opt.label)}
-                      style={{
-                        padding: '0.5rem 0.65rem',
-                        fontSize: '0.75rem',
-                        fontWeight: 700,
-                        borderRadius: '4px',
-                        cursor: 'pointer',
-                        border: sizePreference === opt.label ? '2px solid var(--pk-gold-dark)' : '1px solid var(--pk-border)',
-                        background: sizePreference === opt.label ? 'var(--pk-gold-gradient)' : '#FFFFFF',
-                        color: sizePreference === opt.label ? '#121110' : 'var(--pk-text-primary)',
-                        transition: 'all 0.15s',
-                        textAlign: 'center'
-                      }}
-                    >
-                      {opt.label}
-                    </button>
-                  ))}
+              {/* Items & Sizes Summary from Cart (Sizes chosen at Add-To-Cart time) */}
+              <div style={{ background: '#FAF8F5', border: '1px solid var(--pk-border)', padding: '0.75rem 0.9rem', borderRadius: '6px', marginBottom: '1rem' }}>
+                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                  Items &amp; Selected Sizes:
                 </div>
+                {cart.map((item, idx) => (
+                  <div key={idx} style={{ fontSize: '0.78rem', color: 'var(--pk-text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0', borderBottom: idx < cart.length - 1 ? '1px dashed #E8E2D9' : 'none' }}>
+                    <span>• {item.product.name} <strong style={{ color: 'var(--pk-gold-dark)' }}>[Size: {item.size || 'Standard'}]</strong></span>
+                    <span style={{ fontWeight: 600 }}>Qty: {item.quantity}</span>
+                  </div>
+                ))}
               </div>
 
               {/* Special Instructions & Guidance Notes */}
-              <div style={{ marginBottom: '1rem' }}>
+              <div>
                 <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.35rem', color: 'var(--pk-obsidian)' }}>
-                  Special Guidance Notes / Customization Requests:
+                  Special Guidance Notes / Customization Requests (Optional):
                 </label>
                 <textarea 
                   rows="3" 
@@ -500,42 +459,6 @@ export const CheckoutModal = () => {
                   className="form-input"
                   style={{ width: '100%', padding: '0.65rem', fontSize: '0.82rem', resize: 'vertical' }} 
                 />
-              </div>
-
-              {/* Quick Guidance Tags */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.73rem', fontWeight: 700, marginBottom: '0.35rem', color: 'var(--pk-text-muted)', textTransform: 'uppercase' }}>
-                  Quick Assistance Tags (Click to attach):
-                </label>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.45rem' }}>
-                  {quickGuidanceTags.map(tag => {
-                    const isSelected = selectedTags.includes(tag);
-                    return (
-                      <button
-                        key={tag}
-                        type="button"
-                        onClick={() => handleToggleTag(tag)}
-                        style={{
-                          padding: '0.35rem 0.65rem',
-                          fontSize: '0.72rem',
-                          fontWeight: 600,
-                          borderRadius: 'var(--radius-full)',
-                          border: isSelected ? '1px solid #137333' : '1px dashed var(--pk-border)',
-                          background: isSelected ? '#E6F4EA' : '#FFFFFF',
-                          color: isSelected ? '#137333' : 'var(--pk-text-secondary)',
-                          cursor: 'pointer',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '0.3rem',
-                          transition: 'all 0.15s'
-                        }}
-                      >
-                        {isSelected ? '✓ ' : '+ '}
-                        <span>{tag}</span>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
 
             </div>
@@ -593,7 +516,7 @@ export const CheckoutModal = () => {
             <div style={{ background: '#FAF8F5', border: '1px solid var(--pk-border)', padding: '0.75rem 1rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
               <div style={{ fontSize: '0.78rem', color: 'var(--pk-obsidian)' }}>
                 <strong>Deliver to:</strong> {name} ({phone}) • {city}, {state}
-                {sizePreference && <span style={{ color: 'var(--pk-gold-dark)', display: 'block', fontSize: '0.72rem', marginTop: '0.15rem' }}>Pref: {sizePreference} {selectedTags.length > 0 && `• ${selectedTags.length} tags attached`}</span>}
+                {itemsSizeSummary && <span style={{ color: 'var(--pk-gold-dark)', display: 'block', fontSize: '0.72rem', marginTop: '0.15rem' }}>Items: {itemsSizeSummary}</span>}
               </div>
               <button 
                 type="button" 

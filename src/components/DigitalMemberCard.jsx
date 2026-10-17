@@ -93,7 +93,7 @@ export const DigitalMemberCard = () => {
                   <span style={{ color: '#1E4635', fontWeight: 700 }}>✓</span> 5% instant discount applied automatically at checkout
                 </li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span style={{ color: '#1E4635', fontWeight: 700 }}>✓</span> Free Premium Velvet Box upgrade on orders &gt; ₹1,999
+                  <span style={{ color: '#1E4635', fontWeight: 700 }}>✓</span> Exclusive preview of new artificial & imitation jewellery drops
                 </li>
                 <li style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <span style={{ color: '#1E4635', fontWeight: 700 }}>✓</span> Priority concierge dispatch & WhatsApp live support
@@ -218,13 +218,13 @@ export const DigitalMemberCard = () => {
                 <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: 'var(--pk-gold-dark)', fontWeight: 800 }}>02.</div>
                   <div>
-                    <strong>Complimentary Velvet Jewelry Case:</strong> Upgrade to heirloom-grade travel velvet case on eligible festive orders.
+                    <strong>Handcrafted Imitation Craft:</strong> Premium bridal lac, Kundan, and brass-core artificial jewellery directly from master artisans.
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.6rem' }}>
                   <div style={{ color: 'var(--pk-gold-dark)', fontWeight: 800 }}>03.</div>
                   <div>
-                    <strong>Early Access to Miss World 2025 Edits:</strong> First right to reserve limited-edition artisan pieces worn on the runway.
+                    <strong>Exclusive VIP Drops:</strong> First right to reserve limited-edition artisan designs and celebrity-styled pieces.
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '0.6rem' }}>

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useStore } from './context/StoreContext';
 import { Header } from './components/Header';
-import { HeroCarousel } from './components/HeroCarousel';
+import { HeroSection } from './components/HeroSection';
 import { ShortsSection } from './components/ShortsSection';
 import { CelebrityMissWorldSpotlight } from './components/CelebrityMissWorldSpotlight';
 import { BanglesSpotlight } from './components/BanglesSpotlight';
@@ -42,7 +42,7 @@ export const App = () => {
         <>
           <Header />
           <main style={{ position: 'relative', zIndex: 1 }}>
-            <HeroCarousel />
+            <HeroSection />
             <ShortsSection />
             <div id="celebrity-spotlight">
               <CelebrityMissWorldSpotlight />

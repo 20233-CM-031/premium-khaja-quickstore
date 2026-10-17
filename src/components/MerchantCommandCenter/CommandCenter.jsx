@@ -113,7 +113,11 @@ export const CommandCenter = () => {
     executeCopilotAction,
     rejectCopilotDraft,
     exportAuthoritativeBackup,
-    verifyDisasterRecovery
+    verifyDisasterRecovery,
+    heroStarProducts,
+    addHeroStarProduct,
+    updateHeroStarProduct,
+    deleteHeroStarProduct
   } = useStore();
 
   const allCatalogueProducts = products || ALL_PRODUCTS;
@@ -247,6 +251,31 @@ export const CommandCenter = () => {
   // Custom added products filter
   const defaultProductIds = new Set(ALL_PRODUCTS.map(p => p.id));
   const customAddedProducts = allCatalogueProducts.filter(p => !defaultProductIds.has(p.id) || p.isCustomAdded);
+
+  // ================= HERO STAR PRODUCTS LANE MANAGER STATE =================
+  const starProductFileInputRef = useRef(null);
+  const starEditFileInputRef = useRef(null);
+  const [newStarName, setNewStarName] = useState('');
+  const [newStarReputation, setNewStarReputation] = useState('Miss World Gifting Spotlight Piece');
+  const [newStarPrice, setNewStarPrice] = useState(300);
+  const [newStarOriginalPrice, setNewStarOriginalPrice] = useState(405);
+  const [newStarMemberPrice, setNewStarMemberPrice] = useState(285);
+  const [newStarSubcategory, setNewStarSubcategory] = useState('Kada');
+  const [newStarImage, setNewStarImage] = useState('');
+  const [newStarDesc, setNewStarDesc] = useState('');
+  const [starUploadLoading, setStarUploadLoading] = useState(false);
+  const [starSuccessMsg, setStarSuccessMsg] = useState('');
+  const [editingStarProduct, setEditingStarProduct] = useState(null);
+  const [starEditForm, setStarEditForm] = useState({
+    name: '',
+    marketingReputation: '',
+    price: 300,
+    originalPrice: 405,
+    memberPrice: 285,
+    subcategory: 'Kada',
+    image: '',
+    description: ''
+  });
 
   // ================= FULL PRODUCT EDITING STATE =================
   const editFileInputRef = useRef(null);
@@ -797,7 +826,7 @@ export const CommandCenter = () => {
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
           {[
             { id: 'ORDERS', label: `Orders & Dispatch (${orders.length})`, icon: Package, highlight: true },
-            { id: 'HERO_CAMPAIGN', label: `Campaigns & Claim Gate (${campaignSlides?.length || 8})`, icon: Megaphone, highlight: true },
+            { id: 'HERO_CAMPAIGN', label: `Hero Star Lane & Campaigns (${heroStarProducts?.length || 0})`, icon: Sparkles, highlight: true },
             { id: 'OFFERS_PROMO', label: `Coupons & Offers (${offersList?.length || 2})`, icon: Percent, highlight: true },
             { id: 'INVENTORY_LEDGER', label: `Stock Movement Ledger (${inventoryMovements?.length || 0})`, icon: ClipboardList, highlight: false },
             { id: 'AI_COPILOT', label: 'Safe AI Copilot', icon: Bot, highlight: true },
@@ -2644,6 +2673,505 @@ Customer has made payment via QR code. Please confirm receipt in your UPI App an
                 ))}
               </div>
             </div>
+
+            {/* Hero Section Star Products Lane Controller */}
+            <div style={{ background: '#FFFFFF', borderRadius: 'var(--radius-md)', border: '1px solid var(--pk-border)', padding: '1.75rem', boxShadow: 'var(--shadow-sm)' }}>
+              <div style={{ borderBottom: '1px solid var(--pk-border)', paddingBottom: '1.25rem', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                    <div style={{ background: 'var(--pk-gold-gradient)', color: '#121110', padding: '0.35rem', borderRadius: '6px' }}>
+                      <Sparkles size={18} />
+                    </div>
+                    <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
+                      Hero Star Products &amp; Marketing Lane
+                    </span>
+                  </div>
+                  <h3 style={{ fontSize: '1.4rem', color: 'var(--pk-obsidian)', margin: 0 }}>
+                    Hero Horizontal Moving Products ({heroStarProducts?.length || 0})
+                  </h3>
+                  <p style={{ fontSize: '0.8rem', color: 'var(--pk-text-muted)', margin: '0.25rem 0 0', maxWidth: '780px' }}>
+                    Upload and manage the star artificial jewellery products displayed in the continuous horizontal moving lane right next to the Premium Khaja business header. Add your custom marketing reputation badges (e.g. Miss World Gifting Spotlight Piece, Celebrity Feature).
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveMode('storefront')}
+                  className="btn-gold"
+                  style={{ padding: '0.45rem 0.9rem', fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+                >
+                  <Eye size={14} />
+                  <span>Preview Live Moving Lane</span>
+                </button>
+              </div>
+
+              {starSuccessMsg && (
+                <div style={{ background: '#E6F4EA', color: '#137333', padding: '0.75rem 1rem', borderRadius: '6px', marginBottom: '1.25rem', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <CheckCircle2 size={16} />
+                  <span>{starSuccessMsg}</span>
+                </div>
+              )}
+
+              {/* Form to Add New Star Product */}
+              <div style={{ background: 'var(--pk-surface-alt)', border: '1px solid var(--pk-border)', borderRadius: 'var(--radius-sm)', padding: '1.25rem', marginBottom: '1.75rem' }}>
+                <h4 style={{ fontSize: '0.92rem', color: 'var(--pk-obsidian)', margin: '0 0 1rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                  <Plus size={15} style={{ color: 'var(--pk-gold-dark)' }} />
+                  <span>Upload New Star Product to Hero Lane</span>
+                </h4>
+
+                <form onSubmit={(e) => {
+                  e.preventDefault();
+                  if (!newStarName.trim()) {
+                    alert('Please enter a product name for the star product.');
+                    return;
+                  }
+                  const payload = {
+                    name: newStarName.trim(),
+                    marketingReputation: newStarReputation.trim() || 'Miss World Gifting Spotlight Piece',
+                    price: Number(newStarPrice) || 300,
+                    originalPrice: Number(newStarOriginalPrice) || Math.round(Number(newStarPrice) * 1.35),
+                    memberPrice: Number(newStarMemberPrice) || Math.round(Number(newStarPrice) * 0.95),
+                    image: newStarImage || '/images/bangles/Screenshot 2026-09-17 202420.png',
+                    subcategory: newStarSubcategory || 'Kada',
+                    category: 'bangles',
+                    sizes: ['2.4', '2.6', '2.8'],
+                    material: 'High-Quality Artificial Glass & Lac',
+                    finish: 'Antique Polish',
+                    description: newStarDesc.trim() || `${newStarName} - Premium artificial jewellery handcrafted by heritage artisans.`
+                  };
+                  addHeroStarProduct(payload);
+                  setNewStarName('');
+                  setNewStarImage('');
+                  setNewStarDesc('');
+                  setStarSuccessMsg(`✓ "${payload.name}" successfully added to the moving Hero Star Lane!`);
+                  setTimeout(() => setStarSuccessMsg(''), 4500);
+                }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                        Product Name *
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Choti kada pink"
+                        value={newStarName}
+                        onChange={(e) => setNewStarName(e.target.value)}
+                        required
+                        style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                        Marketing / Pageant Reputation Badge
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Miss World Gifting Spotlight Piece"
+                        value={newStarReputation}
+                        onChange={(e) => setNewStarReputation(e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                        Subcategory
+                      </label>
+                      <input 
+                        type="text" 
+                        placeholder="e.g. Kada, Bridal Chura, Lac Set"
+                        value={newStarSubcategory}
+                        onChange={(e) => setNewStarSubcategory(e.target.value)}
+                        style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                        Selling Price (₹) *
+                      </label>
+                      <input 
+                        type="number" 
+                        value={newStarPrice}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          setNewStarPrice(val);
+                          setNewStarOriginalPrice(Math.round(val * 1.35));
+                          setNewStarMemberPrice(Math.round(val * 0.95));
+                        }}
+                        style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                        Original (Strikethrough) ₹
+                      </label>
+                      <input 
+                        type="number" 
+                        value={newStarOriginalPrice}
+                        onChange={(e) => setNewStarOriginalPrice(Number(e.target.value))}
+                        style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                        VIP Club Price (₹)
+                      </label>
+                      <input 
+                        type="number" 
+                        value={newStarMemberPrice}
+                        onChange={(e) => setNewStarMemberPrice(Number(e.target.value))}
+                        style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Image Upload Row */}
+                  <div style={{ marginBottom: '1rem' }}>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                      Star Product Photo (Upload from Phone/PC or paste URL)
+                    </label>
+
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <input 
+                        type="file" 
+                        accept="image/*"
+                        ref={starProductFileInputRef}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          setStarUploadLoading(true);
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            setNewStarImage(ev.target.result);
+                            setStarUploadLoading(false);
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                        style={{ display: 'none' }}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={() => starProductFileInputRef.current?.click()}
+                        className="btn-outline"
+                        style={{ padding: '0.45rem 0.85rem', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
+                      >
+                        <Upload size={14} />
+                        <span>{starUploadLoading ? 'Processing Image...' : 'Choose Photo from Device'}</span>
+                      </button>
+
+                      <span style={{ fontSize: '0.75rem', color: 'var(--pk-text-muted)' }}>or paste image URL:</span>
+                      
+                      <input 
+                        type="text"
+                        placeholder="https://... or /images/..."
+                        value={newStarImage}
+                        onChange={(e) => setNewStarImage(e.target.value)}
+                        style={{ flex: 1, minWidth: '180px', padding: '0.45rem 0.65rem', fontSize: '0.8rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF' }}
+                      />
+
+                      {newStarImage && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          <img 
+                            src={newStarImage} 
+                            alt="Preview" 
+                            style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--pk-gold)' }} 
+                          />
+                          <button 
+                            type="button" 
+                            onClick={() => setNewStarImage('')}
+                            style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: '0.72rem' }}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.3rem' }}>
+                      Product Description / Artisan Note
+                    </label>
+                    <input 
+                      type="text"
+                      placeholder="e.g. Authentic handcrafted Choti Kada with intricate braided detailing."
+                      value={newStarDesc}
+                      onChange={(e) => setNewStarDesc(e.target.value)}
+                      style={{ width: '100%', padding: '0.5rem 0.75rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px', background: '#FFFFFF', marginBottom: '1rem' }}
+                    />
+                  </div>
+
+                  <button
+                    type="submit"
+                    className="btn-gold"
+                    style={{ padding: '0.65rem 1.25rem', fontSize: '0.85rem', display: 'inline-flex', alignItems: 'center', gap: '0.4rem' }}
+                  >
+                    <Plus size={15} />
+                    <span>Publish Star Product to Moving Hero Lane</span>
+                  </button>
+                </form>
+              </div>
+
+              {/* Active Hero Star Products Cards Grid */}
+              <h4 style={{ fontSize: '0.92rem', color: 'var(--pk-obsidian)', margin: '0 0 0.85rem', fontWeight: 700 }}>
+                Current Star Products on Live Moving Lane:
+              </h4>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: '1rem' }}>
+                {heroStarProducts?.map((item) => (
+                  <div 
+                    key={item.id}
+                    style={{
+                      background: '#FFFFFF',
+                      border: '1px solid var(--pk-border)',
+                      borderRadius: 'var(--radius-sm)',
+                      padding: '0.85rem',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'space-between',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                    }}
+                  >
+                    <div>
+                      <div style={{ position: 'relative', width: '100%', height: '140px', borderRadius: '4px', overflow: 'hidden', marginBottom: '0.65rem', background: '#F8F6F2' }}>
+                        <img 
+                          src={item.image} 
+                          alt={item.name} 
+                          style={{ width: '100%', height: '100%', objectFit: 'contain' }} 
+                        />
+                        <span style={{ position: 'absolute', top: '6px', left: '6px', background: '#121110', color: '#D4AF37', fontSize: '0.62rem', fontWeight: 800, padding: '0.15rem 0.45rem', borderRadius: '3px', border: '1px solid rgba(212,175,55,0.4)', textTransform: 'uppercase' }}>
+                          {item.marketingReputation || 'Featured'}
+                        </span>
+                      </div>
+
+                      <div style={{ fontWeight: 700, fontSize: '0.88rem', color: 'var(--pk-obsidian)', marginBottom: '0.2rem' }}>
+                        {item.name}
+                      </div>
+
+                      <div style={{ fontSize: '0.72rem', color: 'var(--pk-text-muted)', marginBottom: '0.4rem' }}>
+                        {item.subcategory || 'Artificial Jewellery'}
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.4rem', marginBottom: '0.75rem' }}>
+                        <span style={{ fontWeight: 800, color: 'var(--pk-gold-dark)', fontSize: '0.92rem' }}>
+                          ₹{item.price}
+                        </span>
+                        {item.originalPrice && (
+                          <span style={{ textDecoration: 'line-through', color: 'var(--pk-text-muted)', fontSize: '0.72rem' }}>
+                            ₹{item.originalPrice}
+                          </span>
+                        )}
+                        {item.memberPrice && (
+                          <span style={{ fontSize: '0.68rem', background: 'var(--pk-gold-bg)', color: 'var(--pk-gold-dark)', padding: '0.1rem 0.35rem', borderRadius: '2px', fontWeight: 700 }}>
+                            VIP: ₹{item.memberPrice}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '0.5rem', borderTop: '1px solid var(--pk-border)', paddingTop: '0.65rem' }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setEditingStarProduct(item);
+                          setStarEditForm({
+                            name: item.name,
+                            marketingReputation: item.marketingReputation || '',
+                            price: item.price || 300,
+                            originalPrice: item.originalPrice || 405,
+                            memberPrice: item.memberPrice || 285,
+                            subcategory: item.subcategory || 'Kada',
+                            image: item.image || '',
+                            description: item.description || ''
+                          });
+                        }}
+                        className="btn-outline"
+                        style={{ flex: 1, padding: '0.35rem', fontSize: '0.74rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.3rem' }}
+                      >
+                        <Edit3 size={13} />
+                        <span>Edit</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (confirm(`Remove "${item.name}" from the Hero moving lane?`)) {
+                            deleteHeroStarProduct(item.id);
+                          }
+                        }}
+                        className="btn-icon"
+                        style={{ color: '#DC2626' }}
+                        title="Delete Star Product"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Star Product Edit Modal */}
+            {editingStarProduct && (
+              <div className="modal-backdrop" onClick={() => setEditingStarProduct(null)}>
+                <div className="modal-content" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px', padding: '1.75rem', borderRadius: 'var(--radius-md)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.75rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <Sparkles size={18} style={{ color: 'var(--pk-gold-dark)' }} />
+                      <h3 style={{ margin: 0, fontSize: '1.15rem', color: 'var(--pk-obsidian)' }}>
+                        Edit Hero Star Product
+                      </h3>
+                    </div>
+                    <button className="btn-icon" onClick={() => setEditingStarProduct(null)}>
+                      <X size={18} />
+                    </button>
+                  </div>
+
+                  <form onSubmit={(e) => {
+                    e.preventDefault();
+                    updateHeroStarProduct(editingStarProduct.id, {
+                      name: starEditForm.name,
+                      marketingReputation: starEditForm.marketingReputation,
+                      price: Number(starEditForm.price),
+                      originalPrice: Number(starEditForm.originalPrice),
+                      memberPrice: Number(starEditForm.memberPrice),
+                      subcategory: starEditForm.subcategory,
+                      image: starEditForm.image,
+                      description: starEditForm.description
+                    });
+                    setEditingStarProduct(null);
+                    setStarSuccessMsg(`✓ Updated "${starEditForm.name}" on Hero Lane!`);
+                    setTimeout(() => setStarSuccessMsg(''), 4000);
+                  }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem', marginBottom: '1.25rem' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                          Product Name
+                        </label>
+                        <input 
+                          type="text"
+                          value={starEditForm.name}
+                          onChange={(e) => setStarEditForm({ ...starEditForm, name: e.target.value })}
+                          required
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                        />
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                          Marketing Reputation (e.g. Miss World Gifting Spotlight Piece)
+                        </label>
+                        <input 
+                          type="text"
+                          value={starEditForm.marketingReputation}
+                          onChange={(e) => setStarEditForm({ ...starEditForm, marketingReputation: e.target.value })}
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                        />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.5rem' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.25rem' }}>Price (₹)</label>
+                          <input 
+                            type="number"
+                            value={starEditForm.price}
+                            onChange={(e) => setStarEditForm({ ...starEditForm, price: Number(e.target.value) })}
+                            style={{ width: '100%', padding: '0.45rem 0.5rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.25rem' }}>Orig Price (₹)</label>
+                          <input 
+                            type="number"
+                            value={starEditForm.originalPrice}
+                            onChange={(e) => setStarEditForm({ ...starEditForm, originalPrice: Number(e.target.value) })}
+                            style={{ width: '100%', padding: '0.45rem 0.5rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.25rem' }}>VIP Price (₹)</label>
+                          <input 
+                            type="number"
+                            value={starEditForm.memberPrice}
+                            onChange={(e) => setStarEditForm({ ...starEditForm, memberPrice: Number(e.target.value) })}
+                            style={{ width: '100%', padding: '0.45rem 0.5rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                          Image (File or URL)
+                        </label>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                          <input 
+                            type="file" 
+                            accept="image/*"
+                            ref={starEditFileInputRef}
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+                              const reader = new FileReader();
+                              reader.onload = (ev) => {
+                                setStarEditForm({ ...starEditForm, image: ev.target.result });
+                              };
+                              reader.readAsDataURL(file);
+                            }}
+                            style={{ display: 'none' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => starEditFileInputRef.current?.click()}
+                            className="btn-outline"
+                            style={{ padding: '0.35rem 0.75rem', fontSize: '0.75rem' }}
+                          >
+                            Upload New File
+                          </button>
+                          <input 
+                            type="text"
+                            value={starEditForm.image}
+                            onChange={(e) => setStarEditForm({ ...starEditForm, image: e.target.value })}
+                            placeholder="Image URL"
+                            style={{ flex: 1, padding: '0.45rem 0.5rem', fontSize: '0.78rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                          />
+                          {starEditForm.image && (
+                            <img src={starEditForm.image} alt="Preview" style={{ width: '36px', height: '36px', objectFit: 'cover', borderRadius: '4px', border: '1px solid var(--pk-border)' }} />
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.25rem' }}>
+                          Subcategory
+                        </label>
+                        <input 
+                          type="text"
+                          value={starEditForm.subcategory}
+                          onChange={(e) => setStarEditForm({ ...starEditForm, subcategory: e.target.value })}
+                          style={{ width: '100%', padding: '0.45rem 0.65rem', fontSize: '0.82rem', border: '1px solid var(--pk-border)', borderRadius: '4px' }}
+                        />
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                      <button type="button" onClick={() => setEditingStarProduct(null)} className="btn-outline" style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}>
+                        Cancel
+                      </button>
+                      <button type="submit" className="btn-gold" style={{ padding: '0.5rem 1.25rem', fontSize: '0.8rem' }}>
+                        Save Star Product Updates
+                      </button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            )}
 
           </div>
         )}

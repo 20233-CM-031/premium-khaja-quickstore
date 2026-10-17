@@ -623,6 +623,135 @@ export const StoreProvider = ({ children }) => {
     });
   };
 
+  // Hero Section Star Products Moving Lane (Admin Manageable & Real-Time Sync)
+  const [heroStarProducts, setHeroStarProducts] = useState(() => {
+    const saved = localStorage.getItem('pk_hero_star_products');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch (e) {}
+    }
+    return [
+      {
+        id: 'star-01',
+        name: 'Choti kada pink',
+        image: '/images/bangles/Screenshot 2026-09-17 202420.png',
+        price: 300,
+        originalPrice: 405,
+        memberPrice: 285,
+        marketingReputation: 'Miss World Gifting Spotlight Piece',
+        subcategory: 'Kada',
+        category: 'bangles',
+        sizes: ['2.4', '2.6', '2.8'],
+        material: 'High-Quality Artificial Glass & Lac',
+        finish: 'Antique Pink & Gold Polish',
+        description: 'Heritage handcrafted Choti Kada in blush pink with intricate braided detailing. Designed as an official gifting piece presented at national pageants.'
+      },
+      {
+        id: 'star-02',
+        name: 'Royal Rajputi Kundan Kada',
+        image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
+        price: 1899,
+        originalPrice: 2599,
+        memberPrice: 1799,
+        marketingReputation: 'Celebrity Runway Feature',
+        subcategory: 'Kundan Kada',
+        category: 'bangles',
+        sizes: ['2.4', '2.6', '2.8'],
+        material: 'Hypoallergenic Brass Core',
+        finish: 'Micro-Gold Polish',
+        description: 'Handcrafted artificial antique micro-gold kada embedded with uncut polki kundan and crimson enameling.'
+      },
+      {
+        id: 'star-03',
+        name: 'Hyderabadi Nizam Bridal Chura',
+        image: '/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png',
+        price: 2499,
+        originalPrice: 3499,
+        memberPrice: 2349,
+        marketingReputation: 'Heritage Pageant Showcase',
+        subcategory: 'Bridal Chura',
+        category: 'bangles',
+        sizes: ['2.4', '2.6', '2.8'],
+        material: 'Handcrafted Glass & Lac',
+        finish: 'Royal Crimson & Gold',
+        description: 'Complete 32-piece traditional bridal chura adorned with sparkling Austrian crystals and gold foil lac rows.'
+      },
+      {
+        id: 'star-04',
+        name: 'Jaipur Velvet Lac Studded Chooda',
+        image: '/images/bangles/Gemini_Generated_Image_bio6s5bio6s5bio6.png',
+        price: 999,
+        originalPrice: 1499,
+        memberPrice: 949,
+        marketingReputation: 'Artisan Lad Bazaar Signature',
+        subcategory: 'Lac Bangles',
+        category: 'bangles',
+        sizes: ['2.4', '2.6', '2.8'],
+        material: 'Pure Organic Lac Base',
+        finish: 'Hand-Studded Glass Stones',
+        description: 'Charminar Lad Bazaar authentic hand-rolled lac bangles encrusted with vibrant mirrors and glass stones.'
+      },
+      {
+        id: 'star-05',
+        name: 'Noor Chand Polki Set',
+        image: '/images/bangles/Gemini_Generated_Image_e8jfpte8jfpte8jf.png',
+        price: 1299,
+        originalPrice: 1899,
+        memberPrice: 1229,
+        marketingReputation: 'Celebrity Gifting Archive',
+        subcategory: 'Polki Sets',
+        category: 'bangles',
+        sizes: ['2.4', '2.6', '2.8'],
+        material: 'Brass Core & Polki Stones',
+        finish: 'Antique Gold Polish',
+        description: 'Pair of royal polki kadas adorned with crescent moon motifs and glistening faux pearls.'
+      }
+    ];
+  });
+
+  const addHeroStarProduct = (prodData) => {
+    const newStar = {
+      id: `star-${Date.now()}`,
+      name: sanitizeInput(prodData.name || 'New Star Product'),
+      image: prodData.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
+      price: Number(prodData.price) || 999,
+      originalPrice: Number(prodData.originalPrice) || Math.round((Number(prodData.price) || 999) * 1.35),
+      memberPrice: Number(prodData.memberPrice) || Math.round((Number(prodData.price) || 999) * 0.95),
+      marketingReputation: sanitizeInput(prodData.marketingReputation || 'Runway Celebrity Spotlight'),
+      subcategory: sanitizeInput(prodData.subcategory || 'Artisan Bangle'),
+      category: prodData.category || 'bangles',
+      sizes: Array.isArray(prodData.sizes) && prodData.sizes.length ? prodData.sizes : ['2.4', '2.6', '2.8'],
+      material: prodData.material || 'Hypoallergenic Brass Core (100% Artificial Jewellery)',
+      finish: prodData.finish || 'Antique Gold Polish',
+      description: sanitizeInput(prodData.description || 'Exclusive star creation handcrafted by Premium Khaja master artisans.')
+    };
+
+    setHeroStarProducts(prev => {
+      const updated = [newStar, ...prev];
+      try { localStorage.setItem('pk_hero_star_products', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    return newStar;
+  };
+
+  const updateHeroStarProduct = (id, fields) => {
+    setHeroStarProducts(prev => {
+      const updated = prev.map(p => p.id === id ? { ...p, ...fields } : p);
+      try { localStorage.setItem('pk_hero_star_products', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  const deleteHeroStarProduct = (id) => {
+    setHeroStarProducts(prev => {
+      const updated = prev.filter(p => p.id !== id);
+      try { localStorage.setItem('pk_hero_star_products', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
   // Miss World & Pageant Gifting Publication Claim Gate (Section 4 Compliance)
   const [claimGate, setClaimGate] = useState(() => {
     const saved = localStorage.getItem('pk_claim_gate');
@@ -1538,21 +1667,22 @@ export const StoreProvider = ({ children }) => {
       memberPrice: memberPrice,
       discount: productData.discount || `${discountPercent}% OFF`,
       tag: productData.tag || 'New Launch',
+      tags: [productData.tag || 'New Launch', cleanCat, 'Artificial Jewellery'],
       rating: 5.0,
       reviewsCount: 1,
       image: productData.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
       secondaryImages: [productData.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png'],
-      description: productData.description?.trim() || 'Handcrafted luxury designer jewellery by Premium Khaja master artisans with 22K micro-gold plating and anti-tarnish shield.',
+      description: productData.description?.trim() || 'Handcrafted artificial and imitation jewellery by Premium Khaja master artisans with anti-tarnish micro-gold finish.',
       features: productData.features?.length ? productData.features : [
-        'Pure 22K Micro-Gold Micron Dip',
+        'Premium Micro-Gold Polish (Imitation Jewellery)',
         'Hypoallergenic Nickel-Free Brass Base',
         'Advanced Anti-Tarnish Nano Protective Seal',
-        'Signature Velvet Gift Box Included'
+        'Signature Luxury Packaging'
       ],
       sizes: productData.sizes?.length ? productData.sizes : ['2.4', '2.6', '2.8'],
       inventoryCount: Number(productData.inventoryCount) || 15,
-      material: productData.material || '22K Gold Micron Plated Brass Core',
-      finish: productData.finish || 'Antique Royal Gold',
+      material: productData.material || 'Hypoallergenic Brass Core (100% Artificial Jewellery)',
+      finish: productData.finish || 'Antique Royal Gold Polish',
       careInstructions: 'Avoid direct contact with chemicals or perfume. Wipe with soft cotton cloth after wear.',
       matchingItemIds: ['bangle-01', 'bangle-05'],
       isNew: true,
@@ -2186,6 +2316,12 @@ Customer has submitted payment reference via QR code. Please verify receipt in y
         updateCampaignSlide,
         addCampaignSlide,
         deleteCampaignSlide,
+        // Hero Star Products Moving Lane (Admin Manageable)
+        heroStarProducts,
+        setHeroStarProducts,
+        addHeroStarProduct,
+        updateHeroStarProduct,
+        deleteHeroStarProduct,
         // Miss World Gifting Claim Gate (Section 4)
         claimGate,
         updateClaimGate,
