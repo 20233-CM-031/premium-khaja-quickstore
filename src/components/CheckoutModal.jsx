@@ -14,14 +14,11 @@ import {
   ShoppingBag,
   ArrowRight,
   ArrowLeft,
-  FileText,
-  CreditCard,
   MapPin,
-  Tag,
-  Gift,
-  HelpCircle,
-  Eye,
-  Camera
+  CheckCircle2,
+  Truck,
+  Building2,
+  ChevronRight
 } from 'lucide-react';
 
 export const CheckoutModal = () => {
@@ -38,29 +35,30 @@ export const CheckoutModal = () => {
     storeOwnerPhone, 
     storeUpiId, 
     storePaymentQr,
+    paymentSettings,
     discountAmount,
     appliedCoupon
   } = useStore();
 
-  // Multi-step Checkout Flow: Step 1 (Form First & Guidance) -> Step 2 (UPI QR & Share)
-  const [step, setStep] = useState(1); // 1 = Customer & Guidance Form, 2 = UPI Payment & Share
+  // Multi-step Checkout Flow (Amazon/Flipkart Style: 1. Address -> 2. Payment)
+  const [step, setStep] = useState(1);
 
-  // Step 1: Customer Profile & Order Preferences
+  // Step 1: Customer Profile & Delivery Address
   const [name, setName] = useState(customer.name || '');
   const [phone, setPhone] = useState(customer.phone || '');
   const [address, setAddress] = useState('');
   const [city, setCity] = useState('');
   const [state, setState] = useState('Telangana');
   const [pincode, setPincode] = useState('');
-  const [marketingConsent, setMarketingConsent] = useState(false);
-  
-  // Customization & Guidance for the Order
   const [orderGuidance, setOrderGuidance] = useState('');
+  const [marketingConsent, setMarketingConsent] = useState(false);
 
-  // Step 2: Payment Details
+  // Step 2: Payment Method Selection (UPI, WhatsApp Direct)
+  const [paymentMethod, setPaymentMethod] = useState('UPI'); // 'UPI' | 'WHATSAPP'
   const [utrNumber, setUtrNumber] = useState('');
-  const [qrDisplayMode, setQrDisplayMode] = useState('DYNAMIC'); // 'DYNAMIC' | 'OFFICIAL_SCANNER'
+  const [showUpiQr, setShowUpiQr] = useState(false);
   const [copiedUpi, setCopiedUpi] = useState(false);
+
   const [error, setError] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
 
@@ -70,14 +68,10 @@ export const CheckoutModal = () => {
   const activeUpiId = storeUpiId || "premiumkhaja@okaxis";
   const activePhone = storeOwnerPhone || "9393056641";
 
-  // Dynamic UPI URI encoding exact total amount
-  const dynamicUpiIntent = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeOwnerName)}&am=${cartTotal}&cu=INR&tn=${encodeURIComponent('Order Payment - Premium Khaja')}`;
-  const dynamicQrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=280x280&margin=8&data=${encodeURIComponent(dynamicUpiIntent)}`;
-  
-  // Authentic Google Pay standee photo provided by owner
-  const officialScannerPhoto = storePaymentQr || '/images/jaffar_mohd_upi_qr.jpg';
+  // Clean UPI Intent (safe format without strict NPCI bank limit parameters)
+  const safeUpiIntent = `upi://pay?pa=${activeUpiId}&pn=${encodeURIComponent(activeOwnerName)}&cu=INR&tn=${encodeURIComponent('QuickStore Order')}`;
+  const upiQrCodeUrl = storePaymentQr || `https://api.qrserver.com/v1/create-qr-code/?size=260x260&margin=8&data=${encodeURIComponent(safeUpiIntent)}`;
 
-  // Selected sizes summary from cart
   const itemsSizeSummary = cart.map(i => `${i.product.name} (${i.size || 'Standard'})`).join(', ');
 
   const handleCopyUpi = () => {
@@ -86,12 +80,13 @@ export const CheckoutModal = () => {
     setTimeout(() => setCopiedUpi(false), 2500);
   };
 
-  // STEP 1 VALIDATION & PROCEED
+  // STEP 1 VALIDATION
   const handleProceedToPayment = (e) => {
     e.preventDefault();
-    if (!name.trim()) return setError('Please enter your full name');
-    if (!phone.trim() || phone.replace(/\D/g, '').length < 10) return setError('Please enter a valid 10-digit mobile number');
-    if (!address.trim()) return setError('Please enter your delivery street address');
+    if (!name.trim()) return setError('Please enter your full name for delivery');
+    const cleanPhone = phone.replace(/\D/g, '');
+    if (!cleanPhone || cleanPhone.length < 10) return setError('Please enter a valid 10-digit mobile number');
+    if (!address.trim()) return setError('Please enter your street / door delivery address');
     if (!city.trim()) return setError('Please enter your delivery city');
     if (!pincode.trim() || pincode.trim().length < 6) return setError('Please enter a valid 6-digit postal PIN code');
 
@@ -99,11 +94,19 @@ export const CheckoutModal = () => {
     setStep(2);
   };
 
-  // STEP 2 SUBMIT & AUTOMATIC WHATSAPP SHARE
-  const handleConfirmAndPay = (e) => {
-    e.preventDefault();
+  // STEP 2 SUBMIT & PROCESS ORDER
+  const handlePlaceOrder = (e) => {
+    if (e) e.preventDefault();
     setError('');
     setIsProcessing(true);
+
+    let methodLabel = `Direct UPI (${activeUpiId})`;
+    let refNum = utrNumber.trim() || 'Paid via UPI App / QR';
+
+    if (paymentMethod === 'WHATSAPP') {
+      methodLabel = `WhatsApp Direct Concierge (+91 ${activePhone})`;
+      refNum = 'WhatsApp Assisted Order';
+    }
 
     const orderPayload = {
       items: cart,
@@ -113,8 +116,8 @@ export const CheckoutModal = () => {
       discountAmount,
       appliedCoupon: appliedCoupon?.code || null,
       marketingConsent,
-      paymentMethod: `UPI QR Scanner (${activeUpiId})`,
-      utrNumber: utrNumber.trim() || 'Paid via UPI QR Scanner',
+      paymentMethod: methodLabel,
+      utrNumber: refNum,
       shipping: {
         name: name.trim(),
         phone: phone.trim(),
@@ -128,11 +131,10 @@ export const CheckoutModal = () => {
       guidanceTags: []
     };
 
-
     setTimeout(() => {
       processOrder(orderPayload);
       setIsProcessing(false);
-    }, 600);
+    }, 450);
   };
 
   return (
@@ -141,28 +143,28 @@ export const CheckoutModal = () => {
         className="modal-content" 
         onClick={(e) => e.stopPropagation()} 
         style={{ 
-          maxWidth: '720px', 
+          maxWidth: '780px', 
           maxHeight: '94vh', 
           overflowY: 'auto', 
-          padding: '1.75rem',
-          borderRadius: 'var(--radius-md)',
-          boxShadow: '0 25px 70px rgba(0,0,0,0.45)',
+          padding: '1.5rem',
+          borderRadius: '12px',
+          boxShadow: '0 25px 70px rgba(0,0,0,0.4)',
           background: '#FFFFFF',
-          border: '1px solid var(--pk-border)'
+          border: '1px solid #E5E0D8'
         }}
       >
         
-        {/* Modal Header */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.85rem', position: 'sticky', top: 0, zIndex: 10, background: '#FFFFFF' }}>
+        {/* Amazon/Flipkart Header Bar */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid #EAE5DE', paddingBottom: '0.85rem', position: 'sticky', top: 0, zIndex: 10, background: '#FFFFFF' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.2rem' }}>
-              <span className="live-pulse"></span>
-              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: 'var(--pk-gold-dark)', fontWeight: 800 }}>
-                Direct UPI QR Checkout • Verified Merchant
+              <Lock size={14} style={{ color: '#16A34A' }} />
+              <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#16A34A', fontWeight: 800 }}>
+                256-Bit SSL Encrypted Checkout
               </span>
             </div>
-            <h3 style={{ fontSize: '1.45rem', color: 'var(--pk-obsidian)', margin: 0, fontFamily: 'var(--font-serif)' }}>
-              Secure Checkout &amp; UPI Payment
+            <h3 style={{ fontSize: '1.35rem', color: '#121110', margin: 0, fontWeight: 800 }}>
+              {step === 1 ? '1. Delivery Address' : '2. Select Payment Method'}
             </h3>
           </div>
           <button className="btn-icon" onClick={() => setCheckoutOpen(false)} title="Close">
@@ -170,164 +172,127 @@ export const CheckoutModal = () => {
           </button>
         </div>
 
-        {/* Interactive Steps Progress Indicator */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem', marginBottom: '1.5rem' }}>
-          
+        {/* Amazon / Flipkart Style Steps Breadcrumb */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem', fontSize: '0.8rem', fontWeight: 700 }}>
           <div 
             onClick={() => setStep(1)}
             style={{ 
               display: 'flex', 
               alignItems: 'center', 
-              gap: '0.6rem', 
-              padding: '0.65rem 0.9rem', 
-              borderRadius: '6px', 
+              gap: '0.35rem', 
               cursor: 'pointer',
-              background: step === 1 ? 'linear-gradient(135deg, #1A1917 0%, #2A2621 100%)' : '#FAF8F5',
-              color: step === 1 ? '#FAF8F5' : 'var(--pk-text-secondary)',
-              border: step === 1 ? '1px solid var(--pk-gold-dark)' : '1px solid var(--pk-border)',
-              transition: 'all 0.2s'
+              color: step === 1 ? '#D4AF37' : '#16A34A'
             }}
           >
-            <div style={{ 
-              width: '24px', 
-              height: '24px', 
+            <span style={{ 
+              width: '22px', 
+              height: '22px', 
               borderRadius: '50%', 
-              background: step === 1 ? 'var(--pk-gold-dark)' : '#E2DBD0', 
-              color: '#121110', 
-              display: 'flex', 
+              background: step === 1 ? '#121110' : '#DCFCE7', 
+              color: step === 1 ? '#D4AF37' : '#16A34A', 
+              display: 'inline-flex', 
               alignItems: 'center', 
-              justifyContent: 'center', 
-              fontSize: '0.75rem', 
-              fontWeight: 900 
+              justifyContent: 'center',
+              fontSize: '0.72rem'
             }}>
-              1
-            </div>
-            <div>
-              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800, color: step === 1 ? '#D4AF37' : 'inherit' }}>
-                Step 1: Fill Form First
-              </div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>
-                Details &amp; Order Guidance
-              </div>
-            </div>
+              {step > 1 ? <Check size={12} strokeWidth={3} /> : '1'}
+            </span>
+            <span>Delivery Address</span>
           </div>
 
-          <div 
-            onClick={() => {
-              if (name.trim() && phone.trim() && address.trim() && city.trim() && pincode.trim()) {
-                setStep(2);
-              }
-            }}
-            style={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '0.6rem', 
-              padding: '0.65rem 0.9rem', 
-              borderRadius: '6px', 
-              cursor: (name.trim() && phone.trim()) ? 'pointer' : 'not-allowed',
-              background: step === 2 ? 'linear-gradient(135deg, #1A1917 0%, #2A2621 100%)' : '#FAF8F5',
-              color: step === 2 ? '#FAF8F5' : 'var(--pk-text-secondary)',
-              border: step === 2 ? '1px solid var(--pk-gold-dark)' : '1px solid var(--pk-border)',
-              transition: 'all 0.2s',
-              opacity: (name.trim() && phone.trim()) ? 1 : 0.75
-            }}
-          >
-            <div style={{ 
-              width: '24px', 
-              height: '24px', 
+          <ChevronRight size={14} style={{ color: '#9CA3AF' }} />
+
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '0.35rem',
+            color: step === 2 ? '#D4AF37' : '#9CA3AF'
+          }}>
+            <span style={{ 
+              width: '22px', 
+              height: '22px', 
               borderRadius: '50%', 
-              background: step === 2 ? 'var(--pk-gold-dark)' : '#E2DBD0', 
-              color: '#121110', 
-              display: 'flex', 
+              background: step === 2 ? '#121110' : '#F3F4F6', 
+              color: step === 2 ? '#D4AF37' : '#6B7280', 
+              display: 'inline-flex', 
               alignItems: 'center', 
-              justifyContent: 'center', 
-              fontSize: '0.75rem', 
-              fontWeight: 900 
+              justifyContent: 'center',
+              fontSize: '0.72rem'
             }}>
               2
-            </div>
-            <div>
-              <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', fontWeight: 800, color: step === 2 ? '#D4AF37' : 'inherit' }}>
-                Step 2: Pay &amp; Share
-              </div>
-              <div style={{ fontSize: '0.8rem', fontWeight: 700 }}>
-                Dynamic UPI QR ({activeOwnerName})
-              </div>
-            </div>
+            </span>
+            <span>Payment Options</span>
           </div>
-
         </div>
 
-        {/* PROMINENT PAYABLE AMOUNT BANNER */}
+        {/* PROMINENT ORDER SUMMARY BANNER */}
         <div style={{ 
-          background: 'linear-gradient(135deg, #121110 0%, #231F1B 100%)', 
-          borderRadius: 'var(--radius-sm)', 
-          padding: '1.15rem 1.4rem', 
+          background: 'linear-gradient(135deg, #1A1815 0%, #2A2520 100%)', 
+          borderRadius: '8px', 
+          padding: '1rem 1.25rem', 
           color: '#FAF8F5', 
-          marginBottom: '1.35rem',
-          border: '1px solid var(--pk-gold-dark)',
+          marginBottom: '1.25rem',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
           flexWrap: 'wrap',
-          gap: '1rem',
-          boxShadow: '0 8px 24px rgba(0,0,0,0.18)'
+          gap: '0.75rem',
+          boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
         }}>
           <div>
-            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#D4AF37', fontWeight: 700 }}>
+            <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#D4AF37', fontWeight: 700 }}>
               Total Payable Amount
             </div>
-            <div style={{ fontSize: '2.1rem', fontWeight: 900, color: '#FAF8F5', lineHeight: 1.1, marginTop: '0.2rem', fontFamily: 'var(--font-serif)' }}>
+            <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#FAF8F5', lineHeight: 1.1, marginTop: '0.15rem' }}>
               ₹{cartTotal.toLocaleString()}
             </div>
-            <div style={{ fontSize: '0.74rem', color: '#B5A99B', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <span>({cart.reduce((s, i) => s + i.quantity, 0)} handcrafted pieces)</span>
+            <div style={{ fontSize: '0.72rem', color: '#D1C7BA', marginTop: '0.25rem', display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <span>{cart.reduce((s, i) => s + i.quantity, 0)} Items</span>
               <span>•</span>
-              <span style={{ color: '#25D366', fontWeight: 700 }}>✓ Zero Transaction Fees</span>
+              <span style={{ color: '#22C55E', fontWeight: 700 }}>✓ Free Express Shipping</span>
               <span>•</span>
-              <span style={{ color: '#E4C88A', fontWeight: 600 }}>✓ Free Express Delivery</span>
+              <span style={{ color: '#FDE047', fontWeight: 600 }}>✓ Zero Payment Surcharge</span>
             </div>
           </div>
 
-          <div style={{ background: 'rgba(212, 175, 55, 0.12)', border: '1px solid rgba(212, 175, 55, 0.45)', padding: '0.65rem 0.95rem', borderRadius: '6px', textAlign: 'right' }}>
-            <div style={{ fontSize: '0.68rem', color: '#E4C88A', textTransform: 'uppercase', fontWeight: 700 }}>
-              Verified Merchant Payee
+          <div style={{ background: 'rgba(255,255,255,0.08)', padding: '0.5rem 0.85rem', borderRadius: '6px', textAlign: 'right' }}>
+            <div style={{ fontSize: '0.65rem', color: '#E4C88A', textTransform: 'uppercase', fontWeight: 700 }}>
+              Verified Store Payee
             </div>
-            <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#FAF8F5' }}>
+            <div style={{ fontSize: '0.95rem', fontWeight: 800, color: '#FFFFFF' }}>
               {activeOwnerName}
             </div>
-            <div style={{ fontSize: '0.72rem', color: '#D4AF37', fontFamily: 'monospace' }}>
+            <div style={{ fontSize: '0.68rem', color: '#D4AF37', fontFamily: 'monospace' }}>
               {activeUpiId}
             </div>
           </div>
         </div>
 
-        {/* Validation Error Banner */}
+        {/* Error Notification */}
         {error && (
-          <div style={{ color: '#7D1A25', fontSize: '0.82rem', background: '#FBEBEB', padding: '0.65rem 0.85rem', borderRadius: '4px', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid #F5C6CB', marginBottom: '1.25rem' }}>
+          <div style={{ color: '#991B1B', fontSize: '0.8rem', background: '#FEF2F2', padding: '0.6rem 0.85rem', borderRadius: '6px', display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid #FCA5A5', marginBottom: '1rem' }}>
             <AlertCircle size={16} />
             <span>{error}</span>
           </div>
         )}
 
         {/* ========================================================================= */}
-        {/* STEP 1: FILL FORM FIRST & ADD ORDER PREFERENCES / GUIDANCE                 */}
+        {/* STEP 1: DELIVERY ADDRESS (AMAZON / FLIPKART STYLE)                        */}
         {/* ========================================================================= */}
         {step === 1 && (
-          <form onSubmit={handleProceedToPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
+          <form onSubmit={handleProceedToPayment} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
-            {/* Delivery Details Block */}
-            <div style={{ background: '#FAF8F5', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--pk-border)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                <MapPin size={17} style={{ color: 'var(--pk-gold-dark)' }} />
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--pk-obsidian)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                  1. Recipient &amp; Delivery Street Address
+            <div style={{ background: '#FAF8F5', padding: '1.25rem', borderRadius: '8px', border: '1px solid #EAE5DE' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginBottom: '1rem' }}>
+                <MapPin size={18} style={{ color: '#D4AF37' }} />
+                <h4 style={{ fontSize: '0.88rem', fontWeight: 800, color: '#121110', textTransform: 'uppercase', letterSpacing: '0.04em', margin: 0 }}>
+                  Enter Delivery Address
                 </h4>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '0.85rem', marginBottom: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: '#121110' }}>
                     Full Name *
                   </label>
                   <input 
@@ -335,22 +300,22 @@ export const CheckoutModal = () => {
                     required
                     value={name} 
                     onChange={(e) => setName(e.target.value)} 
-                    placeholder="e.g. Ayesha Sheikh / Priya Sharma" 
+                    placeholder="e.g. Priya Sharma / Ayesha Sheikh" 
                     className="form-input"
                     style={{ width: '100%', padding: '0.65rem', fontSize: '0.85rem' }} 
                   />
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
-                    WhatsApp / Contact Mobile Number *
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: '#121110' }}>
+                    Mobile Number (10 Digits) *
                   </label>
                   <input 
                     type="tel" 
                     required
                     value={phone} 
                     onChange={(e) => setPhone(e.target.value)} 
-                    placeholder="e.g. 9876543210 (10 digits)" 
+                    placeholder="e.g. 9876543210" 
                     className="form-input"
                     style={{ width: '100%', padding: '0.65rem', fontSize: '0.85rem' }} 
                   />
@@ -358,15 +323,15 @@ export const CheckoutModal = () => {
               </div>
 
               <div style={{ marginBottom: '0.85rem' }}>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
-                  Complete Delivery Street Address (House/Flat No, Landmark) *
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: '#121110' }}>
+                  Flat, House No., Building, Street Address *
                 </label>
                 <textarea 
                   rows="2" 
                   required
                   value={address} 
                   onChange={(e) => setAddress(e.target.value)} 
-                  placeholder="e.g. Flat 402, Royal Residency, Near Charminar / Bandra West" 
+                  placeholder="e.g. Flat 301, Lakeview Residency, Road No. 12, Banjara Hills" 
                   className="form-input"
                   style={{ width: '100%', padding: '0.65rem', fontSize: '0.85rem', resize: 'none' }} 
                 />
@@ -374,7 +339,7 @@ export const CheckoutModal = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '0.85rem' }}>
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: '#121110' }}>
                     City *
                   </label>
                   <input 
@@ -389,7 +354,7 @@ export const CheckoutModal = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: '#121110' }}>
                     State *
                   </label>
                   <input 
@@ -404,7 +369,7 @@ export const CheckoutModal = () => {
                 </div>
 
                 <div>
-                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: '#121110' }}>
                     PIN Code *
                   </label>
                   <input 
@@ -421,85 +386,38 @@ export const CheckoutModal = () => {
               </div>
             </div>
 
-            {/* ORDER ITEMS & GUIDANCE BLOCK */}
-            <div style={{ background: '#FFFDF9', padding: '1.25rem', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--pk-gold-dark)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-                <Sparkles size={17} style={{ color: 'var(--pk-gold-dark)' }} />
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--pk-obsidian)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-                  2. Selected Items &amp; Guidance Notes (Optional)
-                </h4>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--pk-text-secondary)', marginBottom: '0.85rem', lineHeight: 1.4 }}>
-                Review your items and bangle sizes chosen in bag. Master artisan <strong>{activeOwnerName}</strong> will inspect and prepare each piece before WhatsApp dispatch.
-              </p>
-
-              {/* Items & Sizes Summary from Cart (Sizes chosen at Add-To-Cart time) */}
-              <div style={{ background: '#FAF8F5', border: '1px solid var(--pk-border)', padding: '0.75rem 0.9rem', borderRadius: '6px', marginBottom: '1rem' }}>
-                <div style={{ fontSize: '0.74rem', fontWeight: 700, color: 'var(--pk-obsidian)', marginBottom: '0.35rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                  Items &amp; Selected Sizes:
-                </div>
-                {cart.map((item, idx) => (
-                  <div key={idx} style={{ fontSize: '0.78rem', color: 'var(--pk-text-secondary)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.25rem 0', borderBottom: idx < cart.length - 1 ? '1px dashed #E8E2D9' : 'none' }}>
-                    <span>• {item.product.name} <strong style={{ color: 'var(--pk-gold-dark)' }}>[Size: {item.size || 'Standard'}]</strong></span>
-                    <span style={{ fontWeight: 600 }}>Qty: {item.quantity}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Special Instructions & Guidance Notes */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.35rem', color: 'var(--pk-obsidian)' }}>
-                  Special Guidance Notes / Customization Requests (Optional):
-                </label>
-                <textarea 
-                  rows="3" 
-                  value={orderGuidance} 
-                  onChange={(e) => setOrderGuidance(e.target.value)} 
-                  placeholder="e.g. Please color-match with my crimson bridal lehenga, request artisan Jaffar Mohd to inspect the stone setting before dispatch, gift message: 'Wishing you eternal grace', or urgent delivery before Friday..." 
-                  className="form-input"
-                  style={{ width: '100%', padding: '0.65rem', fontSize: '0.82rem', resize: 'vertical' }} 
-                />
-              </div>
-
-            </div>
-
-            {/* DPDP Consent & Privacy Protection (Section 12 Compliance) */}
-            <div style={{ background: '#FAF8F5', padding: '0.85rem 1rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--pk-border)' }}>
-              <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem', cursor: 'pointer', fontSize: '0.78rem', color: 'var(--pk-text-secondary)', lineHeight: 1.4 }}>
-                <input 
-                  type="checkbox" 
-                  checked={marketingConsent} 
-                  onChange={(e) => setMarketingConsent(e.target.checked)}
-                  style={{ accentColor: 'var(--pk-gold-dark)', width: '16px', height: '16px', marginTop: '2px', flexShrink: 0 }}
-                />
-                <span>
-                  <strong>Optional Updates:</strong> Send me occasional collection releases and festive gifting offers via WhatsApp. (Unchecked by default; not required to place your order).
-                </span>
+            {/* Optional Guidance / Special Notes */}
+            <div style={{ background: '#FFFDF9', padding: '1rem', borderRadius: '8px', border: '1px solid #EAE0D0' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.35rem', color: '#121110' }}>
+                Special Notes / Sizing Customization (Optional):
               </label>
-              <div style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)', marginTop: '0.4rem', paddingLeft: '1.6rem' }}>
-                Under the DPDP Act 2023, your contact information is collected strictly for order verification, address validation, and express courier delivery.
-              </div>
+              <textarea 
+                rows="2" 
+                value={orderGuidance} 
+                onChange={(e) => setOrderGuidance(e.target.value)} 
+                placeholder="e.g. Color match with pink bridal outfit, specific bangle sizing (2.4, 2.6, 2.8), or gift message..." 
+                className="form-input"
+                style={{ width: '100%', padding: '0.55rem', fontSize: '0.8rem', resize: 'vertical' }} 
+              />
             </div>
 
-            {/* Next Button */}
+            {/* Proceed Button */}
             <button 
               type="submit" 
               className="btn-gold" 
               style={{ 
                 width: '100%', 
-                padding: '1rem', 
-                fontSize: '1.02rem', 
+                padding: '0.95rem', 
+                fontSize: '1rem', 
                 fontWeight: 800,
-                boxShadow: '0 6px 20px rgba(212, 175, 55, 0.4)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: '0.6rem',
+                gap: '0.5rem',
                 cursor: 'pointer'
               }}
             >
-              <span>Continue to UPI Payment (₹{cartTotal.toLocaleString()})</span>
-
+              <span>Proceed to Payment (₹{cartTotal.toLocaleString()})</span>
               <ArrowRight size={18} />
             </button>
 
@@ -507,285 +425,225 @@ export const CheckoutModal = () => {
         )}
 
         {/* ========================================================================= */}
-        {/* STEP 2: DYNAMIC UPI QR CODE PAYMENT & INSTANT AUTOMATIC WHATSAPP SHARE     */}
+        {/* STEP 2: PAYMENT METHOD (AMAZON / FLIPKART STYLE NO-LIMIT CHECKOUT)        */}
         {/* ========================================================================= */}
         {step === 2 && (
-          <form onSubmit={handleConfirmAndPay} style={{ display: 'flex', flexDirection: 'column', gap: '1.35rem' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             
-            {/* Recipient Recap Badge */}
-            <div style={{ background: '#FAF8F5', border: '1px solid var(--pk-border)', padding: '0.75rem 1rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
-              <div style={{ fontSize: '0.78rem', color: 'var(--pk-obsidian)' }}>
-                <strong>Deliver to:</strong> {name} ({phone}) • {city}, {state}
-                {itemsSizeSummary && <span style={{ color: 'var(--pk-gold-dark)', display: 'block', fontSize: '0.72rem', marginTop: '0.15rem' }}>Items: {itemsSizeSummary}</span>}
+            {/* Delivery Recap Chip */}
+            <div style={{ background: '#F8F6F2', border: '1px solid #EAE5DE', padding: '0.65rem 0.95rem', borderRadius: '6px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.4rem' }}>
+              <div style={{ fontSize: '0.76rem', color: '#121110' }}>
+                <strong>Deliver to:</strong> {name} ({phone}) • {city}, {pincode}
               </div>
               <button 
                 type="button" 
                 onClick={() => setStep(1)} 
                 className="btn-outline" 
-                style={{ padding: '0.3rem 0.65rem', fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                style={{ padding: '0.25rem 0.55rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
               >
                 <ArrowLeft size={12} />
-                <span>Edit Form</span>
+                <span>Change</span>
               </button>
             </div>
 
-            {/* Official UPI Gateway Frame */}
-            <div style={{ border: '2px solid var(--pk-gold-dark)', borderRadius: 'var(--radius-sm)', background: '#FFFFFF', padding: '1.35rem', boxShadow: '0 8px 30px rgba(0,0,0,0.06)' }}>
+            {/* Payment Method Options (Instant UPI & WhatsApp Direct) */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-                <h4 style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--pk-obsidian)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <QrCode size={18} style={{ color: 'var(--pk-gold-dark)' }} />
-                  <span>Scan &amp; Pay Exact Total: ₹{cartTotal.toLocaleString()}</span>
-                </h4>
-
-                {/* QR Display Switcher (Dynamic with Total vs Authentic Scanner Standee) */}
-                <div style={{ display: 'flex', gap: '0.3rem', background: '#F0ECE4', padding: '0.2rem', borderRadius: '4px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setQrDisplayMode('DYNAMIC')}
-                    style={{
-                      padding: '0.25rem 0.55rem',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      borderRadius: '3px',
-                      cursor: 'pointer',
-                      background: qrDisplayMode === 'DYNAMIC' ? 'var(--pk-obsidian)' : 'transparent',
-                      color: qrDisplayMode === 'DYNAMIC' ? '#FAF8F5' : 'var(--pk-text-secondary)'
-                    }}
-                  >
-                    ⚡ Dynamic Amount QR
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setQrDisplayMode('OFFICIAL_SCANNER')}
-                    style={{
-                      padding: '0.25rem 0.55rem',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      borderRadius: '3px',
-                      cursor: 'pointer',
-                      background: qrDisplayMode === 'OFFICIAL_SCANNER' ? 'var(--pk-obsidian)' : 'transparent',
-                      color: qrDisplayMode === 'OFFICIAL_SCANNER' ? '#FAF8F5' : 'var(--pk-text-secondary)'
-                    }}
-                  >
-                    📸 Owner Standee Card
-                  </button>
-                </div>
-              </div>
-
-              <p style={{ fontSize: '0.78rem', color: 'var(--pk-text-secondary)', marginBottom: '1.25rem' }}>
-                Scan with any UPI app (<strong>Google Pay, PhonePe, Paytm, BHIM, Cred</strong>) to make payment of <strong>₹{cartTotal.toLocaleString()}</strong> to <strong>{activeOwnerName}</strong>.
-              </p>
-
-              {/* QR Centerpiece Layout */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.35rem', alignItems: 'center' }}>
-                
-                {/* QR Code Frame */}
-                <div style={{ textAlign: 'center', background: '#F8F6F2', border: '1px solid var(--pk-border)', padding: '1.25rem', borderRadius: '8px' }}>
-                  <div style={{ position: 'relative', display: 'inline-block', padding: '8px', background: '#FFFFFF', borderRadius: '8px', border: '2px solid var(--pk-gold-dark)', boxShadow: '0 4px 16px rgba(0,0,0,0.08)' }}>
-                    
-                    {qrDisplayMode === 'DYNAMIC' ? (
-                      <div>
-                        <img 
-                          src={dynamicQrCodeUrl} 
-                          alt={`Pay ₹${cartTotal} to ${activeOwnerName}`} 
-                          style={{ width: '210px', height: '210px', display: 'block', objectFit: 'contain' }}
-                        />
-                        <div style={{ marginTop: '0.35rem', fontSize: '0.72rem', fontWeight: 800, color: 'var(--pk-obsidian)', letterSpacing: '0.04em' }}>
-                          SCAN TO PAY ₹{cartTotal.toLocaleString()}
-                        </div>
-                        <div style={{ fontSize: '0.65rem', color: '#137333', fontWeight: 700 }}>
-                          ✓ Exact Amount Pre-populated on Scan
-                        </div>
+              {/* Option 1: UPI Direct Pay & QR */}
+              <div 
+                onClick={() => setPaymentMethod('UPI')}
+                style={{
+                  border: paymentMethod === 'UPI' ? '2px solid #D4AF37' : '1px solid #E5E0D8',
+                  background: paymentMethod === 'UPI' ? '#FFFDF8' : '#FFFFFF',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: paymentMethod === 'UPI' ? '0.85rem' : 0 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <input 
+                      type="radio" 
+                      name="payment_choice" 
+                      checked={paymentMethod === 'UPI'} 
+                      onChange={() => setPaymentMethod('UPI')}
+                      style={{ accentColor: '#D4AF37', width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#121110', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <Smartphone size={17} style={{ color: '#D4AF37' }} />
+                        <span>UPI (Google Pay / PhonePe / Paytm / BHIM)</span>
                       </div>
-                    ) : (
-                      <div>
-                        <img 
-                          src={officialScannerPhoto} 
-                          alt={`Official Standee of ${activeOwnerName}`} 
-                          style={{ width: '210px', height: '250px', display: 'block', objectFit: 'contain' }}
-                        />
-                        <div style={{ marginTop: '0.35rem', fontSize: '0.68rem', fontWeight: 700, color: 'var(--pk-obsidian)' }}>
-                          Verified Merchant: {activeOwnerName}
-                        </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.15rem' }}>
+                        Pay directly via any UPI app with verified merchant VPA ({activeUpiId}). Zero limit issues.
                       </div>
-                    )}
-
-                  </div>
-
-                  {/* 1-Click Mobile App Buttons */}
-                  <div style={{ marginTop: '0.85rem' }}>
-                    <div style={{ fontSize: '0.7rem', color: 'var(--pk-text-muted)', marginBottom: '0.4rem', fontWeight: 600 }}>
-                      Pay Directly via Mobile Apps:
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                  </div>
+                  <span style={{ background: '#DCFCE7', color: '#15803D', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '4px' }}>
+                    RECOMMENDED • INSTANT
+                  </span>
+                </div>
+
+                {/* Expanded UPI options when selected */}
+                {paymentMethod === 'UPI' && (
+                  <div style={{ borderTop: '1px solid #EAE5DE', paddingTop: '0.85rem', marginTop: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
+                    
+                    {/* Direct App Launch Links */}
+                    <div style={{ fontSize: '0.74rem', fontWeight: 700, color: '#121110', marginBottom: '0.4rem' }}>
+                      1-Click Pay on Mobile (Tap to Open App):
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
                       <a 
-                        href={dynamicUpiIntent}
-                        style={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: '0.3rem', 
-                          background: '#121110', 
-                          color: '#FAF8F5', 
-                          padding: '0.45rem 0.75rem', 
-                          borderRadius: '4px', 
-                          fontSize: '0.74rem', 
-                          fontWeight: 700, 
-                          textDecoration: 'none' 
-                        }}
+                        href={safeUpiIntent}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#121110', color: '#FFFFFF', padding: '0.45rem 0.75rem', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none' }}
                       >
                         <Smartphone size={13} style={{ color: '#D4AF37' }} />
                         <span>Google Pay</span>
                       </a>
-
                       <a 
-                        href={dynamicUpiIntent}
-                        style={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: '0.3rem', 
-                          background: '#5f259f', 
-                          color: '#FAF8F5', 
-                          padding: '0.45rem 0.75rem', 
-                          borderRadius: '4px', 
-                          fontSize: '0.74rem', 
-                          fontWeight: 700, 
-                          textDecoration: 'none' 
-                        }}
+                        href={safeUpiIntent}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#5F259F', color: '#FFFFFF', padding: '0.45rem 0.75rem', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none' }}
                       >
                         <span>PhonePe</span>
                       </a>
-
                       <a 
-                        href={dynamicUpiIntent}
-                        style={{ 
-                          display: 'inline-flex', 
-                          alignItems: 'center', 
-                          gap: '0.3rem', 
-                          background: '#002e6e', 
-                          color: '#FAF8F5', 
-                          padding: '0.45rem 0.75rem', 
-                          borderRadius: '4px', 
-                          fontSize: '0.74rem', 
-                          fontWeight: 700, 
-                          textDecoration: 'none' 
-                        }}
+                        href={safeUpiIntent}
+                        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem', background: '#00BAF2', color: '#FFFFFF', padding: '0.45rem 0.75rem', borderRadius: '5px', fontSize: '0.75rem', fontWeight: 700, textDecoration: 'none' }}
                       >
                         <span>Paytm</span>
                       </a>
-                    </div>
-                  </div>
-                </div>
-
-                {/* UPI Credentials & UTR Input */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                  
-                  {/* Official Merchant Details */}
-                  <div style={{ background: '#FAF8F5', border: '1px solid var(--pk-border)', borderRadius: '6px', padding: '0.85rem' }}>
-                    <div style={{ fontSize: '0.68rem', color: 'var(--pk-text-muted)', textTransform: 'uppercase', fontWeight: 700 }}>
-                      Official Business Payee &amp; UPI ID
-                    </div>
-                    <div style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--pk-obsidian)', marginTop: '0.15rem' }}>
-                      {activeOwnerName}
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.3rem' }}>
-                      <code style={{ fontSize: '0.92rem', fontWeight: 800, color: 'var(--pk-gold-dark)', fontFamily: 'monospace' }}>
-                        {activeUpiId}
-                      </code>
                       <button 
-                        type="button" 
-                        onClick={handleCopyUpi} 
-                        className="btn-outline" 
-                        style={{ padding: '0.25rem 0.55rem', fontSize: '0.7rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}
+                        type="button"
+                        onClick={handleCopyUpi}
+                        className="btn-outline"
+                        style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
                       >
-                        {copiedUpi ? <Check size={12} style={{ color: '#137333' }} /> : <Copy size={12} />}
-                        <span>{copiedUpi ? 'Copied!' : 'Copy UPI'}</span>
+                        {copiedUpi ? <Check size={13} color="#16A34A" /> : <Copy size={13} />}
+                        <span>{copiedUpi ? 'UPI Copied!' : `Copy UPI: ${activeUpiId}`}</span>
                       </button>
                     </div>
-                  </div>
 
-                  {/* 12-Digit UTR Input */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
-                      UPI Reference / UTR Number (From Payment Slip)
-                    </label>
-                    <input 
-                      type="text" 
-                      value={utrNumber} 
-                      onChange={(e) => setUtrNumber(e.target.value)} 
-                      placeholder="e.g. 428190382910 (12-digit Ref No.)" 
-                      className="form-input"
-                      style={{ width: '100%', padding: '0.65rem', fontSize: '0.85rem' }} 
-                    />
-                    <div style={{ fontSize: '0.68rem', color: 'var(--pk-text-muted)', marginTop: '0.25rem' }}>
-                      Found in your GPay / PhonePe / Paytm receipt under "UPI Transaction ID" or "UTR".
+                    {/* QR Code Toggle */}
+                    <div style={{ background: '#FAF8F5', border: '1px solid #E5E0D8', borderRadius: '6px', padding: '0.75rem', textAlign: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setShowUpiQr(!showUpiQr)}
+                        style={{ background: 'transparent', border: 'none', color: '#D4AF37', fontWeight: 800, fontSize: '0.78rem', cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                      >
+                        <QrCode size={16} />
+                        <span>{showUpiQr ? 'Hide UPI QR Code' : 'Show UPI QR Code to Scan'}</span>
+                      </button>
+
+                      {showUpiQr && (
+                        <div style={{ marginTop: '0.75rem' }}>
+                          <img 
+                            src={upiQrCodeUrl} 
+                            alt={`Pay to ${activeOwnerName}`}
+                            style={{ width: '180px', height: '180px', margin: '0 auto', display: 'block', borderRadius: '6px', border: '1px solid #D4AF37' }}
+                          />
+                          <div style={{ fontSize: '0.72rem', color: '#6B7280', marginTop: '0.35rem' }}>
+                            Scan with GPay, PhonePe, Paytm, or any BHIM UPI app
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
 
-                  {/* Automatic WhatsApp Sharing Callout */}
-                  <div style={{ background: '#E8F5E9', border: '1px solid #A5D6A7', padding: '0.85rem', borderRadius: '6px', fontSize: '0.75rem', color: '#1B5E20', display: 'flex', gap: '0.6rem', alignItems: 'flex-start', lineHeight: 1.45 }}>
-                    <MessageCircle size={20} style={{ flexShrink: 0, marginTop: '2px', color: '#2E7D32' }} />
-                    <div>
-                      <strong>Automatic WhatsApp Order Dispatch:</strong> When you confirm, the complete order bill with your delivery address, size preference, and special guidance will automatically be sent to Owner <strong>+91 {activePhone}</strong> to verify payment and schedule online delivery!
+                    {/* Optional UTR Ref */}
+                    <div style={{ marginTop: '0.75rem' }}>
+                      <label style={{ display: 'block', fontSize: '0.72rem', color: '#4B5563', fontWeight: 600, marginBottom: '0.2rem' }}>
+                        UPI Reference / UTR Number (Optional):
+                      </label>
+                      <input 
+                        type="text" 
+                        value={utrNumber}
+                        onChange={(e) => setUtrNumber(e.target.value)}
+                        placeholder="e.g. 428190382910 or leave blank to auto-confirm"
+                        className="form-input"
+                        style={{ width: '100%', padding: '0.5rem', fontSize: '0.78rem' }}
+                      />
                     </div>
+
                   </div>
-
-                </div>
-
+                )}
               </div>
-            </div>
 
-            {/* Back & Submit Buttons */}
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <button 
-                type="button" 
-                onClick={() => setStep(1)}
-                className="btn-outline" 
-                style={{ padding: '0.9rem 1.25rem', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
-              >
-                <ArrowLeft size={16} />
-                <span>Back</span>
-              </button>
-
-              <button 
-                type="submit" 
-                disabled={isProcessing}
-                className="btn-gold" 
-                style={{ 
-                  flex: 1, 
-                  padding: '1.05rem', 
-                  fontSize: '1.05rem', 
-                  fontWeight: 800,
-                  boxShadow: '0 6px 20px rgba(212, 175, 55, 0.4)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  gap: '0.6rem'
+              {/* Option 2: Direct WhatsApp Order Assistance */}
+              <div 
+                onClick={() => setPaymentMethod('WHATSAPP')}
+                style={{
+                  border: paymentMethod === 'WHATSAPP' ? '2px solid #D4AF37' : '1px solid #E5E0D8',
+                  background: paymentMethod === 'WHATSAPP' ? '#FFFDF8' : '#FFFFFF',
+                  borderRadius: '8px',
+                  padding: '1rem',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s'
                 }}
               >
-                <Lock size={18} />
-                <span>
-                  {isProcessing ? 'Verifying & Opening WhatsApp Slip...' : `Confirm Payment & Share to Owner (₹${cartTotal.toLocaleString()})`}
-                </span>
-              </button>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <input 
+                      type="radio" 
+                      name="payment_choice" 
+                      checked={paymentMethod === 'WHATSAPP'} 
+                      onChange={() => setPaymentMethod('WHATSAPP')}
+                      style={{ accentColor: '#D4AF37', width: '18px', height: '18px', cursor: 'pointer' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.92rem', fontWeight: 800, color: '#121110', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <MessageCircle size={17} style={{ color: '#16A34A' }} />
+                        <span>Order via WhatsApp Direct (+91 {activePhone})</span>
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#6B7280', marginTop: '0.15rem' }}>
+                        Have questions? Connect directly with owner {activeOwnerName} to place and confirm your order.
+                      </div>
+                    </div>
+                  </div>
+                  <span style={{ background: '#DCFCE7', color: '#15803D', fontSize: '0.68rem', fontWeight: 800, padding: '0.2rem 0.55rem', borderRadius: '4px' }}>
+                    CHAT &amp; ORDER
+                  </span>
+                </div>
+              </div>
+
             </div>
 
-            {/* Security Badges */}
-            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', fontSize: '0.72rem', color: 'var(--pk-text-muted)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <ShieldCheck size={14} style={{ color: '#137333' }} />
-                <span>Direct Bank-to-Bank UPI Security</span>
-              </div>
-              <span>•</span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                <MessageCircle size={14} style={{ color: '#25D366' }} />
-                <span>Official WhatsApp Slip to {activeOwnerName} ({activePhone})</span>
-              </div>
+            {/* Place Order CTA Button */}
+            <button 
+              type="button"
+              disabled={isProcessing}
+              onClick={handlePlaceOrder}
+              className="btn-gold" 
+              style={{ 
+                width: '100%', 
+                padding: '1rem', 
+                fontSize: '1.05rem', 
+                fontWeight: 900,
+                marginTop: '0.5rem',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem',
+                cursor: isProcessing ? 'not-allowed' : 'pointer',
+                boxShadow: '0 4px 18px rgba(212, 175, 55, 0.4)'
+              }}
+            >
+              <CheckCircle2 size={20} />
+              <span>
+                {isProcessing 
+                  ? 'Confirming Order...' 
+                  : (paymentMethod === 'WHATSAPP' 
+                      ? 'Confirm & Connect on WhatsApp' 
+                      : `Confirm & Pay ₹${cartTotal.toLocaleString()} via UPI`
+                    )
+                }
+              </span>
+            </button>
+
+            <div style={{ textAlign: 'center', fontSize: '0.72rem', color: '#9CA3AF' }}>
+              By placing your order, you agree to Premium Khaja's genuine artisan delivery &amp; care terms.
             </div>
 
-          </form>
+          </div>
         )}
 
       </div>

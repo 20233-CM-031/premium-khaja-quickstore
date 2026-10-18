@@ -451,17 +451,28 @@ export const HeroSection = () => {
                           padding: '10px'
                         }}
                       >
-                        <img
-                          src={item.image || '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png'}
-                          alt={item.name}
-                          style={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain',
-                            display: 'block',
-                            transition: 'transform 0.3s'
-                          }}
-                        />
+                        {item.image ? (
+                          <img
+                            src={item.image}
+                            alt={item.name}
+                            style={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'contain',
+                              display: 'block',
+                              transition: 'transform 0.3s'
+                            }}
+                          />
+                        ) : (
+                          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', width: '100%', height: '100%' }}>
+                            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(212,175,55,0.15)', border: '1px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.4rem' }}>
+                              <Sparkles size={20} style={{ color: '#D4AF37' }} />
+                            </div>
+                            <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#E4C88A', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                              Artisan Star Piece
+                            </span>
+                          </div>
+                        )}
 
                         {/* Subcategory Pill */}
                         <span style={{

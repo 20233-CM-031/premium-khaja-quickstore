@@ -285,19 +285,28 @@ export const StoreProvider = ({ children }) => {
     } catch (e) {}
   };
 
-  // Dynamic Products Catalog (Admin has full control to add all items)
+  // Dynamic Products Catalog (Admin has full control to add all items & photos)
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem('pk_showroom_products');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Remove any legacy dummy placeholder images so Admin / SouqOne AI Studio adds genuine photos
+          return parsed.map(p => ({
+            ...p,
+            image: (p.image && !p.image.includes('Gemini_Generated_Image') && !p.image.includes('unsplash') && !p.image.includes('Screenshot')) ? p.image : ''
+          }));
+        }
       } catch (e) {
         console.error("Failed to parse custom products", e);
       }
     }
-    // Default to clean empty catalogue so Admin adds authentic products
-    return [];
+    // Default to ALL_PRODUCTS catalog with empty images awaiting Admin / SouqOne upload
+    return ALL_PRODUCTS.map(p => ({
+      ...p,
+      image: (p.image && !p.image.includes('Gemini_Generated_Image') && !p.image.includes('unsplash') && !p.image.includes('Screenshot')) ? p.image : ''
+    }));
   });
 
   const clearAllProducts = () => {
@@ -306,6 +315,30 @@ export const StoreProvider = ({ children }) => {
       localStorage.setItem('pk_showroom_products', JSON.stringify([]));
     } catch (e) {}
   };
+
+  const clearAllMedia = () => {
+    setProducts(prev => {
+      const updated = prev.map(p => ({ ...p, image: '' }));
+      try { localStorage.setItem('pk_showroom_products', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    setShortsList(prev => {
+      const updated = prev.map(s => ({ ...s, videoUrl: '', posterImage: '' }));
+      try { localStorage.setItem('pk_shorts', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    logEvent('MEDIA_CLEARED_BY_ADMIN', {});
+  };
+
+  const updateProductPhoto = (productId, newImageUrl) => {
+    setProducts(prev => {
+      const updated = prev.map(p => p.id === productId ? { ...p, image: newImageUrl } : p);
+      try { localStorage.setItem('pk_showroom_products', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+    logEvent('PRODUCT_PHOTO_UPDATED', { productId, newImageUrl });
+  };
+
 
   // Real-time Inventory State (Persisted & Synchronized across all shoppers & admin)
   const [inventory, setInventory] = useState(() => {
@@ -423,6 +456,41 @@ export const StoreProvider = ({ children }) => {
     }
   };
 
+  // Admin Payment Configuration (Direct UPI & WhatsApp Concierge, Limits Unlocked)
+  const [paymentSettings, setPaymentSettings] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pk_payment_settings');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          ...parsed,
+          codEnabled: false,
+          cardsEnabled: false,
+          upiEnabled: true,
+          noLimit: true
+        };
+      }
+    } catch (e) {}
+    return {
+      codEnabled: false,
+      upiEnabled: true,
+      cardsEnabled: false,
+      netBankingEnabled: false,
+      noLimit: true, // No limit by default - users are never blocked!
+      minOrderAmount: 0,
+      maxOrderAmount: 0,
+      instructions: 'Pay online via Direct UPI (Google Pay, PhonePe, Paytm, QR) or WhatsApp Concierge.'
+    };
+  });
+
+  const updatePaymentSettings = (newSettings) => {
+    setPaymentSettings(prev => {
+      const updated = { ...prev, ...newSettings };
+      try { localStorage.setItem('pk_payment_settings', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
   const uploadStorePaymentQr = (qrDataUrl) => {
     setStorePaymentQr(qrDataUrl);
     try {
@@ -478,13 +546,19 @@ export const StoreProvider = ({ children }) => {
     });
   };
 
-  // Royal Jewellery Shorts & Video Reels State (Full Axis Video CMS)
+  // Royal Jewellery Shorts & Video Reels State (Full Axis Video CMS - Cleared of dummy videos so Admin adds them)
   const [shortsList, setShortsList] = useState(() => {
     const saved = localStorage.getItem('pk_shorts');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed.map(s => ({
+            ...s,
+            videoUrl: s.videoUrl?.includes('mixkit') ? '' : (s.videoUrl || ''),
+            posterImage: (s.posterImage?.includes('Gemini') || s.posterImage?.includes('unsplash') || s.posterImage?.includes('Screenshot')) ? '' : (s.posterImage || '')
+          }));
+        }
       } catch (e) {}
     }
     return INITIAL_SHORTS;
@@ -2121,12 +2195,16 @@ export const StoreProvider = ({ children }) => {
       shippingFee: orderPayload.shippingFee || 0,
       discountAmount: orderPayload.discountAmount || discountAmount || 0,
       appliedCoupon: appliedCoupon ? appliedCoupon.code : null,
-      status: 'payment_verification_pending',
-      paymentStatus: 'submitted_pending_verification',
-      paymentMethod: orderPayload.paymentMethod || `UPI QR Code (${storeUpiId})`,
+      status: (orderPayload.paymentMethod && orderPayload.paymentMethod.toLowerCase().includes('cash'))
+        ? 'COD ORDER CONFIRMED' 
+        : 'payment_verification_pending',
+      paymentStatus: (orderPayload.paymentMethod && orderPayload.paymentMethod.toLowerCase().includes('cash'))
+        ? 'cod_pending' 
+        : 'submitted_pending_verification',
+      paymentMethod: orderPayload.paymentMethod || 'Direct UPI (premiumkhaja@okaxis)',
       payeeName: storeOwnerName || 'Jaffar Mohd',
       upiId: storeUpiId || 'premiumkhaja@okaxis',
-      utrNumber: sanitizeInput(orderPayload.utrNumber || 'Paid via UPI QR Scanner'),
+      utrNumber: sanitizeInput(orderPayload.utrNumber || 'Paid via UPI'),
       orderDate: new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' }),
       shippingAddress: `${sanitizeInput(orderPayload.shipping.address)}, ${sanitizeInput(orderPayload.shipping.city)}, ${sanitizeInput(orderPayload.shipping.state || 'Telangana')} - ${sanitizeInput(orderPayload.shipping.pincode)}`,
       shippingDetails: orderPayload.shipping,
@@ -2143,8 +2221,8 @@ export const StoreProvider = ({ children }) => {
     });
     clearCart();
     removeCoupon();
-    recordAuditLog('ORDER_CREATED', `Order ${newOrder.orderId} created for ₹${newOrder.totalAmount}. Manual UPI verification pending.`, newOrder.orderId);
-    logEvent('ORDER_CREATED', { orderId: newOrder.orderId, amount: newOrder.totalAmount });
+    recordAuditLog('ORDER_CREATED', `Order ${newOrder.orderId} created for ₹${newOrder.totalAmount}. Method: ${newOrder.paymentMethod}`, newOrder.orderId);
+    logEvent('ORDER_CREATED', { orderId: newOrder.orderId, amount: newOrder.totalAmount, method: newOrder.paymentMethod });
 
 
     // Update customer spend in CRM
@@ -2173,20 +2251,24 @@ export const StoreProvider = ({ children }) => {
       ? `\n🎯 *CUSTOMER PREFERENCE / GUIDANCE:*\n• Note: ${newOrder.orderGuidance || 'None'}${newOrder.guidanceTags?.length > 0 ? ` [${newOrder.guidanceTags.join(', ')}]` : ''}\n`
       : '';
 
-    const ownerMsg = `• *Name:* ${newOrder.customerName}
+    const isCodOrder = newOrder.paymentMethod.toLowerCase().includes('cash');
+
+    const ownerMsg = `🛍️ *NEW ORDER - PREMIUM KHAJA* 🛍️
+• *Name:* ${newOrder.customerName}
 • *Phone:* ${cleanCustomerPhone}
 • *Delivery Address:* ${newOrder.shippingAddress}
 
 🛒 *ITEMS ORDERED:*
 ${itemsFormatted}
 ${guidanceNotes}
-💳 *PAYMENT REFERENCE:*
-• Total: ₹${newOrder.totalAmount.toLocaleString()}
-• UTR / Ref: ${newOrder.utrNumber}
-• Payee: ${newOrder.payeeName} (${newOrder.upiId})
+💳 *PAYMENT DETAILS:*
+• Total Payable: ₹${newOrder.totalAmount.toLocaleString()}
+• Method: ${newOrder.paymentMethod}
+• Reference: ${newOrder.utrNumber}
+${isCodOrder ? `• Collection: Collect Cash/UPI ₹${newOrder.totalAmount.toLocaleString()} upon delivery` : `• Payee: ${newOrder.payeeName} (${newOrder.upiId})`}
 
 📍 *DELIVERY DISPATCH ACTION:*
-Customer has submitted payment reference via QR code. Please verify receipt in your UPI / Bank App before dispatch!`;
+${isCodOrder ? '✓ Customer selected Cash on Delivery. Please pack order and book door delivery courier!' : '✓ Customer submitted digital payment. Please verify receipt and initiate express dispatch!'}`;
 
     try {
       const cleanOwnerPhone = (storeOwnerPhone || '9393056641').replace(/\D/g, '');
@@ -2484,6 +2566,10 @@ Customer has submitted payment reference via QR code. Please verify receipt in y
         uploadStorePaymentQr,
         resetStorePaymentQr,
         updateMerchantSettings,
+        paymentSettings,
+        updatePaymentSettings,
+        clearAllMedia,
+        updateProductPhoto,
         updateOrderStatus,
         verifyOrderPayment,
         rejectOrderPayment,

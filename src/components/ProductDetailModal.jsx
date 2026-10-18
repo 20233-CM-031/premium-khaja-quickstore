@@ -372,16 +372,26 @@ export const ProductDetailModal = () => {
           <div className="product-modal-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
             
             {/* Left Column: Image Viewer */}
-            <div className="product-modal-image-col" style={{ background: '#F4EFEB', position: 'relative', minHeight: '240px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-              <img 
-                src={currentProduct.image || '/images/bangles/Screenshot 2026-09-17 202420.png'} 
-                alt={currentProduct.name || 'Jewellery piece'}
-                onError={(e) => {
-                  e.target.onerror = null;
-                  e.target.src = '/images/bangles/Screenshot 2026-09-17 202420.png';
-                }}
-                style={{ width: '100%', height: '100%', maxHeight: '360px', objectFit: 'contain', padding: '12px' }}
-              />
+            <div className="product-modal-image-col" style={{ background: '#F4EFEB', position: 'relative', minHeight: '260px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+              {currentProduct.image ? (
+                <img 
+                  src={currentProduct.image} 
+                  alt={currentProduct.name || 'Jewellery piece'}
+                  style={{ width: '100%', height: '100%', maxHeight: '360px', objectFit: 'contain', padding: '12px' }}
+                />
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '2rem', textAlign: 'center', background: 'linear-gradient(135deg, #1C1A18 0%, #2A2622 100%)', width: '100%', height: '100%', minHeight: '260px' }}>
+                  <div style={{ width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(212,175,55,0.15)', border: '1.5px solid #D4AF37', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.75rem' }}>
+                    <Sparkles size={24} style={{ color: '#D4AF37' }} />
+                  </div>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 800, color: '#E4C88A', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                    Artisan Piece
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#9CA3AF', marginTop: '0.3rem' }}>
+                    Photo to be uploaded by Admin / SouqOne AI Studio
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Right Column: Information & Actions */}

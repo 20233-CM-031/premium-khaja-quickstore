@@ -215,18 +215,8 @@ export const BanglesSpotlight = () => {
 
       <div className="container">
         
-        {/* Simple & Clear Section Header (No pretentiousness, user sees directly) */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
-          <div>
-            <h2 style={{ fontSize: 'clamp(1.5rem, 3vw, 2.2rem)', color: 'var(--pk-obsidian)', lineHeight: 1.2, margin: '0 0 0.35rem', fontWeight: 800 }}>
-              Jewellery &amp; Bangles Collection
-            </h2>
-            <p style={{ fontSize: '0.85rem', color: 'var(--pk-text-secondary)', margin: 0 }}>
-              100% Handcrafted Artificial &amp; Imitation Jewellery • Free Shipping Across India
-            </p>
-          </div>
-
-          {/* Quick Stats / Sort Controls */}
+        {/* Quick Stats / Sort Controls Bar (No section title banner - pure visual flow) */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', background: '#FFFFFF', padding: '0.35rem 0.75rem', borderRadius: 'var(--radius-sm)', border: '1px solid var(--pk-border)' }}>
               <ArrowUpDown size={14} style={{ color: 'var(--pk-text-muted)' }} />
@@ -415,26 +405,53 @@ export const BanglesSpotlight = () => {
                   
                   {/* Image Container with Badges & Wishlist */}
                   <div style={{ position: 'relative', width: '100%', paddingTop: '100%', background: '#F5F2EB', overflow: 'hidden' }}>
-                    <img 
-                      src={product.image} 
-                      alt={product.name} 
-                      loading="lazy"
-                      onError={(e) => {
-                        e.target.onerror = null;
-                        e.target.src = '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png';
-                      }}
-                      onClick={() => openProductDetail(product)}
-                      style={{ 
-                        position: 'absolute', 
-                        top: 0, 
-                        left: 0, 
-                        width: '100%', 
-                        height: '100%', 
-                        objectFit: 'cover', 
-                        cursor: 'pointer',
-                        transition: 'transform 0.3s ease'
-                      }}
-                    />
+                    {product.image ? (
+                      <img 
+                        src={product.image} 
+                        alt={product.name} 
+                        loading="lazy"
+                        onClick={() => openProductDetail(product)}
+                        style={{ 
+                          position: 'absolute', 
+                          top: 0, 
+                          left: 0, 
+                          width: '100%', 
+                          height: '100%', 
+                          objectFit: 'cover', 
+                          cursor: 'pointer',
+                          transition: 'transform 0.3s ease'
+                        }}
+                      />
+                    ) : (
+                      <div
+                        onClick={() => openProductDetail(product)}
+                        style={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: 'linear-gradient(135deg, #1C1A18 0%, #2A2622 100%)',
+                          cursor: 'pointer',
+                          padding: '0.75rem',
+                          textAlign: 'center'
+                        }}
+                      >
+                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(212,175,55,0.12)', border: '1px solid rgba(212,175,55,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.4rem' }}>
+                          <Sparkles size={18} style={{ color: '#D4AF37' }} />
+                        </div>
+                        <span style={{ fontSize: '0.68rem', fontWeight: 800, color: '#E4C88A', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+                          Artisan Piece
+                        </span>
+                        <span style={{ fontSize: '0.6rem', color: '#9CA3AF', marginTop: '0.2rem' }}>
+                          Photo: Admin to upload
+                        </span>
+                      </div>
+                    )}
 
                     {/* Top Badges */}
                     <div style={{ position: 'absolute', top: '8px', left: '8px', display: 'flex', flexDirection: 'column', gap: '3px', zIndex: 2 }}>

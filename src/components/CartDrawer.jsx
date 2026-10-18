@@ -112,11 +112,17 @@ export const CartDrawer = () => {
                     borderBottom: '1px solid var(--pk-surface-alt)' 
                   }}
                 >
-                  <img 
-                    src={item.product.image} 
-                    alt={item.product.name} 
-                    style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', background: '#F2EDE6' }} 
-                  />
+                  {item.product.image ? (
+                    <img 
+                      src={item.product.image} 
+                      alt={item.product.name} 
+                      style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: 'var(--radius-sm)', background: '#F2EDE6' }} 
+                    />
+                  ) : (
+                    <div style={{ width: '70px', height: '70px', borderRadius: 'var(--radius-sm)', background: '#1C1A18', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #D4AF37', flexShrink: 0 }}>
+                      <Sparkles size={20} style={{ color: '#D4AF37' }} />
+                    </div>
+                  )}
 
                   <div style={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
