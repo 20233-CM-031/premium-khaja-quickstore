@@ -608,9 +608,15 @@ h1, h2, h3, h4, .font-serif {
 #netlify-drawer,
 .netlify-drawer,
 [data-netlify-drawer],
+[data-netlify-feedback],
 iframe[src*="netlify"],
 div[id*="netlify"],
+div[class*="netlify"],
 div[class*="netlify-drawer"],
+netlify-drawer,
+div[aria-label*="Netlify"],
+a[href*="netlify.com"],
+[data-testid*="netlify"],
 .netlify-badge {
   display: none !important;
   visibility: hidden !important;
@@ -621,4 +627,5 @@ div[class*="netlify-drawer"],
   position: absolute !important;
   left: -9999px !important;
   top: -9999px !important;
+  z-index: -9999 !important;
 }

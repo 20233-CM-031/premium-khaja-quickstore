@@ -33,118 +33,16 @@ export const HeroSection = () => {
   const [isPaused, setIsPaused] = useState(false);
   const marqueeRef = useRef(null);
 
-  // Default Star Products fallback if state is empty
-  const starList = (Array.isArray(heroStarProducts) && heroStarProducts.length > 0) 
-    ? heroStarProducts 
-    : [
-        {
-          id: 'star-01',
-          name: 'Choti kada pink',
-          image: '/images/bangles/Screenshot 2026-09-17 202420.png',
-          price: 300,
-          originalPrice: 405,
-          memberPrice: 285,
-          marketingReputation: 'Miss World Gifting Spotlight Piece',
-          subcategory: 'Kada',
-          category: 'bangles',
-          sizes: ['2.4', '2.6', '2.8']
-        },
-        {
-          id: 'star-02',
-          name: 'Royal Rajputi Kundan Kada',
-          image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
-          price: 1899,
-          originalPrice: 2599,
-          memberPrice: 1799,
-          marketingReputation: 'Celebrity Runway Feature',
-          subcategory: 'Kundan Kada',
-          category: 'bangles',
-          sizes: ['2.4', '2.6', '2.8']
-        },
-        {
-          id: 'star-03',
-          name: 'Hyderabadi Nizam Bridal Chura',
-          image: '/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png',
-          price: 2499,
-          originalPrice: 3499,
-          memberPrice: 2349,
-          marketingReputation: 'Heritage Pageant Showcase',
-          subcategory: 'Bridal Chura',
-          category: 'bangles',
-          sizes: ['2.4', '2.6', '2.8']
-        }
-      ];
+  // Star products from store (empty by default until Admin adds items)
+  const starList = Array.isArray(heroStarProducts) ? heroStarProducts : [];
 
-  // Seamless infinite loop by duplicating list
-  const displayStarItems = [...starList, ...starList];
+  // Seamless infinite loop by duplicating list if items exist
+  const displayStarItems = starList.length > 0 ? [...starList, ...starList] : [];
 
   const formatINR = (val) => {
     const num = Number(val);
     if (isNaN(num)) return '0';
     return num.toLocaleString('en-IN');
-  };
-
-  // 3D Category circular objects
-  const categoryObjects = [
-    {
-      id: 'bangles',
-      name: 'Bangle Atelier',
-      subtitle: 'Glass, Stone, Lac, Minakari',
-      count: '28 Designs',
-      image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
-      badge: '👑 Royal Heritage',
-      targetId: 'bangles-atelier'
-    },
-    {
-      id: 'necklaces',
-      name: 'Necklace Sets',
-      subtitle: 'CZ, AD & Real Pearls',
-      count: '6 Haute Sets',
-      image: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80',
-      badge: '💎 Haute Sets',
-      targetId: 'bangles-atelier'
-    },
-    {
-      id: 'bracelets',
-      name: 'Bracelet & Cuffs',
-      subtitle: 'Formal, Wedding, Festive',
-      count: 'Handcrafted',
-      image: 'https://images.unsplash.com/photo-1611591475152-473523dd665e?auto=format&fit=crop&w=400&q=80',
-      badge: '✨ Party & Formal',
-      targetId: 'bangles-atelier'
-    },
-    {
-      id: 'earrings',
-      name: 'Earrings & Jhumkas',
-      subtitle: 'Traditional Nizam Craft',
-      count: 'Mughal Style',
-      image: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80',
-      badge: '🌸 Traditional Wear',
-      targetId: 'bangles-atelier'
-    },
-    {
-      id: 'shorts',
-      name: 'Royal Shorts',
-      subtitle: 'Watch & Shop Video Reels',
-      count: 'Runway Clips',
-      image: '/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png',
-      badge: '🎬 Video Shopping',
-      isShortsTrigger: true
-    }
-  ];
-
-  const handleCategoryClick = (cat) => {
-    if (cat.isShortsTrigger) {
-      setActiveShortIndex(0);
-      setShortsModalOpen(true);
-      return;
-    }
-    setActiveCategory(cat.id);
-    setActiveSubcategory('all');
-    const targetElement = document.getElementById(cat.targetId || 'bangles-atelier');
-    if (targetElement) {
-      targetElement.scrollIntoView({ behavior: 'smooth' });
-    }
   };
 
   return (
@@ -177,7 +75,9 @@ export const HeroSection = () => {
         {/* ========================================================================= */}
         <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+          gridTemplateColumns: starList.length > 0 ? 'repeat(auto-fit, minmax(320px, 1fr))' : '1fr',
+          maxWidth: starList.length > 0 ? 'none' : '900px',
+          margin: starList.length > 0 ? '0' : '0 auto',
           gap: '2.5rem',
           alignItems: 'center'
         }}>
@@ -338,7 +238,8 @@ export const HeroSection = () => {
           </div>
 
           {/* ─── SIDE 2: STAR PRODUCTS MOVING IN HORIZONTAL LANE ON CONSTANT TIME ─── */}
-          <div style={{ position: 'relative', overflow: 'hidden' }}>
+          {starList.length > 0 && (
+            <div style={{ position: 'relative', overflow: 'hidden' }}>
             
             {/* Lane Header */}
             <div style={{ 
@@ -605,114 +506,12 @@ export const HeroSection = () => {
               </div>
             </div>
 
-          </div>
+            </div>
+          )}
 
         </div>
 
-        {/* ========================================================================= */}
-        {/* CATEGORY OBJECTS DISCOVERY BAR                                            */}
-        {/* ========================================================================= */}
-        <div style={{ marginTop: '3.5rem', paddingTop: '2.5rem', borderTop: '1px solid rgba(212, 175, 55, 0.2)' }}>
-          <div style={{ textAlign: 'center', marginBottom: '1.8rem' }}>
-            <span style={{ color: '#E4C88A', fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase' }}>
-              ✦ Visual Jewellery Discovery ✦
-            </span>
-            <h3 style={{ fontSize: '1.45rem', color: '#FAF8F5', margin: '0.25rem 0 0', fontFamily: 'var(--font-serif)', fontWeight: 500 }}>
-              Explore By Royal Category Objects
-            </h3>
-          </div>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
-            gap: '1.15rem'
-          }}>
-            {categoryObjects.map((cat) => (
-              <div
-                key={cat.id}
-                onClick={() => handleCategoryClick(cat)}
-                style={{
-                  background: 'rgba(28, 25, 22, 0.75)',
-                  border: '1px solid rgba(212, 175, 55, 0.3)',
-                  borderRadius: 'var(--radius-lg)',
-                  padding: '1.2rem 1rem',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  textAlign: 'center',
-                  cursor: 'pointer',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                  boxShadow: '0 8px 20px rgba(0,0,0,0.3)',
-                  position: 'relative'
-                }}
-                onMouseOver={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-5px)';
-                  e.currentTarget.style.borderColor = 'var(--pk-gold)';
-                  e.currentTarget.style.boxShadow = '0 16px 30px rgba(212, 175, 55, 0.25)';
-                }}
-                onMouseOut={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.borderColor = 'rgba(212, 175, 55, 0.3)';
-                  e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.3)';
-                }}
-              >
-                <div style={{
-                  width: '84px',
-                  height: '84px',
-                  borderRadius: '50%',
-                  padding: '3px',
-                  background: 'var(--pk-gold-gradient)',
-                  boxShadow: '0 8px 25px rgba(212, 175, 55, 0.4)',
-                  marginBottom: '0.85rem',
-                  position: 'relative'
-                }}>
-                  <img
-                    src={cat.image}
-                    alt={cat.name}
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      borderRadius: '50%',
-                      objectFit: 'cover',
-                      background: '#121110',
-                      display: 'block'
-                    }}
-                  />
-                  {cat.isShortsTrigger && (
-                    <div style={{
-                      position: 'absolute',
-                      inset: 0,
-                      borderRadius: '50%',
-                      background: 'rgba(0,0,0,0.45)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: '#E4C88A'
-                    }}>
-                      <Flame size={26} />
-                    </div>
-                  )}
-                </div>
-
-                <span style={{ fontSize: '0.65rem', color: '#E4C88A', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '0.2rem' }}>
-                  {cat.badge}
-                </span>
-
-                <h4 style={{ fontSize: '0.96rem', color: '#FAF8F5', margin: '0 0 0.25rem', fontWeight: 600 }}>
-                  {cat.name}
-                </h4>
-
-                <p style={{ fontSize: '0.72rem', color: '#A89E92', margin: '0 0 0.4rem', lineHeight: 1.3 }}>
-                  {cat.subtitle}
-                </p>
-
-                <span className="gold-badge" style={{ fontSize: '0.62rem', padding: '0.1rem 0.5rem' }}>
-                  {cat.count}
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
 
       </div>
     </section>

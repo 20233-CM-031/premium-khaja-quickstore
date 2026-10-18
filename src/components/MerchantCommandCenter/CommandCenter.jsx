@@ -50,7 +50,10 @@ import {
   CheckSquare,
   Download,
   Bot,
-  ShieldAlert
+  ShieldAlert,
+  Calendar,
+  Share2,
+  Printer
 } from 'lucide-react';
 
 export const CommandCenter = () => {
@@ -122,7 +125,10 @@ export const CommandCenter = () => {
     heroStarProducts,
     addHeroStarProduct,
     updateHeroStarProduct,
-    deleteHeroStarProduct
+    deleteHeroStarProduct,
+    souqoneLibrary,
+    publishFromSouqoneLibrary,
+    receiveFromSouqoneWebhook
   } = useStore();
 
   const allCatalogueProducts = products || ALL_PRODUCTS;
@@ -367,6 +373,250 @@ export const CommandCenter = () => {
   const [souqoneSelectedProdId, setSouqoneSelectedProdId] = useState(allCatalogueProducts[0]?.id || 'bangle-01');
   const [souqoneDirectImageUrl, setSouqoneDirectImageUrl] = useState('');
   const [souqoneSyncActionMsg, setSouqoneSyncActionMsg] = useState('');
+
+  
+  // ================= WEEKLY SALES & ITEMS SOLD REPORT STATE & HANDLERS =================
+  const [selectedWeekFilter, setSelectedWeekFilter] = useState('ALL');
+  const [weeklyReportShareMsg, setWeeklyReportShareMsg] = useState('');
+
+  // Group orders by week and calculate item-level statistics
+  const getWeeklySalesData = () => {
+    const weeksMap = {};
+
+    (orders || []).forEach(order => {
+      const orderDate = new Date(order.orderDate || Date.now());
+      const validDate = isNaN(orderDate.getTime()) ? new Date() : orderDate;
+      
+      const d = new Date(validDate);
+      const day = d.getDay();
+      const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const monday = new Date(d.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+
+      const sunday = new Date(monday);
+      sunday.setDate(monday.getDate() + 6);
+      sunday.setHours(23, 59, 59, 999);
+
+      const formatDay = (dt) => dt.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      const weekId = `${monday.getFullYear()}-W${String(Math.ceil((((monday - new Date(monday.getFullYear(),0,1)) / 86400000) + 1)/7)).padStart(2, '0')}`;
+      const weekLabel = `${formatDay(monday)} – ${formatDay(sunday)}, ${monday.getFullYear()}`;
+
+      if (!weeksMap[weekId]) {
+        weeksMap[weekId] = {
+          weekId,
+          weekLabel,
+          startDate: monday,
+          endDate: sunday,
+          orders: [],
+          totalRevenue: 0,
+          totalUnitsSold: 0,
+          itemsSoldMap: {}
+        };
+      }
+
+      const weekObj = weeksMap[weekId];
+      weekObj.orders.push(order);
+      const orderTotal = Number(order.totalAmount) || 0;
+      weekObj.totalRevenue += orderTotal;
+
+      (order.items || []).forEach(item => {
+        const qty = Number(item.quantity) || 1;
+        const itemKey = item.name || 'Unknown Item';
+        weekObj.totalUnitsSold += qty;
+
+        if (!weekObj.itemsSoldMap[itemKey]) {
+          weekObj.itemsSoldMap[itemKey] = {
+            name: item.name,
+            image: item.image,
+            unitPrice: Number(item.price) || 0,
+            totalQty: 0,
+            totalRevenue: 0,
+            sizesChosen: {},
+            finishesChosen: {},
+            orderIds: []
+          };
+        }
+
+        const record = weekObj.itemsSoldMap[itemKey];
+        record.totalQty += qty;
+        record.totalRevenue += (Number(item.price) || 0) * qty;
+        record.orderIds.push(order.orderId);
+
+        const sz = item.size || order.sizePreference || 'Standard';
+        record.sizesChosen[sz] = (record.sizesChosen[sz] || 0) + qty;
+
+        const fn = item.finish || 'Antique Gold';
+        record.finishesChosen[fn] = (record.finishesChosen[fn] || 0) + qty;
+      });
+    });
+
+    return Object.values(weeksMap).sort((a, b) => b.startDate - a.startDate);
+  };
+
+  const handleShareWeeklyWhatsApp = (targetWeek) => {
+    const itemsList = Object.values(targetWeek.itemsSoldMap)
+      .sort((a, b) => b.totalQty - a.totalQty)
+      .map(i => {
+        const sizesStr = Object.entries(i.sizesChosen).map(([s, q]) => `${s} (x${q})`).join(', ');
+        return `• *${i.name}*\n   Qty: ${i.totalQty} pcs | Revenue: ₹${i.totalRevenue.toLocaleString('en-IN')}\n   Sizes: ${sizesStr}`;
+      })
+      .join('\n\n');
+
+    const message = `📊 *PREMIUM KHAJA — WEEKLY SALES & ITEMS SOLD REPORT*
+━━━━━━━━━━━━━━━━━━━━
+📅 *Sales Period:* ${targetWeek.weekLabel}
+💰 *Total Revenue:* ₹${targetWeek.totalRevenue.toLocaleString('en-IN')}
+📦 *Total Units Sold:* ${targetWeek.totalUnitsSold} pieces
+🛍️ *Total Orders:* ${targetWeek.orders.length} orders
+💳 *Direct UPI Merchant:* ${storeOwnerName || 'Jaffar Mohd'} (${storeUpiId || 'premiumkhaja@okaxis'})
+
+🏆 *ITEMS SOLD BREAKDOWN:*
+${itemsList || 'No individual items recorded'}
+
+━━━━━━━━━━━━━━━━━━━━
+✨ Generated directly from Premium Khaja QuickStore Command Center`;
+
+    const encoded = encodeURIComponent(message);
+    window.open(`https://wa.me/?text=${encoded}`, '_blank');
+    setWeeklyReportShareMsg('✓ Weekly sales report dispatched to WhatsApp!');
+    setTimeout(() => setWeeklyReportShareMsg(''), 4000);
+  };
+
+  const handleExportWeeklyCsv = (targetWeek) => {
+    const rows = [
+      ['Week Period', 'Order ID', 'Order Date', 'Customer Name', 'Phone', 'Item Name', 'Quantity', 'Size', 'Finish', 'Unit Price', 'Item Total', 'Order Total', 'Payment Status', 'UTR Reference']
+    ];
+
+    targetWeek.orders.forEach(ord => {
+      (ord.items || []).forEach(item => {
+        rows.push([
+          `"${targetWeek.weekLabel}"`,
+          `"${ord.orderId}"`,
+          `"${ord.orderDate || ''}"`,
+          `"${ord.customerName || ''}"`,
+          `"${ord.customerPhone || ''}"`,
+          `"${item.name || ''}"`,
+          item.quantity || 1,
+          `"${item.size || ord.sizePreference || 'Standard'}"`,
+          `"${item.finish || 'Antique Gold'}"`,
+          item.price || 0,
+          (item.price || 0) * (item.quantity || 1),
+          ord.totalAmount || 0,
+          `"${ord.status || 'CONFIRMED'}"`,
+          `"${ord.utrNumber || ''}"`
+        ]);
+      });
+    });
+
+    const csvContent = "data:text/csv;charset=utf-8," + rows.map(e => e.join(",")).join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `premium-khaja-weekly-sales-${targetWeek.weekId}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setWeeklyReportShareMsg(`✓ Downloaded CSV report for ${targetWeek.weekLabel}!`);
+    setTimeout(() => setWeeklyReportShareMsg(''), 4000);
+  };
+
+  // ================= SOUQONE AI SHOWROOM ASSET VAULT STATE & HANDLERS =================
+  const [souqoneLibrarySearch, setSouqoneLibrarySearch] = useState('');
+  const [souqoneLibraryCategory, setSouqoneLibraryCategory] = useState('all');
+  const [publishingAsset, setPublishingAsset] = useState(null);
+  const [publishForm, setPublishForm] = useState({
+    title: '',
+    category: 'bangles',
+    subcategory: '',
+    price: 2499,
+    originalPrice: 3499,
+    memberPrice: 2249,
+    stock: 15
+  });
+
+  const handleOpenPublishModal = (asset) => {
+    setPublishingAsset(asset);
+    setPublishForm({
+      title: asset.title,
+      category: asset.category || 'bangles',
+      subcategory: asset.subcategory || '',
+      price: asset.suggestedPrice || 2499,
+      originalPrice: asset.suggestedOriginalPrice || 3499,
+      memberPrice: asset.suggestedMemberPrice || 2249,
+      stock: 15
+    });
+  };
+
+  const handleConfirmPublish = (e) => {
+    e.preventDefault();
+    if (!publishingAsset) return;
+    const res = publishFromSouqoneLibrary(publishingAsset.id, publishForm);
+    if (res.success) {
+      setSouqoneSyncActionMsg(`✓ Published "${publishForm.title}" directly to live catalog and storefront!`);
+      setPublishingAsset(null);
+      setTimeout(() => setSouqoneSyncActionMsg(''), 5000);
+    }
+  };
+
+  const handleQuickPublish = (asset) => {
+    const res = publishFromSouqoneLibrary(asset.id, {
+      title: asset.title,
+      category: asset.category,
+      subcategory: asset.subcategory,
+      price: asset.suggestedPrice,
+      originalPrice: asset.suggestedOriginalPrice,
+      memberPrice: asset.suggestedMemberPrice,
+      stock: 15
+    });
+    if (res.success) {
+      setSouqoneSyncActionMsg(`✓ 1-Click Published "${asset.title}" to live showroom!`);
+      setTimeout(() => setSouqoneSyncActionMsg(''), 5000);
+    }
+  };
+
+  const handleSimulateWebhookPush = () => {
+    const sampleIncoming = [
+      {
+        id: `sq-hook-${Date.now()}-1`,
+        title: 'Mughal Jadau Kundan Pearl Hathphool Cuff',
+        category: 'bracelets',
+        subcategory: 'Hathphool & Cuffs',
+        imageUrl: '/images/bangles/1789662666a0eb.png',
+        suggestedPrice: 2899,
+        suggestedOriginalPrice: 3899,
+        suggestedMemberPrice: 2699,
+        sizes: ['Free Size Adjustable Ring Chain'],
+        colors: [
+          { name: 'Antique Gold Polish', code: '#C5A059' },
+          { name: 'Royal Rose Polish', code: '#B76E79' }
+        ],
+        receivedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        source: 'SouqOne AI Studio Webhook (Live)',
+        modelTag: 'Imperial Velvet Lighting 4K'
+      },
+      {
+        id: `sq-hook-${Date.now()}-2`,
+        title: 'Nizam Navratan Royal Haar & Earring Set',
+        category: 'necklaces',
+        subcategory: 'Haute Sets',
+        imageUrl: '/images/bangles/17896626c116d4.png',
+        suggestedPrice: 4499,
+        suggestedOriginalPrice: 5999,
+        suggestedMemberPrice: 4249,
+        sizes: ['Adjustable Silk Dori'],
+        colors: [
+          { name: 'Antique Gold Polish', code: '#C5A059' }
+        ],
+        receivedAt: new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
+        source: 'SouqOne AI Studio Webhook (Live)',
+        modelTag: 'Showroom HD Photogrammetry v2.4'
+      }
+    ];
+
+    receiveFromSouqoneWebhook(sampleIncoming);
+    setSouqoneSyncActionMsg(`⚡ Received 2 new AI Showroom looks from SouqOne Bridge Webhook!`);
+    setTimeout(() => setSouqoneSyncActionMsg(''), 5000);
+  };
 
   const handleSouqonePing = () => {
     setSouqonePingStatus('Connecting to SouqOne AI Studio...');
@@ -928,6 +1178,7 @@ export const CommandCenter = () => {
         <div style={{ display: 'flex', gap: '0.5rem', overflowX: 'auto' }}>
           {[
             { id: 'ORDERS', label: `Orders & Dispatch (${orders.length})`, icon: Package, highlight: true },
+            { id: 'WEEKLY_SALES_REPORT', label: 'Weekly Sales & Items Sold Report', icon: TrendingUp, highlight: true },
             { id: 'HERO_CAMPAIGN', label: `Hero Star Lane & Campaigns (${heroStarProducts?.length || 0})`, icon: Sparkles, highlight: true },
             { id: 'OFFERS_PROMO', label: `Coupons & Offers (${offersList?.length || 2})`, icon: Percent, highlight: true },
             { id: 'INVENTORY_LEDGER', label: `Stock Movement Ledger (${inventoryMovements?.length || 0})`, icon: ClipboardList, highlight: false },
@@ -2709,127 +2960,218 @@ export const CommandCenter = () => {
               </div>
             </div>
 
-            {/* 3 Major Ecosystem Pillars */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+            
+            {/* ========================================================================= */}
+            {/* SOUQONE AI SHOWROOM ASSET LIBRARY & INCOMING VAULT                        */}
+            {/* ========================================================================= */}
+            <div style={{ background: '#FAF8F5', border: '1.5px solid var(--pk-gold-dark)', borderRadius: 'var(--radius-md)', padding: '1.5rem', marginBottom: '2rem' }}>
               
-              {/* PILLAR 1: AI STUDIO SHOWROOM PHOTOGRAPHY */}
-              <div style={{ background: '#FAF8F5', border: '1.5px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <h4 style={{ fontSize: '0.95rem', fontWeight: 800, color: 'var(--pk-obsidian)', margin: 0, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <Sparkles size={16} style={{ color: 'var(--pk-gold-dark)' }} />
-                    <span>SouqOne AI Studio — Showroom Images</span>
-                  </h4>
-                  <span style={{ fontSize: '0.7rem', background: '#FEF7E0', color: '#B06000', padding: '0.15rem 0.5rem', borderRadius: '4px', fontWeight: 700 }}>
-                    AI Studio Connected
-                  </span>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '1rem', marginBottom: '1.25rem' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+                    <Sparkles size={18} style={{ color: 'var(--pk-gold-dark)' }} />
+                    <h4 style={{ fontSize: '1.15rem', fontWeight: 800, color: 'var(--pk-obsidian)', margin: 0 }}>
+                      SouqOne AI Showroom Asset Library &amp; Vault
+                    </h4>
+                    <span style={{ fontSize: '0.7rem', background: '#FEF7E0', color: '#B06000', padding: '0.15rem 0.55rem', borderRadius: '4px', fontWeight: 700 }}>
+                      AI Studio Connected
+                    </span>
+                  </div>
+                  <p style={{ fontSize: '0.78rem', color: 'var(--pk-text-muted)', margin: 0 }}>
+                    Showroomified photography generated exclusively on your <strong>SouqOne web application (app.souqone.com)</strong>. Pushed directly through the bridge and stored here in your QuickStore Vault. From this library, the Admin publishes looks into live inventory and storefront with 1 click.
+                  </p>
                 </div>
 
-                <p style={{ fontSize: '0.75rem', color: 'var(--pk-text-muted)', margin: 0 }}>
-                  Showroom photography and AI-enhanced product looks created in your SouqOne platform can be assigned to products or synced in batch.
-                </p>
-
-                {/* Status of Catalog Images */}
-                <div style={{ background: '#FFFFFF', border: '1px solid #E5E0D8', borderRadius: '6px', padding: '0.75rem' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', marginBottom: '0.35rem' }}>
-                    <span style={{ color: 'var(--pk-text-muted)' }}>Catalog Products with Photos:</span>
-                    <strong>{allCatalogueProducts.filter(p => !!p.image).length} / {allCatalogueProducts.length}</strong>
-                  </div>
-                  <div style={{ fontSize: '0.7rem', color: '#6B7280' }}>
-                    {allCatalogueProducts.filter(p => !!p.image).length === 0 ? (
-                      <span style={{ color: '#10B981', fontWeight: 700 }}>All dummy media successfully cleared. Ready for authentic SouqOne AI Studio uploads!</span>
-                    ) : (
-                      <span>{allCatalogueProducts.filter(p => !p.image).length} items waiting for SouqOne showroom imagery.</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Fast Action Buttons */}
+                {/* Simulation & Vault Controls */}
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   <button
                     type="button"
-                    onClick={handleSimulateAiStudioImageSync}
+                    onClick={handleSimulateWebhookPush}
                     className="btn-gold"
-                    style={{ flex: 1, padding: '0.55rem 0.75rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '0.35rem' }}
+                    style={{ padding: '0.45rem 0.85rem', fontSize: '0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                    title="Simulate receiving 2 new AI Showroom looks from SouqOne AI Studio Webhook"
                   >
                     <Layers size={13} />
-                    <span>Sync AI Studio Showroom Set</span>
+                    <span>⚡ Receive Looks from SouqOne Bridge</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={handleClearStorePhotosAndVideos}
                     className="btn-outline"
-                    style={{ padding: '0.55rem 0.75rem', fontSize: '0.75rem', color: '#DC2626', borderColor: '#FCA5A5', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
-                    title="Clear all photos and videos so admin can re-upload fresh"
+                    style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem', color: '#DC2626', borderColor: '#FCA5A5', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
                   >
                     <Trash2 size={13} />
-                    <span>Clear All Photos &amp; Reels</span>
+                    <span>Clear Catalog Media</span>
                   </button>
                 </div>
+              </div>
 
-                {/* Individual Product Photo Assignor */}
-                <div style={{ background: '#FFFFFF', border: '1px solid #E5E0D8', borderRadius: '6px', padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
-                  <div style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--pk-obsidian)' }}>
-                    Assign SouqOne Showroom Photo to Product:
-                  </div>
+              {/* Protocol Guarantee Banner */}
+              <div style={{ background: '#FFFFFF', border: '1px solid #E5E0D8', borderRadius: '6px', padding: '0.75rem 1rem', marginBottom: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem', fontSize: '0.75rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: '#4B5563' }}>
+                  <ShieldCheck size={16} color="#16A34A" />
+                  <span><strong>SouqOne Unidirectional Push:</strong> Admin image uploads originate from SouqOne AI Studio. QuickStore stores received looks exclusively in this Asset Library.</span>
+                </div>
+                <div style={{ color: 'var(--pk-gold-dark)', fontWeight: 700 }}>
+                  Vault Assets: {(souqoneLibrary || []).length} Showroom Looks
+                </div>
+              </div>
 
-                  <select
-                    value={souqoneSelectedProdId}
-                    onChange={(e) => setSouqoneSelectedProdId(e.target.value)}
-                    className="form-select"
-                    style={{ padding: '0.45rem', fontSize: '0.75rem' }}
-                  >
-                    {allCatalogueProducts.map(prod => (
-                      <option key={prod.id} value={prod.id}>
-                        {prod.name} ({prod.id}) {prod.image ? '• Photo Set' : '• [NO PHOTO]'}
-                      </option>
-                    ))}
-                  </select>
-
-                  <div style={{ display: 'flex', gap: '0.4rem' }}>
-                    <input
-                      type="text"
-                      placeholder="Showroom Image URL / CDN Path..."
-                      value={souqoneDirectImageUrl}
-                      onChange={(e) => setSouqoneDirectImageUrl(e.target.value)}
-                      className="form-input"
-                      style={{ flex: 1, padding: '0.45rem', fontSize: '0.75rem' }}
-                    />
+              {/* Search & Category Filter for Library */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.75rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                  {['all', 'bangles', 'necklaces', 'earrings', 'bracelets'].map(cat => (
                     <button
+                      key={cat}
                       type="button"
-                      onClick={() => handleAssignSouqonePhoto(souqoneSelectedProdId, souqoneDirectImageUrl)}
-                      className="btn-gold"
-                      style={{ padding: '0.45rem 0.75rem', fontSize: '0.75rem' }}
+                      onClick={() => setSouqoneLibraryCategory(cat)}
+                      style={{
+                        background: souqoneLibraryCategory === cat ? 'var(--pk-gold-dark)' : '#FFFFFF',
+                        color: souqoneLibraryCategory === cat ? '#FAF8F5' : '#4B5563',
+                        border: souqoneLibraryCategory === cat ? '1px solid var(--pk-gold-dark)' : '1px solid #D1D5DB',
+                        borderRadius: '4px',
+                        padding: '0.3rem 0.65rem',
+                        fontSize: '0.72rem',
+                        fontWeight: 700,
+                        textTransform: 'capitalize',
+                        cursor: 'pointer'
+                      }}
                     >
-                      Apply
+                      {cat}
                     </button>
-                  </div>
-
-                  {/* AI Studio Showroom Presets */}
-                  <div style={{ fontSize: '0.68rem', color: 'var(--pk-text-muted)' }}>Quick AI Studio Presets:</div>
-                  <div style={{ display: 'flex', gap: '0.3rem', flexWrap: 'wrap' }}>
-                    {[
-                      { name: 'Royal Polki', url: '/images/bangles/1789662811af3b.png' },
-                      { name: 'Emerald Nizam', url: '/images/bangles/178966249ed2e1.png' },
-                      { name: 'Rajwada Bridal', url: '/images/bangles/1789662666a0eb.png' },
-                      { name: 'AD Solitaire', url: '/images/bangles/17896626c116d4.png' }
-                    ].map(preset => (
-                      <button
-                        key={preset.name}
-                        type="button"
-                        onClick={() => {
-                          setSouqoneDirectImageUrl(preset.url);
-                          handleAssignSouqonePhoto(souqoneSelectedProdId, preset.url);
-                        }}
-                        style={{ background: '#F3F4F6', border: '1px solid #D1D5DB', borderRadius: '3px', padding: '0.2rem 0.45rem', fontSize: '0.68rem', cursor: 'pointer' }}
-                      >
-                        + {preset.name}
-                      </button>
-                    ))}
-                  </div>
+                  ))}
                 </div>
 
+                <div style={{ width: '220px' }}>
+                  <input
+                    type="text"
+                    placeholder="Search SouqOne library..."
+                    value={souqoneLibrarySearch}
+                    onChange={(e) => setSouqoneLibrarySearch(e.target.value)}
+                    className="form-input"
+                    style={{ padding: '0.35rem 0.65rem', fontSize: '0.75rem' }}
+                  />
+                </div>
               </div>
+
+              {/* Grid of SouqOne Library Showroom Cards */}
+              {(() => {
+                const filteredLibrary = (souqoneLibrary || []).filter(item => {
+                  const matchCat = souqoneLibraryCategory === 'all' || item.category === souqoneLibraryCategory;
+                  const matchSearch = !souqoneLibrarySearch || item.title.toLowerCase().includes(souqoneLibrarySearch.toLowerCase());
+                  return matchCat && matchSearch;
+                });
+
+                if (filteredLibrary.length === 0) {
+                  return (
+                    <div style={{ background: '#FFFFFF', border: '1px dashed #D1D5DB', borderRadius: '6px', padding: '2.5rem 1rem', textAlign: 'center', color: '#6B7280' }}>
+                      <Camera size={32} style={{ color: 'var(--pk-gold)', marginBottom: '0.5rem', opacity: 0.5 }} />
+                      <div style={{ fontWeight: 700, color: 'var(--pk-obsidian)', fontSize: '0.9rem' }}>No Showroom Looks Found</div>
+                      <div style={{ fontSize: '0.75rem', marginTop: '0.25rem' }}>Click "⚡ Receive Looks from SouqOne Bridge" to simulate incoming webhook uploads from SouqOne AI Studio.</div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                    {filteredLibrary.map(asset => {
+                      const isAlreadyInCatalog = allCatalogueProducts.some(p => p.name === asset.title || p.image === asset.imageUrl);
+                      return (
+                        <div
+                          key={asset.id}
+                          style={{
+                            background: '#FFFFFF',
+                            border: isAlreadyInCatalog ? '1.5px solid #10B981' : '1.5px solid #E5E0D8',
+                            borderRadius: '8px',
+                            overflow: 'hidden',
+                            boxShadow: '0 4px 15px rgba(0,0,0,0.06)',
+                            display: 'flex',
+                            flexDirection: 'column'
+                          }}
+                        >
+                          {/* Image Thumbnail with Tag */}
+                          <div style={{ position: 'relative', height: '210px', background: '#121110', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <img
+                              src={asset.imageUrl}
+                              alt={asset.title}
+                              style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                            />
+                            <div style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(0,0,0,0.75)', color: '#E4C88A', padding: '0.2rem 0.5rem', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 700 }}>
+                              ★ {asset.category?.toUpperCase()}
+                            </div>
+                            {isAlreadyInCatalog && (
+                              <div style={{ position: 'absolute', top: '8px', right: '8px', background: '#10B981', color: '#FFFFFF', padding: '0.2rem 0.5rem', borderRadius: '3px', fontSize: '0.65rem', fontWeight: 800 }}>
+                                ✓ LIVE IN STORE
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Card Body */}
+                          <div style={{ padding: '0.9rem', display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 }}>
+                            <h5 style={{ margin: 0, fontSize: '0.88rem', fontWeight: 800, color: 'var(--pk-obsidian)', lineHeight: 1.35 }}>
+                              {asset.title}
+                            </h5>
+
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                              <span style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--pk-gold-dark)' }}>
+                                ₹{(asset.suggestedPrice || 2499).toLocaleString('en-IN')}
+                              </span>
+                              {asset.suggestedOriginalPrice && (
+                                <span style={{ fontSize: '0.75rem', color: '#9CA3AF', textDecoration: 'line-through' }}>
+                                  ₹{asset.suggestedOriginalPrice.toLocaleString('en-IN')}
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.68rem', background: '#FEF3C7', color: '#92400E', padding: '0.1rem 0.4rem', borderRadius: '3px', fontWeight: 700 }}>
+                                VIP: ₹{(asset.suggestedMemberPrice || Math.round(asset.suggestedPrice * 0.95)).toLocaleString('en-IN')}
+                              </span>
+                            </div>
+
+                            {/* Sizes Available */}
+                            {asset.sizes?.length > 0 && (
+                              <div style={{ fontSize: '0.7rem', color: '#4B5563' }}>
+                                Sizes: <strong>{asset.sizes.join(', ')}</strong>
+                              </div>
+                            )}
+
+                            {/* Source Stamp */}
+                            <div style={{ fontSize: '0.66rem', color: '#6B7280', fontStyle: 'italic', marginTop: 'auto' }}>
+                              ⚡ {asset.source || 'SouqOne AI Studio Webhook'} • {asset.modelTag || 'HD Showroom'}
+                            </div>
+
+                            {/* Action Buttons */}
+                            <div style={{ display: 'flex', gap: '0.45rem', marginTop: '0.5rem' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenPublishModal(asset)}
+                                className="btn-gold"
+                                style={{ flex: 1, padding: '0.5rem', fontSize: '0.75rem', fontWeight: 700 }}
+                              >
+                                {isAlreadyInCatalog ? 'Publish Another' : 'Publish to Store'}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleQuickPublish(asset)}
+                                className="btn-primary"
+                                style={{ padding: '0.5rem 0.65rem', fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                                title="Instant 1-Click Publish to Live Catalog"
+                              >
+                                ⚡ 1-Click
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+
+            </div>
+
+            {/* 2 Other Ecosystem Pillars (Inventory Sync & CRM Sync) */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
 
               {/* PILLAR 2: INVENTORY SYNC ENGINE */}
               <div style={{ background: '#FAF8F5', border: '1.5px solid var(--pk-border)', borderRadius: 'var(--radius-md)', padding: '1.25rem', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
@@ -5820,6 +6162,164 @@ export const CommandCenter = () => {
             >
               Close Video Preview
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* MODAL: PUBLISH SOUQONE SHOWROOM LOOK TO LIVE QUICKSTORE INVENTORY          */}
+      {/* ========================================================================= */}
+      {publishingAsset && (
+        <div className="modal-backdrop" onClick={() => setPublishingAsset(null)} style={{ zIndex: 1200 }}>
+          <div
+            className="modal-content"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '560px',
+              background: '#FFFFFF',
+              padding: '1.75rem',
+              borderRadius: 'var(--radius-md)',
+              border: '2px solid var(--pk-gold-dark)',
+              boxShadow: '0 25px 60px rgba(0,0,0,0.5)'
+            }}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', borderBottom: '1px solid var(--pk-border)', paddingBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <Sparkles size={18} style={{ color: 'var(--pk-gold-dark)' }} />
+                <h4 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: 'var(--pk-obsidian)' }}>
+                  Publish SouqOne Look to Live QuickStore
+                </h4>
+              </div>
+              <button
+                type="button"
+                className="btn-icon"
+                onClick={() => setPublishingAsset(null)}
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <form onSubmit={handleConfirmPublish} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              {/* Image Preview & Details */}
+              <div style={{ display: 'flex', gap: '1rem', background: '#121110', padding: '0.75rem', borderRadius: '6px', alignItems: 'center' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '4px', overflow: 'hidden', flexShrink: 0, background: '#1E1B18', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                  <img src={publishingAsset.imageUrl} alt={publishingAsset.title} style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                </div>
+                <div style={{ color: '#FAF8F5' }}>
+                  <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#E4C88A' }}>
+                    {publishingAsset.title}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#B5AFA6', marginTop: '0.2rem' }}>
+                    Origin: {publishingAsset.source || 'SouqOne AI Studio'} • Model: {publishingAsset.modelTag || 'Showroom 4K'}
+                  </div>
+                  <div style={{ fontSize: '0.72rem', color: '#A7F3D0', marginTop: '0.15rem' }}>
+                    Sizes: {publishingAsset.sizes?.join(', ') || 'Standard Sizes'}
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                  Product Title in Storefront *
+                </label>
+                <input
+                  type="text"
+                  value={publishForm.title}
+                  onChange={(e) => setPublishForm({ ...publishForm, title: e.target.value })}
+                  className="form-input"
+                  required
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                    Category
+                  </label>
+                  <select
+                    value={publishForm.category}
+                    onChange={(e) => setPublishForm({ ...publishForm, category: e.target.value })}
+                    className="form-select"
+                  >
+                    <option value="bangles">Bangles</option>
+                    <option value="necklaces">Necklaces</option>
+                    <option value="bracelets">Bracelets &amp; Cuffs</option>
+                    <option value="earrings">Earrings &amp; Jhumkas</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.75rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                    Initial Stock Count (Inventory)
+                  </label>
+                  <input
+                    type="number"
+                    min="1"
+                    value={publishForm.stock}
+                    onChange={(e) => setPublishForm({ ...publishForm, stock: Number(e.target.value) })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.3rem', color: 'var(--pk-obsidian)' }}>
+                    Selling Price (₹) *
+                  </label>
+                  <input
+                    type="number"
+                    value={publishForm.price}
+                    onChange={(e) => setPublishForm({ ...publishForm, price: Number(e.target.value) })}
+                    className="form-input"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.3rem', color: '#6B7280' }}>
+                    MRP / Orig Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={publishForm.originalPrice}
+                    onChange={(e) => setPublishForm({ ...publishForm, originalPrice: Number(e.target.value) })}
+                    className="form-input"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.72rem', fontWeight: 700, marginBottom: '0.3rem', color: '#D97706' }}>
+                    VIP Member Price (₹)
+                  </label>
+                  <input
+                    type="number"
+                    value={publishForm.memberPrice}
+                    onChange={(e) => setPublishForm({ ...publishForm, memberPrice: Number(e.target.value) })}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
+                <button
+                  type="submit"
+                  className="btn-gold"
+                  style={{ flex: 1, padding: '0.75rem', fontWeight: 700, fontSize: '0.85rem' }}
+                >
+                  Confirm &amp; Push to Live Website
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPublishingAsset(null)}
+                  className="btn-outline"
+                  style={{ padding: '0.75rem 1rem' }}
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -13,15 +13,71 @@
     
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23D4AF37'%3E%3Cpolygon points='12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2'%3E%3C/polygon%3E%3C/svg%3E" />
     <style>
-      #netlify-drawer, .netlify-drawer, [data-netlify-drawer], iframe[src*="netlify"], .netlify-badge {
+      /* Eradicate Netlify drawer, badge, feedback widgets, and floating pills */
+      #netlify-drawer,
+      .netlify-drawer,
+      [data-netlify-drawer],
+      [data-netlify-feedback],
+      iframe[src*="netlify"],
+      .netlify-badge,
+      netlify-drawer,
+      div[class*="netlify"],
+      div[id*="netlify"],
+      div[aria-label*="Netlify"],
+      a[href*="netlify.com"],
+      [data-testid*="netlify"] {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
+        pointer-events: none !important;
+        width: 0 !important;
+        height: 0 !important;
+        position: absolute !important;
+        left: -9999px !important;
+        bottom: -9999px !important;
+        z-index: -9999 !important;
       }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+      // Purge any Netlify injected drawer / badge from DOM dynamically
+      (function() {
+        function purgeNetlifyElements() {
+          const targets = document.querySelectorAll(
+            '#netlify-drawer, .netlify-drawer, [data-netlify-drawer], [data-netlify-feedback], iframe[src*="netlify"], .netlify-badge, netlify-drawer, div[class*="netlify"], div[id*="netlify"], a[href*="netlify.com"]'
+          );
+          targets.forEach(function(el) {
+            try { el.remove(); } catch(e) {}
+          });
+
+          // Check text content of any fixed bottom-right buttons
+          const fixedEls = document.querySelectorAll('div, a, button, section');
+          fixedEls.forEach(function(el) {
+            const text = el.innerText || el.textContent || '';
+            if (text.toLowerCase().includes('powered by netlify') || text.toLowerCase().includes('netlify')) {
+              const style = window.getComputedStyle(el);
+              if (style.position === 'fixed' || style.position === 'absolute') {
+                try { el.remove(); } catch(e) {}
+              }
+            }
+          });
+        }
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', purgeNetlifyElements);
+        } else {
+          purgeNetlifyElements();
+        }
+
+        const observer = new MutationObserver(function(mutations) {
+          purgeNetlifyElements();
+        });
+        observer.observe(document.documentElement, { childList: true, subtree: true });
+        window.addEventListener('load', purgeNetlifyElements);
+      })();
+    </script>
   </body>
 </html>

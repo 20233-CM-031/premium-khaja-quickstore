@@ -4,12 +4,23 @@
 
 [build.environment]
   NETLIFY_PREVIEW_DRAWER = "false"
+  NETLIFY_DRAWER = "false"
+  NETLIFY_FEEDBACK = "false"
+
+[context.production.environment]
+  NETLIFY_PREVIEW_DRAWER = "false"
+  NETLIFY_DRAWER = "false"
+  NETLIFY_FEEDBACK = "false"
 
 [context.deploy-preview.environment]
   NETLIFY_PREVIEW_DRAWER = "false"
+  NETLIFY_DRAWER = "false"
+  NETLIFY_FEEDBACK = "false"
 
 [context.branch-deploy.environment]
   NETLIFY_PREVIEW_DRAWER = "false"
+  NETLIFY_DRAWER = "false"
+  NETLIFY_FEEDBACK = "false"
 
 [[redirects]]
   from = "/*"

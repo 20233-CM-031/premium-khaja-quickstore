@@ -22,6 +22,7 @@ export const ProductDetailModal = () => {
   const { 
     quickProduct, 
     setQuickProduct,
+    closeProductDetail,
     originalSelectedProduct,
     viewingRecommendationProduct,
     inspectRecommendation,
@@ -40,7 +41,7 @@ export const ProductDetailModal = () => {
 
   const allAvailableProducts = products || ALL_PRODUCTS || [];
 
-  const [selectedSize, setSelectedSize] = useState('2.6');
+  const [selectedSize, setSelectedSize] = useState('');
   const [selectedColor, setSelectedColor] = useState('Antique Gold Polish');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('SPEC'); // 'SPEC' | 'CARE' | 'STYLING'
@@ -59,11 +60,27 @@ export const ProductDetailModal = () => {
     return n.toLocaleString('en-IN');
   };
 
-  // Close modal
+  // Close modal completely without reverting back to re-open
   const handleClose = () => {
-    setQuickProduct(null);
-    revertToOriginalSelection();
+    if (closeProductDetail) {
+      closeProductDetail();
+    } else {
+      setQuickProduct(null);
+    }
   };
+
+  // Auto-initialize size & finish whenever a product is viewed
+  useEffect(() => {
+    if (quickProduct) {
+      const defaultSizes = Array.isArray(quickProduct.sizes) && quickProduct.sizes.length > 0 
+        ? quickProduct.sizes 
+        : (quickProduct.category === 'bangles' ? ['2.4', '2.6', '2.8'] : ['Standard Size']);
+      setSelectedSize(defaultSizes[0] || 'Standard Size');
+      setSelectedColor(POLISH_OPTIONS[0]?.name || 'Antique Gold Polish');
+      setQuantity(1);
+      setSizeError('');
+    }
+  }, [quickProduct?.id]);
 
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -73,17 +90,8 @@ export const ProductDetailModal = () => {
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    // Support phone hardware back button
-    window.history.pushState({ modal: 'product-detail' }, '');
-    const handlePopState = () => {
-      setQuickProduct(null);
-      revertToOriginalSelection();
-    };
-    window.addEventListener('popstate', handlePopState);
-
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
-      window.removeEventListener('popstate', handlePopState);
     };
   }, []);
 
@@ -505,63 +513,48 @@ export const ProductDetailModal = () => {
                 </div>
               </div>
 
-              {/* 2. SIZE SELECTOR WITH UNDO/CLEAR CAPABILITY */}
+              {/* 2. SIZE SELECTOR WITH HIGH VISIBILITY & ACTIVE SELECTION */}
               <div style={{ flexShrink: 0 }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.45rem' }}>
-                  <label style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
-                    Select Size: <span style={{ fontWeight: 400, color: 'var(--pk-text-muted)', fontSize: '0.7rem' }}>(Tap again to deselect)</span>
+                  <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--pk-text-primary)' }}>
+                    Select Size:
                   </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: selectedSize ? 'var(--pk-gold-dark)' : 'var(--pk-text-muted)', fontWeight: 600 }}>
-                      {selectedSize ? `Size: ${selectedSize}` : 'No size chosen'}
-                    </span>
-                    {selectedSize && (
-                      <button
-                        type="button"
-                        onClick={() => setSelectedSize('')}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: '#C92A2A',
-                          fontSize: '0.7rem',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          padding: '0 0.2rem',
-                          textDecoration: 'underline'
-                        }}
-                      >
-                        ✕ Clear
-                      </button>
-                    )}
-                  </div>
+                  <span style={{ fontSize: '0.78rem', color: selectedSize ? 'var(--pk-gold-dark)' : 'var(--pk-text-muted)', fontWeight: 700 }}>
+                    {selectedSize ? `Selected: ${selectedSize}` : 'Please choose size'}
+                  </span>
                 </div>
-                <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {availableSizes.map(size => {
                     const isSelected = selectedSize === size;
                     return (
                       <button
                         key={size}
                         type="button"
-                        onClick={() => setSelectedSize(isSelected ? '' : size)}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setSelectedSize(size);
+                        }}
                         aria-pressed={isSelected}
-                        title={isSelected ? `Size ${size} selected - tap to deselect` : `Select size ${size}`}
+                        title={`Select size ${size}`}
                         style={{
-                          padding: '0.45rem 0.95rem',
+                          padding: '0.55rem 1rem',
                           borderRadius: 'var(--radius-sm)',
-                          fontSize: '0.8rem',
-                          fontWeight: isSelected ? 700 : 600,
-                          border: isSelected ? '2px solid var(--pk-obsidian)' : '1px solid var(--pk-border)',
-                          background: isSelected ? 'var(--pk-obsidian)' : '#FFFFFF',
-                          color: isSelected ? '#FAF8F5' : 'var(--pk-text-primary)',
+                          fontSize: '0.82rem',
+                          fontWeight: isSelected ? 800 : 600,
+                          border: isSelected ? '2px solid #D4AF37' : '1px solid #D1D5DB',
+                          background: isSelected ? '#181614' : '#FFFFFF',
+                          color: isSelected ? '#E4C88A' : '#1F2937',
                           cursor: 'pointer',
                           transition: 'all 0.15s',
                           display: 'inline-flex',
                           alignItems: 'center',
-                          gap: '0.35rem'
+                          gap: '0.4rem',
+                          boxShadow: isSelected ? '0 2px 8px rgba(212,175,55,0.3)' : 'none'
                         }}
                       >
-                        {size}
-                        {isSelected && <span style={{ fontSize: '0.7rem', color: 'var(--pk-gold-light)' }}>✓</span>}
+                        <span>{size}</span>
+                        {isSelected && <span style={{ fontSize: '0.75rem', color: '#D4AF37' }}>✓</span>}
                       </button>
                     );
                   })}

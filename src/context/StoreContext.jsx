@@ -285,28 +285,25 @@ export const StoreProvider = ({ children }) => {
     } catch (e) {}
   };
 
-  // Dynamic Products Catalog (Admin has full control to add all items & photos)
+  // Dynamic Products Catalog (Empty by default per user request - Admin adds or imports via SouqOne)
   const [products, setProducts] = useState(() => {
     const saved = localStorage.getItem('pk_showroom_products');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed) && parsed.length > 0) {
-          // Remove any legacy dummy placeholder images so Admin / SouqOne AI Studio adds genuine photos
-          return parsed.map(p => ({
-            ...p,
-            image: (p.image && !p.image.includes('Gemini_Generated_Image') && !p.image.includes('unsplash') && !p.image.includes('Screenshot')) ? p.image : ''
-          }));
+          // If the cached products are legacy dummy catalog items, clear them
+          const isLegacyCatalog = parsed.some(p => p.id?.startsWith('bangle-') || p.id?.startsWith('neck-') || p.id?.startsWith('brace-') || p.id?.startsWith('ear-'));
+          if (!isLegacyCatalog) {
+            return parsed;
+          }
         }
       } catch (e) {
         console.error("Failed to parse custom products", e);
       }
     }
-    // Default to ALL_PRODUCTS catalog with empty images awaiting Admin / SouqOne upload
-    return ALL_PRODUCTS.map(p => ({
-      ...p,
-      image: (p.image && !p.image.includes('Gemini_Generated_Image') && !p.image.includes('unsplash') && !p.image.includes('Screenshot')) ? p.image : ''
-    }));
+    // Default to empty array [] so user request: "remove all products items and images" is 100% honored
+    return [];
   });
 
   const clearAllProducts = () => {
@@ -406,22 +403,291 @@ export const StoreProvider = ({ children }) => {
   const [customersList, setCustomersList] = useState(INITIAL_CUSTOMERS);
   const [leadsList, setLeadsList] = useState(INITIAL_LEADS);
   const [campaignsList, setCampaignsList] = useState(INITIAL_CAMPAIGNS);
-  const [orders, setOrders] = useState([
+  // Initial SouqOne AI Studio Showroom Asset Vault (Images received via SouqOne Bridge)
+  const INITIAL_SOUQONE_LIBRARY = [
     {
-      orderId: "PK-ORD-9041",
-      customerName: "Ayesha Sheikh",
-      customerPhone: "+91 93930 56641",
-      items: [
-        { name: "Rajwada Bridal Chura Master Set", quantity: 1, price: 3499, image: "/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png" }
+      id: 'sq-ai-101',
+      title: 'Devasthan Nakshi Temple Ear Cuffs & Jhumki Masterpiece',
+      category: 'earrings',
+      subcategory: 'Traditional Wear',
+      imageUrl: 'https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=800&q=80',
+      suggestedPrice: 2199,
+      suggestedOriginalPrice: 3299,
+      suggestedMemberPrice: 1979,
+      sizes: ['Length: 3.8 Inches with Hair Chain'],
+      colors: [
+        { name: 'Antique Gold Polish', code: '#C5A059' },
+        { name: 'Royal Rose Polish', code: '#B76E79' },
+        { name: 'Classic Gold Finish', code: '#E5C158' },
+        { name: 'Silver Rhodium Finish', code: '#94A3B8' }
       ],
-      totalAmount: 3499,
-      status: "DISPATCHED",
+      receivedAt: '2026-10-18 18:30',
+      source: 'SouqOne AI Studio Webhook (Bridge Active)',
+      modelTag: 'Showroom HD Photogrammetry v2.4'
+    },
+    {
+      id: 'sq-ai-102',
+      title: 'Royal Rajputi Kundan & Meenakari Kada',
+      category: 'bangles',
+      subcategory: 'Kundan Kada',
+      imageUrl: '/images/bangles/1789662811af3b.png',
+      suggestedPrice: 1899,
+      suggestedOriginalPrice: 2599,
+      suggestedMemberPrice: 1799,
+      sizes: ['2.4', '2.6', '2.8'],
+      colors: [
+        { name: 'Antique Gold Polish', code: '#C5A059' },
+        { name: 'Royal Rose Polish', code: '#B76E79' }
+      ],
+      receivedAt: '2026-10-18 19:15',
+      source: 'SouqOne AI Studio Webhook (Bridge Active)',
+      modelTag: 'Imperial Velvet Lighting 4K'
+    },
+    {
+      id: 'sq-ai-103',
+      title: 'Hyderabadi Nizam Bridal Emerald Chura Set',
+      category: 'bangles',
+      subcategory: 'Bridal Chura',
+      imageUrl: '/images/bangles/178966249ed2e1.png',
+      suggestedPrice: 2499,
+      suggestedOriginalPrice: 3499,
+      suggestedMemberPrice: 2349,
+      sizes: ['2.4', '2.6', '2.8'],
+      colors: [
+        { name: 'Antique Gold Polish', code: '#C5A059' },
+        { name: 'Emerald Velvet Green', code: '#047857' }
+      ],
+      receivedAt: '2026-10-18 20:00',
+      source: 'SouqOne AI Studio Webhook (Bridge Active)',
+      modelTag: 'Haute Runway Studio 4K'
+    },
+    {
+      id: 'sq-ai-104',
+      title: 'Celebrity Gala Polki Solitaire Choker Necklace',
+      category: 'necklaces',
+      subcategory: 'Haute Sets',
+      imageUrl: 'https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=800&q=80',
+      suggestedPrice: 3999,
+      suggestedOriginalPrice: 5499,
+      suggestedMemberPrice: 3799,
+      sizes: ['Adjustable Dori Thread (Free Size)'],
+      colors: [
+        { name: 'Antique Gold Polish', code: '#C5A059' },
+        { name: 'Silver Rhodium Finish', code: '#94A3B8' }
+      ],
+      receivedAt: '2026-10-18 21:10',
+      source: 'SouqOne AI Studio Webhook (Bridge Active)',
+      modelTag: 'Gala Spotlighting Lens'
+    }
+  ];
+
+  const [souqoneLibrary, setSouqoneLibrary] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pk_souqone_library');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_SOUQONE_LIBRARY;
+  });
+
+  const publishFromSouqoneLibrary = (assetId, customOverrides = {}) => {
+    const asset = souqoneLibrary.find(a => a.id === assetId);
+    if (!asset) return { success: false, error: 'Asset not found' };
+
+    const newProd = {
+      id: `pk-sq-${Date.now().toString().slice(-6)}`,
+      sku: `PK-${(asset.category || 'bangles').slice(0, 3).toUpperCase()}-${Math.floor(100 + Math.random() * 900)}`,
+      name: customOverrides.title || asset.title,
+      category: customOverrides.category || asset.category,
+      subcategory: customOverrides.subcategory || asset.subcategory || 'Showroom Piece',
+      price: Number(customOverrides.price) || asset.suggestedPrice || 2499,
+      originalPrice: Number(customOverrides.originalPrice) || asset.suggestedOriginalPrice || 3499,
+      memberPrice: Number(customOverrides.memberPrice) || asset.suggestedMemberPrice || 2249,
+      image: asset.imageUrl,
+      description: customOverrides.description || `Handcrafted high-fashion artificial piece published directly from SouqOne AI Studio showroom looks. Finished in royal craftsmanship.`,
+      sizes: asset.sizes?.length ? asset.sizes : ['2.4', '2.6', '2.8'],
+      colors: asset.colors?.length ? asset.colors : [{ name: 'Antique Gold Polish', code: '#C5A059' }],
+      finish: asset.colors?.[0]?.name || 'Antique Gold Polish',
+      inventoryCount: Number(customOverrides.stock) || 15,
+      status: 'IN STOCK',
+      rating: 5.0,
+      reviewsCount: 1,
+      isTrending: true,
+      isNewArrival: true,
+      tags: ['SouqOne Showroom', asset.category],
+      careInstructions: 'Wipe gently with soft cloth. Avoid perfumes and moisture.',
+      matchingItemIds: []
+    };
+
+    setProducts(prev => [newProd, ...prev]);
+    setInventory(prev => ({ ...prev, [newProd.id]: newProd.inventoryCount }));
+    recordInventoryMovement(newProd.id, newProd.name, 'INWARD', newProd.inventoryCount, 'Initial Stock Published from SouqOne AI Studio');
+    recordAuditLog('PRODUCT_PUBLISHED_FROM_SOUQONE', `Published ${newProd.name} from SouqOne Showroom Vault. Price: ₹${newProd.price}, Stock: ${newProd.inventoryCount}`);
+    return { success: true, product: newProd };
+  };
+
+  const receiveFromSouqoneWebhook = (newAssets) => {
+    const assetsToAdd = Array.isArray(newAssets) ? newAssets : [newAssets];
+    setSouqoneLibrary(prev => {
+      const updated = [...assetsToAdd, ...prev];
+      try { localStorage.setItem('pk_souqone_library', JSON.stringify(updated)); } catch (e) {}
+      return updated;
+    });
+  };
+
+  // Structured multi-week orders for realistic weekly sales reporting
+  const INITIAL_ORDERS_DATA = [
+    {
+      orderId: "PK-ORD-9045",
+      customerName: "Farhan Zaidi",
+      customerPhone: "+91 98201 44512",
+      items: [
+        { name: "Devasthan Nakshi Temple Ear Cuffs & Jhumki Masterpiece", quantity: 2, size: "Length: 3.8 Inches with Hair Chain", finish: "Antique Gold Polish", price: 2199, image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80" }
+      ],
+      totalAmount: 4398,
+      status: "PAYMENT CONFIRMED",
       paymentMethod: "UPI (Google Pay)",
-      orderDate: "2026-09-24 09:30 AM",
+      utrNumber: "UPI938174928172",
+      orderDate: "2026-10-18 04:15 PM",
+      shippingAddress: "Banjara Hills, Road No 12, Hyderabad, TS - 500034",
+      channel: "Direct QuickStore"
+    },
+    {
+      orderId: "PK-ORD-9044",
+      customerName: "Neha Reddy",
+      customerPhone: "+91 94401 22981",
+      items: [
+        { name: "Royal Rajputi Kundan Kada", quantity: 2, size: "2.6", finish: "Antique Gold Polish", price: 1899, image: "/images/bangles/1789662811af3b.png" }
+      ],
+      totalAmount: 3798,
+      status: "DISPATCHED",
+      paymentMethod: "UPI (PhonePe)",
+      utrNumber: "UPI837192847192",
+      orderDate: "2026-10-17 02:40 PM",
+      shippingAddress: "Jubilee Hills, Hyderabad, TS - 500033",
+      channel: "SouqOne AI Studio Referral"
+    },
+    {
+      orderId: "PK-ORD-9043",
+      customerName: "Shabnam Banu",
+      customerPhone: "+91 97011 88321",
+      items: [
+        { name: "Hyderabadi Nizam Bridal Emerald Chura Set", quantity: 1, size: "2.6", finish: "Antique Gold Polish", price: 2499, image: "/images/bangles/178966249ed2e1.png" },
+        { name: "Devasthan Nakshi Temple Ear Cuffs & Jhumki Masterpiece", quantity: 1, size: "Length: 3.8 Inches with Hair Chain", finish: "Antique Gold Polish", price: 2199, image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80" }
+      ],
+      totalAmount: 4698,
+      status: "PAYMENT CONFIRMED",
+      paymentMethod: "UPI (Paytm)",
+      utrNumber: "UPI728194829104",
+      orderDate: "2026-10-16 11:15 AM",
+      shippingAddress: "Mehdipatnam, Hyderabad, TS - 500028",
+      channel: "Instagram Runway"
+    },
+    {
+      orderId: "PK-ORD-9042",
+      customerName: "Kavita Rao",
+      customerPhone: "+91 99882 11093",
+      items: [
+        { name: "Royal Rajputi Kundan Kada", quantity: 1, size: "2.4", finish: "Antique Gold Polish", price: 1899, image: "/images/bangles/1789662811af3b.png" }
+      ],
+      totalAmount: 1899,
+      status: "DISPATCHED",
+      paymentMethod: "UPI (BHIM)",
+      utrNumber: "UPI619284019283",
+      orderDate: "2026-10-14 06:10 PM",
+      shippingAddress: "Koramangala 4th Block, Bengaluru, KA - 560034",
+      channel: "Direct QuickStore"
+    },
+    {
+      orderId: "PK-ORD-9039",
+      customerName: "Zoya Akhtar",
+      customerPhone: "+91 98210 99482",
+      items: [
+        { name: "Hyderabadi Nizam Bridal Emerald Chura Set", quantity: 2, size: "2.8", finish: "Antique Gold Polish", price: 2499, image: "/images/bangles/178966249ed2e1.png" }
+      ],
+      totalAmount: 4998,
+      status: "DELIVERED",
+      paymentMethod: "UPI (Google Pay)",
+      utrNumber: "UPI518293049182",
+      orderDate: "2026-10-11 01:20 PM",
       shippingAddress: "Bandra West, Mumbai, MH - 400050",
       channel: "Miss World 2025 India Feature"
+    },
+    {
+      orderId: "PK-ORD-9038",
+      customerName: "Priyanka Joshi",
+      customerPhone: "+91 94220 55182",
+      items: [
+        { name: "Devasthan Nakshi Temple Ear Cuffs & Jhumki Masterpiece", quantity: 1, size: "Length: 3.8 Inches with Hair Chain", finish: "Antique Gold Polish", price: 2199, image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80" },
+        { name: "Royal Rajputi Kundan Kada", quantity: 1, size: "2.6", finish: "Antique Gold Polish", price: 1899, image: "/images/bangles/1789662811af3b.png" }
+      ],
+      totalAmount: 4098,
+      status: "DELIVERED",
+      paymentMethod: "UPI (PhonePe)",
+      utrNumber: "UPI419203918273",
+      orderDate: "2026-10-09 05:45 PM",
+      shippingAddress: "Shivaji Nagar, Pune, MH - 411005",
+      channel: "Direct QuickStore"
+    },
+    {
+      orderId: "PK-ORD-9037",
+      customerName: "Ananya Sharma",
+      customerPhone: "+91 99001 23456",
+      items: [
+        { name: "Celebrity Gala Polki Solitaire Choker Necklace", quantity: 1, size: "Adjustable Dori Thread", finish: "Antique Gold Polish", price: 3999, image: "https://images.unsplash.com/photo-1599643478518-a784e5dc4c8f?auto=format&fit=crop&w=400&q=80" }
+      ],
+      totalAmount: 3999,
+      status: "DELIVERED",
+      paymentMethod: "UPI (Paytm)",
+      utrNumber: "UPI319203918271",
+      orderDate: "2026-10-07 10:30 AM",
+      shippingAddress: "Indiranagar, Bengaluru, KA - 560038",
+      channel: "Direct QuickStore"
+    },
+    {
+      orderId: "PK-ORD-9035",
+      customerName: "Fatima Begum",
+      customerPhone: "+91 93930 11223",
+      items: [
+        { name: "Devasthan Nakshi Temple Ear Cuffs & Jhumki Masterpiece", quantity: 2, size: "Length: 3.8 Inches with Hair Chain", finish: "Antique Gold Polish", price: 2199, image: "https://images.unsplash.com/photo-1630019852942-f89202989a59?auto=format&fit=crop&w=400&q=80" }
+      ],
+      totalAmount: 4398,
+      status: "DELIVERED",
+      paymentMethod: "UPI (Google Pay)",
+      utrNumber: "UPI219203918270",
+      orderDate: "2026-10-03 03:15 PM",
+      shippingAddress: "Charminar Heritage Market, Hyderabad, TS - 500002",
+      channel: "Direct QuickStore"
+    },
+    {
+      orderId: "PK-ORD-9034",
+      customerName: "Meera Nair",
+      customerPhone: "+91 98450 77123",
+      items: [
+        { name: "Royal Rajputi Kundan Kada", quantity: 2, size: "2.8", finish: "Antique Gold Polish", price: 1899, image: "/images/bangles/1789662811af3b.png" }
+      ],
+      totalAmount: 3798,
+      status: "DELIVERED",
+      paymentMethod: "UPI (PhonePe)",
+      utrNumber: "UPI119203918269",
+      orderDate: "2026-10-01 07:00 PM",
+      shippingAddress: "MG Road, Kochi, KL - 682016",
+      channel: "Direct QuickStore"
     }
-  ]);
+  ];
+
+  const [orders, setOrders] = useState(() => {
+    try {
+      const saved = localStorage.getItem('pk_orders');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch (e) {}
+    return INITIAL_ORDERS_DATA;
+  });
 
   // Store Owner & Merchant UPI Configuration State (Jaffar Mohd - premiumkhaja@okaxis)
   const [storeOwnerName, setStoreOwnerName] = useState(() => {
@@ -706,86 +972,13 @@ export const StoreProvider = ({ children }) => {
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const isLegacy = parsed.some(p => p.image?.includes('Screenshot') || p.image?.includes('Gemini'));
+          if (!isLegacy) return parsed;
+        }
       } catch (e) {}
     }
-    return [
-      {
-        id: 'star-01',
-        name: 'Choti kada pink',
-        image: '/images/bangles/Screenshot 2026-09-17 202420.png',
-        price: 300,
-        originalPrice: 405,
-        memberPrice: 285,
-        marketingReputation: 'Miss World Gifting Spotlight Piece',
-        subcategory: 'Kada',
-        category: 'bangles',
-        sizes: ['2.4', '2.6', '2.8'],
-        material: 'High-Quality Artificial Glass & Lac',
-        finish: 'Antique Pink & Gold Polish',
-        description: 'Heritage handcrafted Choti Kada in blush pink with intricate braided detailing. Designed as an official gifting piece presented at national pageants.'
-      },
-      {
-        id: 'star-02',
-        name: 'Royal Rajputi Kundan Kada',
-        image: '/images/bangles/Gemini_Generated_Image_srf5bnsrf5bnsrf5.png',
-        price: 1899,
-        originalPrice: 2599,
-        memberPrice: 1799,
-        marketingReputation: 'Celebrity Runway Feature',
-        subcategory: 'Kundan Kada',
-        category: 'bangles',
-        sizes: ['2.4', '2.6', '2.8'],
-        material: 'Hypoallergenic Brass Core',
-        finish: 'Micro-Gold Polish',
-        description: 'Handcrafted artificial antique micro-gold kada embedded with uncut polki kundan and crimson enameling.'
-      },
-      {
-        id: 'star-03',
-        name: 'Hyderabadi Nizam Bridal Chura',
-        image: '/images/bangles/Gemini_Generated_Image_hldb3jhldb3jhldb.png',
-        price: 2499,
-        originalPrice: 3499,
-        memberPrice: 2349,
-        marketingReputation: 'Heritage Pageant Showcase',
-        subcategory: 'Bridal Chura',
-        category: 'bangles',
-        sizes: ['2.4', '2.6', '2.8'],
-        material: 'Handcrafted Glass & Lac',
-        finish: 'Royal Crimson & Gold',
-        description: 'Complete 32-piece traditional bridal chura adorned with sparkling Austrian crystals and gold foil lac rows.'
-      },
-      {
-        id: 'star-04',
-        name: 'Jaipur Velvet Lac Studded Chooda',
-        image: '/images/bangles/Gemini_Generated_Image_bio6s5bio6s5bio6.png',
-        price: 999,
-        originalPrice: 1499,
-        memberPrice: 949,
-        marketingReputation: 'Artisan Lad Bazaar Signature',
-        subcategory: 'Lac Bangles',
-        category: 'bangles',
-        sizes: ['2.4', '2.6', '2.8'],
-        material: 'Pure Organic Lac Base',
-        finish: 'Hand-Studded Glass Stones',
-        description: 'Charminar Lad Bazaar authentic hand-rolled lac bangles encrusted with vibrant mirrors and glass stones.'
-      },
-      {
-        id: 'star-05',
-        name: 'Noor Chand Polki Set',
-        image: '/images/bangles/Gemini_Generated_Image_e8jfpte8jfpte8jf.png',
-        price: 1299,
-        originalPrice: 1899,
-        memberPrice: 1229,
-        marketingReputation: 'Celebrity Gifting Archive',
-        subcategory: 'Polki Sets',
-        category: 'bangles',
-        sizes: ['2.4', '2.6', '2.8'],
-        material: 'Brass Core & Polki Stones',
-        finish: 'Antique Gold Polish',
-        description: 'Pair of royal polki kadas adorned with crescent moon motifs and glistening faux pearls.'
-      }
-    ];
+    return [];
   });
 
   const addHeroStarProduct = (prodData) => {
@@ -1411,6 +1604,13 @@ export const StoreProvider = ({ children }) => {
       setViewingRecommendationProduct(null);
       setQuickProduct(originalSelectedProduct);
     }
+  };
+
+  // Close Product Detail Modal Completely
+  const closeProductDetail = () => {
+    setQuickProduct(null);
+    setOriginalSelectedProduct(null);
+    setViewingRecommendationProduct(null);
   };
 
   // Customer Authentication: Sign Up
@@ -2455,6 +2655,7 @@ ${isCodOrder ? '✓ Customer selected Cash on Delivery. Please pack order and bo
         viewingRecommendationProduct,
         setViewingRecommendationProduct,
         openProductDetail,
+        closeProductDetail,
         inspectRecommendation,
         revertToOriginalSelection,
         checkoutOpen,
@@ -2540,6 +2741,10 @@ ${isCodOrder ? '✓ Customer selected Cash on Delivery. Please pack order and bo
         updateProduct,
         deleteProduct,
         importFromSouqOneStudio,
+        souqoneLibrary,
+        setSouqoneLibrary,
+        publishFromSouqoneLibrary,
+        receiveFromSouqoneWebhook,
         ALL_PRODUCTS,
         BANGLES_PRODUCTS,
         // Royal Shorts & Video Reels (Full Axis Video CRUD)

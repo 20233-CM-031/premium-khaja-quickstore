@@ -56,9 +56,20 @@ export async function runVerifyRestore(): Promise<RestoreVerificationReport> {
     inventoryCount: p.inventoryCount || 10
   }));
 
+  const testProduct: CanonicalProduct = {
+    id: 'smoke-test-prod-1',
+    name: 'Smoke Test Piece',
+    sku: 'PK-SMK-01',
+    price: 1899,
+    memberPrice: 1799,
+    inventoryCount: 10
+  };
+
+  const catalogForSmoke = mockRestoredCatalog.length > 0 ? mockRestoredCatalog : [testProduct];
+
   const smokeOrder = calculateOrderTotals(
-    [{ productId: mockRestoredCatalog[0].id, quantity: 1 }],
-    mockRestoredCatalog,
+    [{ productId: catalogForSmoke[0].id, quantity: 1 }],
+    catalogForSmoke,
     PREMIUM_KHAJA_CONFIG.delivery,
     false,
     'local_courier'

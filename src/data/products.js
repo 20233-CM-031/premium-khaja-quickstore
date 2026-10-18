@@ -61,7 +61,8 @@ export const CATEGORY_CONFIG = {
   }
 };
 
-export const BANGLES_PRODUCTS = [
+export const BANGLES_PRODUCTS = [];
+export const SAMPLE_BANGLES_PRESETS = [
   {
     id: "bangle-01",
     sku: "PK-BGL-01-STN",
@@ -1291,12 +1292,7 @@ export const EARRINGS_PRODUCTS = [
   }
 ];
 
-export const ALL_PRODUCTS = [
-  ...BANGLES_PRODUCTS,
-  ...NECKLACES_PRODUCTS,
-  ...BRACELETS_PRODUCTS,
-  ...EARRINGS_PRODUCTS
-];
+export const ALL_PRODUCTS = [];
 
 export const COMPLEMENTARY_PRODUCTS = [
   ...NECKLACES_PRODUCTS,
